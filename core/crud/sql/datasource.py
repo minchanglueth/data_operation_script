@@ -25,7 +25,7 @@ db_session = scoped_session(sessionmaker(autocommit=False, autoflush=False, bind
 #     return db_session.query(DataSource).filter((DataSource.id.in_(data_source_id)) & (DataSource.valid == 1)).all()
 
 
-def get_datasourceid_from_youtube_url_and_trackid(youtube_url: str, trackid: str, formatid: str):
+def get_datasourceids_from_youtube_url_and_trackid(youtube_url: str, trackid: str, formatid: str):
     datasourceid = (db_session.query(DataSource.id)
                     .select_from(DataSource)
                     .filter(DataSource.valid == 1,

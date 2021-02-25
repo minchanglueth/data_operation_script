@@ -62,7 +62,7 @@ def crawl_youtube(track_id: str, youtube_url: str, format_id: str, when_exist: s
 
 
 def crawl_image(objectid: str, url: str, object_type: str, pic: str = "Joy_xinh", priority: int = 1999):
-    crawl_image = f"insert into crawlingtasks(Id, ObjectID, ActionId, TaskDetail, Priority) values (uuid4(), '{objectid}', {V4CrawlingTaskActionMaster.ARTIST_ALBUM_IMAGE}, JSON_SET(IFNULL(crawlingtasks.TaskDetail, JSON_OBJECT()), '$.url', '{url}', '$.object_type', '{object_type}', '$.PIC', '{pic}'), {priority});\n"
+    crawl_image = f"insert into crawlingtasks(Id, ObjectID, ActionId, TaskDetail, Priority) values (uuid4(), '{objectid}', '{V4CrawlingTaskActionMaster.ARTIST_ALBUM_IMAGE}', JSON_SET(IFNULL(crawlingtasks.TaskDetail, JSON_OBJECT()), '$.url', '{url}', '$.object_type', '{object_type}', '$.PIC', '{pic}'), {priority});\n"
     return crawl_image
 
 
@@ -79,6 +79,7 @@ def convert_dict(raw_dict: dict):
 
 if __name__ == "__main__":
     start_time = time.time()
-    k = crawl_youtube(track_id='joy', youtube_url='joy', format_id=DataSourceFormatMaster.FORMAT_ID_MP4_FULL)
+    # k = crawl_youtube(track_id='joy', youtube_url='joy', format_id=DataSourceFormatMaster.FORMAT_ID_MP4_FULL)
+    k = crawl_image(objectid='joy xinh', url='url', object_type=object_type.ARTIST)
     print(k)
     pd.set_option("display.max_rows", None, "display.max_columns", 50, 'display.width', 1000)
