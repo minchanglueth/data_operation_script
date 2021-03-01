@@ -429,6 +429,10 @@ def process_mp3_mp4(sheet_info: dict, urls: list):
                 (youtube_url['Memo'] == 'not ok') | (youtube_url['Memo'] == 'added')].reset_index().drop_duplicates(
                 subset=['track_id'],
                 keep='first')  # remove duplicate df by column (reset_index before drop_duplicate: because of drop_duplicate default reset index)
+            info = {"url": f"{url}", "gsheet_id": f"{gsheet_id}",
+                    "gsheet_name": f"{get_gsheet_name(gsheet_id=gsheet_id)}",
+                    "sheet_name": f"{sheet_name}"}
+            filter_df['gsheet_info'] = f"{info}"
             mp3_mp4_df = mp3_mp4_df.append(filter_df, ignore_index=True)
     print(mp3_mp4_df)
     return mp3_mp4_df

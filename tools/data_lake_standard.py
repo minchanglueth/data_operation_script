@@ -3,7 +3,9 @@ from google_spreadsheet_api.function import get_df_from_speadsheet, get_list_of_
 
 from core.crud.sql.datasource import get_datasourceids_from_youtube_url_and_trackid, related_datasourceid, \
     get_youtube_info_from_trackid
-from tools import crawlingtask
+from tools.crawlingtask import crawl_youtube, WhenExist
+from core.models.crawling_t_action_master import V4CrawlingTaskActionMaster
+
 import pandas as pd
 import time
 from core import query_path
@@ -41,38 +43,54 @@ def get_sheet_info_from_url(url: str):
     return {"gsheet_id": gsheet_id, "gsheet_name": gsheet_name, "list_of_sheet_title": list_of_sheet_title}
 
 
-def crawl_mp3_mp4(df: object):
+def crawl_mp3_mp4(df: object, sheet_info: dict):
     row_index = df.index
     old_youtube_url_column_name = sheet_info['column_name'][2]
     datasource_format_id = sheet_info['fomatid']
-    with open(query_path, "w") as f:
+    with open(query_path, "a+") as f:
         for i in row_index:
             memo = df.Memo.loc[i]
             new_youtube_url = df.url_to_add.loc[i]
             track_id = df.track_id.loc[i]
             old_youtube_url = df[old_youtube_url_column_name].loc[i]
             query = ""
+            sheet_info_log = df.gsheet_info.loc[i]
+            sheet_info_log = sheet_info_log.replace("'", "\"")
+            import json
+            gsheet_name = json.loads(sheet_info_log)['gsheet_name']
+            sheet_name = json.loads(sheet_info_log)['sheet_name']
+
             if memo == "not ok" and new_youtube_url == "none":
                 datasourceids = get_datasourceids_from_youtube_url_and_trackid(youtube_url=old_youtube_url,
                                                                                trackid=track_id,
                                                                                formatid=datasource_format_id).all()
                 datasourceids_flatten_list = tuple(set(list(chain.from_iterable(datasourceids))))  # flatten list
-                if not datasourceids_flatten_list:
-                    continue
-                else:
+
+                if datasourceids_flatten_list:
                     for datasourceid in datasourceids_flatten_list:
                         related_id_datasource = related_datasourceid(datasourceid)
                         if related_id_datasource == [(None, None, None)]:
-                            query = query + f"Update datasources set valid = -10 where id = {datasourceid};"
+                            query = query + f"Update datasources set valid = -10 where id = {datasourceid};\n"
                         else:
                             query = query + f"UPDATE datasources SET trackid = '', FormatID = ''  where id = '{datasourceid}';\n"
                             query = query + f"UPDATE datasources SET updatedAt = NOW() WHERE trackid = '{track_id}';\n"
 
+                else:
+                    query = query + f"--not have datasourcid searched by {old_youtube_url}, {track_id}, {datasource_format_id};\n"
+                    # continue
+
             elif memo == "not ok" and new_youtube_url != "none":
-                query = query + f"insert into crawlingtasks(Id,ObjectID ,ActionId, TaskDetail, Priority) values (uuid4(),'{track_id}' ,'F91244676ACD47BD9A9048CF2BA3FFC1',JSON_SET(IFNULL(crawlingtasks.TaskDetail, JSON_OBJECT()),'$.when_exists','replace' ,'$.youtube_url','{new_youtube_url}','$.data_source_format_id','{datasource_format_id}','$.PIC', '{gsheet_name}_{sheet_name}'),300);\n"
+                query = query + crawl_youtube(track_id=track_id, youtube_url=new_youtube_url,
+                                              format_id=sheet_info.get('fomatid'),
+                                              when_exist=WhenExist.REPLACE, pic=f"{gsheet_name}_{sheet_name}")
             elif memo == "added":
-                query = query + f"insert into crawlingtasks(Id,ObjectID ,ActionId, TaskDetail, Priority) values (uuid4(),'{track_id}' ,'F91244676ACD47BD9A9048CF2BA3FFC1',JSON_SET(IFNULL(crawlingtasks.TaskDetail, JSON_OBJECT()),'$.when_exists','skip' ,'$.youtube_url','{new_youtube_url}','$.data_source_format_id','{datasource_format_id}','$.PIC', '{gsheet_name}_{sheet_name}'),300);\n"
+                query = query + crawl_youtube(track_id=track_id, youtube_url=new_youtube_url,
+                                              format_id=sheet_info.get('fomatid'),
+                                              when_exist=WhenExist.SKIP, pic=f"{gsheet_name}_{sheet_name}")
+            print(query)
             f.write(query)
+
+
 if __name__ == "__main__":
     start_time = time.time()
     pd.set_option("display.max_rows", None, "display.max_columns", 50, 'display.width', 1000)
@@ -100,10 +118,13 @@ if __name__ == "__main__":
             (youtube_url['Memo'] == 'not ok') | (youtube_url['Memo'] == 'added')].reset_index().drop_duplicates(
             subset=['track_id'],
             keep='first')  # remove duplicate df by column (reset_index before drop_duplicate: because of drop_duplicate default reset index)
+        # info = f"{url}, {gsheet_id}, {get_gsheet_name(gsheet_id=gsheet_id)}, {sheet_name}"
+        # filter_df['gsheet_info'] = info
+
+        info = {"url": f"{url}", "gsheet_id": f"{gsheet_id}",
+                "gsheet_name": f"{get_gsheet_name(gsheet_id=gsheet_id)}",
+                "sheet_name": f"{sheet_name}"}
+        filter_df['gsheet_info'] = f"{info}"
         mp3_mp4_df = mp3_mp4_df.append(filter_df, ignore_index=True)
-    print(mp3_mp4_df)
 
-
-
-
-
+    crawl_mp3_mp4(mp3_mp4_df, sheet_info=sheet_info)
