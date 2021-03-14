@@ -1,10 +1,10 @@
 from core.models.data_source_format_master import DataSourceFormatMaster
 import time
 import pandas as pd
-from core.models.crawling_t_action_master import V4CrawlingTaskActionMaster
+from core.models.crawlingtask_action_master import V4CrawlingTaskActionMaster
 import json
 from core import query_path
-
+from google_spreadsheet_api.function import get_df_from_speadsheet
 
 class WhenExist():
     SKIP = "skip"
@@ -17,7 +17,6 @@ class object_type():
     ALBUM = "album"
     TRACK = "track"
 
-
 class sheet_type:
     MP3_SHEET_NAME = {"sheet_name": "MP_3", "fomatid": DataSourceFormatMaster.FORMAT_ID_MP3_FULL,
                       "column_name": ["track_id", "Memo", "Mp3_link", "url_to_add"]}
@@ -27,6 +26,17 @@ class sheet_type:
                                                                     DataSourceFormatMaster.FORMAT_ID_MP4_LIVE],
                           "column_name": ["track_id", "Remix_url", "Remix_artist", "Live_url", "Live_venue",
                                           "Live_year"]}
+
+    ARTIST_IMAGE = {"sheet_name": "Artist_image", "column_name": ["Artist_uuid", "Memo", "url_to_add"],
+                    "object_type": "artist"}
+    ALBUM_IMAGE = {"sheet_name": "Album_image", "column_name": ["Album_uuid", "Memo", "url_to_add"],
+                   "object_type": "album"}
+
+    ARTIST_WIKI = {"sheet_name": "Artist_wiki", "column_name": ["Artist_uuid", "Memo", "url_to_add", "content to add"],
+                   "table_name": "artists"}
+    ALBUM_WIKI = {"sheet_name": "Album_wiki", "column_name": ["Album_uuid", "Memo", "url_to_add", "Content_to_add"],
+                  "table_name": "albums"}
+
 
 
 def crawl_itunes_album(ituneid: str, pic: str = "Joy_xinh", region: str = "us"):
@@ -79,7 +89,9 @@ def convert_dict(raw_dict: dict):
 
 if __name__ == "__main__":
     start_time = time.time()
-    # k = crawl_youtube(track_id='joy', youtube_url='joy', format_id=DataSourceFormatMaster.FORMAT_ID_MP4_FULL)
+    k = crawl_youtube(track_id='joy', youtube_url='joy', format_id=DataSourceFormatMaster.FORMAT_ID_MP4_FULL)
     k = crawl_image(objectid='joy xinh', url='url', object_type=object_type.ARTIST)
     print(k)
     pd.set_option("display.max_rows", None, "display.max_columns", 50, 'display.width', 1000)
+
+

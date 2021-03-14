@@ -98,6 +98,9 @@ def delete_sheet(gsheet_id, sheet_name):
 
 
 def update_value(list_result: list, range_to_update: str, gsheet_id: str):
+    '''
+    sheet_name!B4:B5
+    '''
     body = {
         'values': list_result  # list_result is array 2 dimensional (2D)
     }

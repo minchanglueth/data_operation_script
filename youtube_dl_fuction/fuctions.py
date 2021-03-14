@@ -47,10 +47,10 @@ def get_raw_title_uploader_from_youtube_url(youtube_url: str):
         youtube_info_result = {"youtube_url": youtube_url, "uploader": result.get('uploader'),
                                "youtube_title": result.get('title'), "duration": result.get('duration') * 1000}
     except DownloadError as ex:
-        youtube_info_result = {"youtube_url": youtube_url, "uploader": f"{ex}", "youtube_title": f"{ex}", "duration": f"{ex}"}
+        youtube_info_result = {"youtube_url": youtube_url, "uploader": f"{ex}", "youtube_title": f"{ex}", "duration": f"0"}
     except:  # noqa
         youtube_info_result = {"youtube_url": youtube_url, "uploader": "Error: Unknown error",
-                               "youtube_title": "Error: Unknown error", "duration": "Error: Unknown error"}
+                               "youtube_title": "Error: Unknown error", "duration": "0"}
     x = random.uniform(0.5, 3)
     time.sleep(x)
     # print(youtube_info_result)

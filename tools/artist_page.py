@@ -1,6 +1,8 @@
 from google_spreadsheet_api.function import get_df_from_speadsheet, get_list_of_sheet_title, update_value, \
     creat_new_sheet_and_update_data_from_df, get_gsheet_name
 from google_spreadsheet_api.create_new_sheet_and_update_data_from_df import creat_new_sheet_and_update_data_from_df
+from tools.data_lake_standard import crawl_mp3_mp4
+from tools.crawlingtask import sheet_type
 
 from core.crud.sql.datasource import get_datasourceids_from_youtube_url_and_trackid, related_datasourceid, \
     get_youtube_info_from_trackid
@@ -16,9 +18,7 @@ from core import query_path
 from support_function.text_similarity.text_similarity import get_token_set_ratio
 from numpy import random
 import numpy as np
-
-from tools.crawlingtask import sheet_type
-
+from core.crud.sql.query_supporter import count_datasource_by_artistname_formatid, get_datasource_by_artistname_formatid
 
 def check_youtube_url_mp3(gsheet_id: str):
     '''
@@ -434,7 +434,6 @@ def process_mp3_mp4(sheet_info: dict, urls: list):
                     "sheet_name": f"{sheet_name}"}
             filter_df['gsheet_info'] = f"{info}"
             mp3_mp4_df = mp3_mp4_df.append(filter_df, ignore_index=True)
-    print(mp3_mp4_df)
     return mp3_mp4_df
 
 
@@ -444,19 +443,42 @@ def get_gsheet_id_from_url(url: str):
     return gsheet_id
 
 
+def get_count_datasource_by_artist_and_formatid(artist_names: list, formatid: str):
+    for artist_name in artist_names:
+        count = count_datasource_by_artistname_formatid(artist_name=artist_name,formatid=formatid)
+        print(f"{artist_name}----{count}")
+
+
+def get_df_datasource_by_artist_and_formatid(artist_names: list, formatid: str, df: object):
+    formatid = formatid
+    for artist_name in artist_names:
+        df = df.append(
+            get_df_from_query(get_datasource_by_artistname_formatid(artist_name=artist_name, formatid=formatid)).fillna(
+                ""), ignore_index=True)
+        print(artist_name)
+        print(df)
+        creat_new_sheet_and_update_data_from_df(df=df, gsheet_id=gsheet_id,
+                                                new_sheet_name=f"{sheet_name}")
+        print("Complete update data")
+
+
 if __name__ == "__main__":
     start_time = time.time()
     pd.set_option("display.max_rows", None, "display.max_columns", 50, 'display.width', 1000)
-
-
-    urls = [
-        "https://docs.google.com/spreadsheets/d/1L17AVvNANbHYyLFKXlYRBEol8nZ14pvO3_KSGlQf0WE/edit#gid=1241019472",
-        "https://docs.google.com/spreadsheets/d/14tBa8mqCAXw50qcQfZsrTs70LeKIPEe9yISsXxYgQUk/edit",
-        # "https://docs.google.com/spreadsheets/d/1qIfm2xhAIRb6kN6P1MgHMTNhlBYpLTApoMSyNa2fxk0/edit#gid=704433363",
-        # "https://docs.google.com/spreadsheets/d/1Mbe1_ANXUMps_LONbn8ntaARg5JqU7v1dMU8KUpnCwo/edit#gid=408034383",
-        # "https://docs.google.com/spreadsheets/d/16vY2NdX8IVHbeg7cHW2gSKsVd8CJiSadN33QKTz0cII/edit#gid=1243013907"
+    with open(query_path, "w") as f:
+        f.truncate()
+    gsheet_id = "1eO8J2qqjxgRVnc3b1EWGskVHYc1baUAmDzdqT6hIdRg"
+    sheet_titles = get_list_of_sheet_title(gsheet_id= gsheet_id)
+    sheet_name = "mp_3"
+    if sheet_name in sheet_titles:
+        df = get_df_from_speadsheet(gsheet_id=gsheet_id,sheet_name=sheet_name)
+    else:
+        df = pd.DataFrame()
+    artists = [
+        "Ray Charles",
+        "Pet Shop Boys",
     ]
-    sheet_info = sheet_type.MP4_SHEET_NAME
-    # check_box(urls=urls)
-    joy = process_mp3_mp4(sheet_info=sheet_info, urls=urls)
+    formatid = DataSourceFormatMaster.FORMAT_ID_MP3_FULL
+    get_df_datasource_by_artist_and_formatid(artists, formatid, df=df)
+
     print("--- %s seconds ---" % (time.time() - start_time))
