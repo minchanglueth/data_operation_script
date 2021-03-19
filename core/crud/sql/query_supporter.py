@@ -12,6 +12,7 @@ from sqlalchemy.orm import scoped_session, sessionmaker, aliased
 from sqlalchemy import func, union, distinct, desc, and_, or_, tuple_, extract
 from sqlalchemy import text
 from core.mysql_database_connection.sqlalchemy_create_engine import SQLALCHEMY_DATABASE_URI
+from typing import Optional, Tuple, Dict, List
 
 from datetime import date
 import time
@@ -80,10 +81,78 @@ def get_datasource_by_artistname_formatid(artist_name: str, formatid: str):
                                              )
     return get_datasource_by_artistname_formatid
 
+def get_crawlingtask_youtube_info(objectid: str, PIC: str, actionid: str):
+    get_crawlingtask_info = (db_session.query(
+        Crawlingtask.id,
+        Crawlingtask.objectid,
+        func.json_extract(Crawlingtask.taskdetail, "$.youtube_url").label(
+            "youtube_title"),
+        func.json_extract(Crawlingtask.taskdetail, "$.when_exists").label(
+            "when_exists"),
+        func.json_extract(Crawlingtask.taskdetail, "$.data_source_format_id").label(
+            "data_source_format_id"),
+        Crawlingtask.status
 
-# if __name__ == "__main__":
-#     start_time = time.time()
-#     joy = get_datasource_by_artistname_formatid(artist_name='taylor swift', formatid='74BA994CF2B54C40946EA62C3979DDA3')
-#     k = get_compiled_raw_mysql(joy)
+    )
+                             .select_from(Crawlingtask)
+                             .filter(Crawlingtask.objectid == objectid,
+                                     Crawlingtask.actionid == actionid,
+                                     func.json_extract(Crawlingtask.taskdetail, "$.PIC") == PIC,
+                                     )
+                             .order_by(
+                                       Crawlingtask.created_at.desc())
+                             ).first()
+    return get_crawlingtask_info
+
+
+def get_crawlingtask_image_info(objectid: str, PIC: str, actionid: str):
+    get_crawlingtask_info = (db_session.query(
+        Crawlingtask.id,
+        Crawlingtask.objectid,
+        func.json_extract(Crawlingtask.taskdetail, "$.url").label(
+            "url"),
+        func.json_extract(Crawlingtask.taskdetail, "$.when_exists").label(
+            "when_exists"),
+        Crawlingtask.status
+
+    )
+                             .select_from(Crawlingtask)
+                             .filter(Crawlingtask.objectid == objectid,
+                                     Crawlingtask.actionid == actionid,
+                                     func.json_extract(Crawlingtask.taskdetail, "$.PIC") == PIC,
+                                     )
+                             .order_by(
+                                       Crawlingtask.created_at.desc())
+                             ).first()
+    return get_crawlingtask_info
+
+
+def get_crawlingtask_image_status(gsheet_name: str, sheet_name: str):
+
+    crawl_artist_image_status = (db_session.query(
+        Crawlingtask.id,
+        Crawlingtask.objectid,
+        func.json_extract(Crawlingtask.taskdetail, "$.url").label(
+            "url"),
+        func.json_extract(Crawlingtask.taskdetail, "$.when_exists").label(
+            "when_exists"),
+        Crawlingtask.status
+    )
+                                 .select_from(Crawlingtask)
+                                 .filter(
+        func.json_extract(Crawlingtask.taskdetail, "$.PIC") == f"{gsheet_name}_{sheet_name}",
+        Crawlingtask.actionid == 'OA9CPKSUT6PBGI1ZHPLQUPQCGVYQ71S9')
+                                 .order_by(Crawlingtask.objectid, Crawlingtask.created_at.desc())
+                                 )
+    return crawl_artist_image_status
+
+
+if __name__ == "__main__":
+    start_time = time.time()
+# #     Artist Page 30.12.2020_MP_3---204F065101834F11BC74251C64967ECF---F91244676ACD47BD9A9048CF2BA3FFC1
+    db_crawlingtask = get_crawlingtask_image_info(objectid="9587370BB39A4253B5F4381B7C9BD644",
+                                      PIC="Top 100 Albums 08.03.2021_08.03.2021",
+                                      actionid="OA9CPKSUT6PBGI1ZHPLQUPQCGVYQ71S9")
+    print(db_crawlingtask.id)
 #     print(k)
 #     print("--- %s seconds ---" % (time.time() - start_time))

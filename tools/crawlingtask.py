@@ -6,6 +6,7 @@ import json
 from core import query_path
 from google_spreadsheet_api.function import get_df_from_speadsheet
 
+
 class WhenExist():
     SKIP = "skip"
     REPLACE = "replace"
@@ -16,6 +17,7 @@ class object_type():
     ARTIST = "artist"
     ALBUM = "album"
     TRACK = "track"
+
 
 class sheet_type:
     MP3_SHEET_NAME = {"sheet_name": "MP_3", "fomatid": DataSourceFormatMaster.FORMAT_ID_MP3_FULL,
@@ -36,7 +38,6 @@ class sheet_type:
                    "table_name": "artists"}
     ALBUM_WIKI = {"sheet_name": "Album_wiki", "column_name": ["Album_uuid", "Memo", "url_to_add", "Content_to_add"],
                   "table_name": "albums"}
-
 
 
 def crawl_itunes_album(ituneid: str, pic: str = "Joy_xinh", region: str = "us"):
@@ -71,8 +72,8 @@ def crawl_youtube(track_id: str, youtube_url: str, format_id: str, when_exist: s
     return crawlingtask
 
 
-def crawl_image(objectid: str, url: str, object_type: str, pic: str = "Joy_xinh", priority: int = 1999):
-    crawl_image = f"insert into crawlingtasks(Id, ObjectID, ActionId, TaskDetail, Priority) values (uuid4(), '{objectid}', '{V4CrawlingTaskActionMaster.ARTIST_ALBUM_IMAGE}', JSON_SET(IFNULL(crawlingtasks.TaskDetail, JSON_OBJECT()), '$.url', '{url}', '$.object_type', '{object_type}', '$.PIC', '{pic}'), {priority});\n"
+def crawl_image(objectid: str, url: str, object_type: str,when_exists: str = WhenExist.REPLACE, pic: str = "Joy_xinh", priority: int = 1999):
+    crawl_image = f"insert into crawlingtasks(Id, ObjectID, ActionId, TaskDetail, Priority) values (uuid4(), '{objectid}', '{V4CrawlingTaskActionMaster.ARTIST_ALBUM_IMAGE}', JSON_SET(IFNULL(crawlingtasks.TaskDetail, JSON_OBJECT()), '$.url', '{url}', '$.object_type', '{object_type}', '$.when_exists', '{when_exists}', '$.PIC', '{pic}'), {priority});\n"
     return crawl_image
 
 
@@ -87,11 +88,9 @@ def convert_dict(raw_dict: dict):
     # convert_dict(joy)
 
 
-if __name__ == "__main__":
-    start_time = time.time()
-    k = crawl_youtube(track_id='joy', youtube_url='joy', format_id=DataSourceFormatMaster.FORMAT_ID_MP4_FULL)
-    k = crawl_image(objectid='joy xinh', url='url', object_type=object_type.ARTIST)
-    print(k)
-    pd.set_option("display.max_rows", None, "display.max_columns", 50, 'display.width', 1000)
-
-
+# if __name__ == "__main__":
+#     start_time = time.time()
+#     k = crawl_youtube(track_id='joy', youtube_url='joy', format_id=DataSourceFormatMaster.FORMAT_ID_MP4_FULL)
+#     k = crawl_image(objectid='joy xinh', url='url', object_type=object_type.ARTIST)
+#     print(k)
+#     pd.set_option("display.max_rows", None, "display.max_columns", 50, 'display.width', 1000)

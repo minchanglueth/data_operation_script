@@ -141,27 +141,17 @@ def creat_new_sheet_and_update_data_from_df(df: object, gsheet_id: str, new_shee
     :return:
     '''
 
-    list_of_sheet_title = get_list_of_sheet_title(gsheet_id)
-    if 'new_sheet_name' in list_of_sheet_title:
-        column_name = df.columns.values.tolist()
-        list_result = df.values.tolist()  # transfer data_frame to 2D list
-        list_result.insert(0, column_name)
+    delete_sheet(gsheet_id=gsheet_id, sheet_name=new_sheet_name)
 
-        range_to_update = f"{new_sheet_name}!A1"
-        update_value(list_result, range_to_update,
-                     gsheet_id)  # validate_value type: object, int, category... NOT DATETIME
+    column_name = df.columns.values.tolist()
+    list_result = df.values.tolist()  # transfer data_frame to 2D list
+    list_result.insert(0, column_name)
 
-    else:
-
-        column_name = df.columns.values.tolist()
-        list_result = df.values.tolist()  # transfer data_frame to 2D list
-        list_result.insert(0, column_name)
-
-        add_sheet(gsheet_id, new_sheet_name)
-        range_to_update = f"{new_sheet_name}!A1"
-        update_value(list_result, range_to_update,
-                     gsheet_id)  # validate_value type: object, int, category... NOT DATETIME
-    return print("\n complete create new sheet and update data")
+    add_sheet(gsheet_id, new_sheet_name)
+    range_to_update = f"{new_sheet_name}!A1"
+    update_value(list_result, range_to_update,
+                 gsheet_id)  # validate_value type: object, int, category... NOT DATETIME
+    return print("\ncomplete create new sheet and update data")
 
 
 def create_new_gsheet(new_gsheet_title: str):
@@ -194,8 +184,14 @@ def get_gsheet_name(gsheet_id: str):
 
 if __name__ == "__main__":
     #     https://docs.google.com/spreadsheets/d/1aoORoNmZoBtnY_jrBDOeLTrwLF0oeJUUDAb173BMf78/edit#gid=0
-    gsheet_id = "1aoORoNmZoBtnY_jrBDOeLTrwLF0oeJUUDAb173BMf78"
-    sheet_name = "Sheet1"
-    # joy = get_df_from_speadsheet(gsheet_id=gsheet_id, sheet_name=sheet_name)
-    joy = get_gsheet_name(gsheet_id)
-    print(joy)
+    d = {
+        "one": pd.Series([1.0, 2.0, 3.0, 5], index=["a", "b", "c", "d"]),
+        "two": pd.Series([1.0, 2.0, 3.0, 4.0], index=["a", "b", "c", "d"])
+    }
+    df = pd.DataFrame(d)
+    print(df)
+
+    new_sheet_name = 'artist image cant upload'
+    creat_new_sheet_and_update_data_from_df(df=df, gsheet_id="1mBJcQvqobNfISSrandRrBCpQCY8vocDi7w6HPUXOY-A",
+                                            new_sheet_name=new_sheet_name)
+

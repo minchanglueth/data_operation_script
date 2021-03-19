@@ -55,12 +55,12 @@ if __name__ == "__main__":
     # https://docs.google.com/spreadsheets/d/1aRhZ7NQAfhud3jjR5aboCZ3Ew8u2Y0SqGqUQYwcUnBs/edit#gid=98817891
     start_time = time.time()
     pd.set_option("display.max_rows", None, "display.max_columns", 50, 'display.width', 1000)
-    # https://docs.google.com/spreadsheets/d/1eO8J2qqjxgRVnc3b1EWGskVHYc1baUAmDzdqT6hIdRg/edit#gid=2082964454
+    # https://docs.google.com/spreadsheets/d/1eO8J2qqjxgRVnc3b1EWGskVHYc1baUAmDzdqT6hIdRg/edit#gid=926860952
     gsheet_id = '1eO8J2qqjxgRVnc3b1EWGskVHYc1baUAmDzdqT6hIdRg'
-    sheet_name = 'mp_4'
+    sheet_name = 'mp_3_2'
     df = get_df_from_speadsheet(gsheet_id=gsheet_id,sheet_name=sheet_name)
     df["DurationMs"].replace({"": "0"}, inplace=True)
-    # df = df.loc[16000:]
+    df = df.loc[4324:6000]
     row_index = df.index
     start = row_index.start
     stop = row_index.stop
