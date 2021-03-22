@@ -29,10 +29,10 @@ class sheet_type:
                           "column_name": ["track_id", "Remix_url", "Remix_artist", "Live_url", "Live_venue",
                                           "Live_year"]}
 
-    ARTIST_IMAGE = {"sheet_name": "Artist_image", "column_name": ["Artist_uuid", "Memo", "url_to_add"],
-                    "object_type": "artist", "sub_sheet": "artist image cant upload"}
-    ALBUM_IMAGE = {"sheet_name": "Album_image", "column_name": ["Album_uuid", "Memo", "url_to_add"],
-                   "object_type": "album", "sub_sheet": "album image cant upload"}
+    ARTIST_IMAGE = {"sheet_name": "Artist_image", "column_name": ["uuid", "Memo", "url_to_add"],
+                    "object_type": object_type.ARTIST, "sub_sheet": "artist image cant upload"}
+    ALBUM_IMAGE = {"sheet_name": "Album_image", "column_name": ["uuid", "Memo", "url_to_add"],
+                   "object_type": object_type.ALBUM, "sub_sheet": "album image cant upload"}
 
     ARTIST_WIKI = {"sheet_name": "Artist_wiki", "column_name": ["Artist_uuid", "Memo", "url_to_add", "content to add"],
                    "table_name": "artists"}

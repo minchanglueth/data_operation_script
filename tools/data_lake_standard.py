@@ -331,13 +331,13 @@ if __name__ == "__main__":
         # 'https://docs.google.com/spreadsheets/d/1O4Xljy4OkwXPPv8_WmR0lzEHyJOdPJUKfGYJPUrMbe8/edit#gid=0',
         # 'https://docs.google.com/spreadsheets/d/1egZ87LNtZim7Ez2Jvo6H47gRrqQ_epeXGobzufaYINE/edit#gid=0'
 
-        'https://docs.google.com/spreadsheets/d/1nNNkgkJggLW9LBiHu8ttUxM2bjKPWIYXC5ONuzL6LIE/edit#gid=930022228',
-        'https://docs.google.com/spreadsheets/d/1aA27dYGp1rtJ9Fwgn8QOUToNHEbfiqFJEjSPe6haWUA/edit#gid=0',
+        # 'https://docs.google.com/spreadsheets/d/1nNNkgkJggLW9LBiHu8ttUxM2bjKPWIYXC5ONuzL6LIE/edit#gid=930022228',
+        # 'https://docs.google.com/spreadsheets/d/1aA27dYGp1rtJ9Fwgn8QOUToNHEbfiqFJEjSPe6haWUA/edit#gid=0',
         # 'https://docs.google.com/spreadsheets/d/168LFRCmcjutE2VJ3Kny-IipoGEtXCXJgBTUhHMjQen4/edit#gid=1415949781',
-        'https://docs.google.com/spreadsheets/d/1zAgHdr0DaHjfNdf8_IkmogQF69vKKBQv51Ay2hPy-D4/edit#gid=0',
+        # 'https://docs.google.com/spreadsheets/d/1zAgHdr0DaHjfNdf8_IkmogQF69vKKBQv51Ay2hPy-D4/edit#gid=0',
         # 'https://docs.google.com/spreadsheets/d/1Q3bUXr_C5fidN5fCOpmU3g3wCgNDQ124BOQNc873osM/edit#gid=0',
         # 'https://docs.google.com/spreadsheets/d/1G3UJPsw0nJLCJOeoXZ4gttWjbGaWvtOkrd7Xuwu_CVY/edit#gid=1824306586',
-        'https://docs.google.com/spreadsheets/d/17Jh4qBEv9nJW93sm8tommkCzbXIdulJyCCudm1xZo18/edit'
+        # 'https://docs.google.com/spreadsheets/d/17Jh4qBEv9nJW93sm8tommkCzbXIdulJyCCudm1xZo18/edit'
     ]
     # sheet_name_core = '15.03.2021'
 

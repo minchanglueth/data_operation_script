@@ -20,3 +20,12 @@ def get_album_wiki(albumuuid: tuple):
                 .filter(Album.uuid.in_(albumuuid))
                 )
     return album_wiki
+
+def get_all_by_ids(artist_uuids: list):
+    return db_session.query(Album).filter((Album.valid == 1),
+                                           Album.uuid.in_(artist_uuids)).order_by(Album.created_at.desc()).all()
+
+
+def get_one_by_id(artist_uuid: str):
+    return db_session.query(Album).filter((Album.valid == 1),
+                                           Album.uuid == artist_uuid).order_by(Album.created_at.desc()).first()
