@@ -30,9 +30,9 @@ class sheet_type:
                                           "Live_year"]}
 
     ARTIST_IMAGE = {"sheet_name": "Artist_image", "column_name": ["Artist_uuid", "Memo", "url_to_add"],
-                    "object_type": "artist"}
+                    "object_type": "artist", "sub_sheet": "artist image cant upload"}
     ALBUM_IMAGE = {"sheet_name": "Album_image", "column_name": ["Album_uuid", "Memo", "url_to_add"],
-                   "object_type": "album"}
+                   "object_type": "album", "sub_sheet": "album image cant upload"}
 
     ARTIST_WIKI = {"sheet_name": "Artist_wiki", "column_name": ["Artist_uuid", "Memo", "url_to_add", "content to add"],
                    "table_name": "artists"}
