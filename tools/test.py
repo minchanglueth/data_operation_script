@@ -339,23 +339,20 @@ if __name__ == "__main__":
     with open(query_path, "w") as f:
         f.truncate()
     urls = [
-    'https://docs.google.com/spreadsheets/d/1DoUNeCJ7t4y2BUIBPvCLn9MnnilubPU9prXtIzacAEs/edit#gid=0',
-    'https://docs.google.com/spreadsheets/d/1r1vD9w8Iq-qwJrnSJ5JXQB4UAu5PBuUXFkxO389OlJI/edit#gid=1429715256',
+        'https://docs.google.com/spreadsheets/d/1DoUNeCJ7t4y2BUIBPvCLn9MnnilubPU9prXtIzacAEs/edit#gid=0',
+        'https://docs.google.com/spreadsheets/d/1r1vD9w8Iq-qwJrnSJ5JXQB4UAu5PBuUXFkxO389OlJI/edit#gid=1429715256',
     ]
     sheet_name_core = 'image'
 
-    # observe
-    sheet_info = sheet_type.ALBUM_IMAGE
-    df = process_image(urls=urls, sheet_info=sheet_info, sheet_name_core='image')
-    print(df)
+    # step 1:observe
+    sheet_info = sheet_type.ARTIST_IMAGE
+    df = process_image(urls=urls, sheet_info=sheet_info)
+    # print(df)
 
-    # step crawl
+    # step2: crawl
     # crawl_image_datalake(df=df, sheet_info=sheet_info, object_type=sheet_info['object_type'])
 
-    # step check
+    # step 3: check
     # checking_crawlingtask_image_crawler_status(df=df)
-
-    # 1mBJcQvqobNfISSrandRrBCpQCY8vocDi7w6HPUXOY-A---Top 100 Albums 08.03.2021----08.03.2021
-    # automate_check_crawl_image_status(gsheet_name="Top 100 Albums 08.03.2021", sheet_name="08.03.2021")
 
     print("\n --- total time to process %s seconds ---" % (time.time() - start_time))
