@@ -5,7 +5,7 @@ from core.crud.sql.datasource import get_datasourceids_from_youtube_url_and_trac
     get_youtube_info_from_trackid
 from core.crud.sql import artist, album
 from core.crud.get_df_from_query import get_df_from_query
-from core.crud.sql.query_supporter import get_crawlingtask_youtube_info, get_crawlingtask_image_info, \
+from core.crud.sql.query_supporter import get_crawlingtask_youtube_info, get_crawlingtask_info, \
     get_crawlingtask_image_status
 
 from tools.crawlingtask import crawl_youtube, WhenExist, crawl_image, object_type, sheet_type
@@ -157,7 +157,7 @@ def checking_crawlingtask_image_crawler_status(df: object):
         sheet_name = json.loads(sheet_info_log)['sheet_name']
         actionid = V4CrawlingTaskActionMaster.ARTIST_ALBUM_IMAGE
         PIC_taskdetail = f"{gsheet_name}_{sheet_name}"
-        db_crawlingtask = get_crawlingtask_image_info(objectid=objectid, PIC=PIC_taskdetail, actionid=actionid)
+        db_crawlingtask = get_crawlingtask_info(objectid=objectid, PIC=PIC_taskdetail, actionid=actionid)
         if db_crawlingtask:
             status = db_crawlingtask.status
             if url in db_crawlingtask.url:

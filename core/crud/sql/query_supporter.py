@@ -105,7 +105,7 @@ def get_crawlingtask_youtube_info(objectid: str, PIC: str, actionid: str):
     return get_crawlingtask_info
 
 
-def get_crawlingtask_image_info(objectid: str, PIC: str, actionid: str):
+def get_crawlingtask_info(objectid: str, PIC: str, actionid: str):
     get_crawlingtask_info = (db_session.query(
         Crawlingtask.id,
         Crawlingtask.objectid,
@@ -147,12 +147,15 @@ def get_crawlingtask_image_status(gsheet_name: str, sheet_name: str):
     return crawl_artist_image_status
 
 
+
+
+
 if __name__ == "__main__":
     start_time = time.time()
 # #     Artist Page 30.12.2020_MP_3---204F065101834F11BC74251C64967ECF---F91244676ACD47BD9A9048CF2BA3FFC1
-    db_crawlingtask = get_crawlingtask_image_info(objectid="9587370BB39A4253B5F4381B7C9BD644",
-                                      PIC="Top 100 Albums 08.03.2021_08.03.2021",
-                                      actionid="OA9CPKSUT6PBGI1ZHPLQUPQCGVYQ71S9")
+    db_crawlingtask = get_crawlingtask_info(objectid="9587370BB39A4253B5F4381B7C9BD644",
+                                            PIC="Top 100 Albums 08.03.2021_08.03.2021",
+                                            actionid="OA9CPKSUT6PBGI1ZHPLQUPQCGVYQ71S9")
     print(db_crawlingtask.id)
 #     print(k)
 #     print("--- %s seconds ---" % (time.time() - start_time))
