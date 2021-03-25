@@ -4,6 +4,7 @@ from google_spreadsheet_api.function import get_df_from_speadsheet, get_list_of_
 from core.crud.sql.datasource import get_datasourceids_from_youtube_url_and_trackid, related_datasourceid, \
     get_youtube_info_from_trackid
 from core.crud.sql import artist, album
+
 from core.crud.get_df_from_query import get_df_from_query
 from core.crud.sql.query_supporter import get_crawlingtask_youtube_info, get_crawlingtask_info, \
     get_crawlingtask_image_status
@@ -296,6 +297,8 @@ def checking_crawlingtask_mp3_mp4_crawler_status(df: object):
     # Step 1: checking accuracy
     print("checking accuracy ")
     df = df.copy()
+    df["check"] = ''
+    df["status"] = ''
     df_crawled = df[df['Memo'] == 'added']
 
     df_crawled = df_crawled.head(10)
@@ -311,34 +314,33 @@ def checking_crawlingtask_mp3_mp4_crawler_status(df: object):
         sheet_name = json.loads(sheet_info_log)['sheet_name']
         actionid = V4CrawlingTaskActionMaster.DOWNLOAD_VIDEO_YOUTUBE
         PIC_taskdetail = f"{gsheet_name}_{sheet_name}"
-        print(f"{objectid}----{PIC_taskdetail}----{actionid}")
-        # db_crawlingtask = get_crawlingtask_info(objectid=objectid, PIC=PIC_taskdetail, actionid=actionid)
-        # print(db_crawlingtask)
-        # if db_crawlingtask:
-    #         status = db_crawlingtask.status
-    #         if url in db_crawlingtask.url:
-    #             joy_check = True
-    #         else:
-    #             joy_check = f"file: {PIC_taskdetail}, uuid: {objectid}, crawlingtask_id: {db_crawlingtask.id}: uuid and url not match"
-    #     else:
-    #         joy_check = f"file: {PIC_taskdetail}, uuid: {objectid} is missing"
-    #         status = 'not have'
-    #     df.loc[i, 'check'] = joy_check
-    #     df.loc[i, 'status'] = status
-    # k = list(set(df.check.tolist()))
-    # if k != [True]:
-    #     print(df[['uuid', 'check']])
+        db_crawlingtask = get_crawlingtask_youtube_info(objectid=objectid, PIC=PIC_taskdetail, actionid=actionid)
+        print(db_crawlingtask)
+        if db_crawlingtask:
+            status = db_crawlingtask.status
+            if url in db_crawlingtask.youtube_url:
+                joy_check = True
+            else:
+                joy_check = f"file: {PIC_taskdetail}, uuid: {objectid}, crawlingtask_id: {db_crawlingtask.id}: uuid and url not match"
+        else:
+            joy_check = f"file: {PIC_taskdetail}, uuid: {objectid} is missing"
+            status = 'not have'
+        df.loc[i, 'check'] = joy_check
+        df.loc[i, 'status'] = status
+    k = list(set(df.check.tolist()))
+    if k != [True]:
+        print(df[['uuid', 'check']])
     #
     # # Step 2: autochecking status
-    # else:
-    #     print("checking accuracy correctly, now checking status")
-    #     gsheet_info_all = list(set(df.gsheet_info.tolist()))
-    #     for gsheet_info in gsheet_info_all:
-    #         gsheet_info = gsheet_info.replace("'", "\"")
-    #         gsheet_name = json.loads(gsheet_info)['gsheet_name']
-    #         sheet_name = json.loads(gsheet_info)['sheet_name']
-    #         gsheet_id = json.loads(gsheet_info)['gsheet_id']
-    #         automate_check_crawl_image_status(gsheet_name=gsheet_name, sheet_name=sheet_name)
+    else:
+        print("checking accuracy correctly, now checking status")
+        gsheet_info_all = list(set(df.gsheet_info.tolist()))
+        for gsheet_info in gsheet_info_all:
+            gsheet_info = gsheet_info.replace("'", "\"")
+            gsheet_name = json.loads(gsheet_info)['gsheet_name']
+            sheet_name = json.loads(gsheet_info)['sheet_name']
+            gsheet_id = json.loads(gsheet_info)['gsheet_id']
+            automate_check_crawl_image_status(gsheet_name=gsheet_name, sheet_name=sheet_name)
     #
     #         # Step 3: upload image cant crawl
     #         df1 = get_df_from_query(get_crawlingtask_image_status(gsheet_name=gsheet_name,
@@ -387,10 +389,10 @@ if __name__ == "__main__":
 
     # step2: crawl
     # crawl_image_datalake(df=df, sheet_info=sheet_info, object_type=sheet_info['object_type'])
-    crawl_mp3_mp4(df=df, sheet_info=sheet_info)
+    # crawl_mp3_mp4(df=df, sheet_info=sheet_info)
 
     # step 3: check
     # checking_crawlingtask_image_crawler_status(df=df)
-    # checking_crawlingtask_mp3_mp4_crawler_status(df=df)
+    checking_crawlingtask_mp3_mp4_crawler_status(df=df)
 
     print("\n --- total time to process %s seconds ---" % (time.time() - start_time))

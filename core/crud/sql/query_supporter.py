@@ -86,7 +86,7 @@ def get_crawlingtask_youtube_info(objectid: str, PIC: str, actionid: str):
         Crawlingtask.id,
         Crawlingtask.objectid,
         func.json_extract(Crawlingtask.taskdetail, "$.youtube_url").label(
-            "youtube_title"),
+            "youtube_url"),
         func.json_extract(Crawlingtask.taskdetail, "$.when_exists").label(
             "when_exists"),
         func.json_extract(Crawlingtask.taskdetail, "$.data_source_format_id").label(
@@ -127,13 +127,17 @@ def get_crawlingtask_info(objectid: str, PIC: str, actionid: str):
     return get_crawlingtask_info
 
 
-def get_crawlingtask_image_status(gsheet_name: str, sheet_name: str):
+def get_crawlingtask_image_status(gsheet_name: str, sheet_name: str, actionid: str):
+    if actionid == V4CrawlingTaskActionMaster.ARTIST_ALBUM_IMAGE:
+        url = "url"
+    else:
+        url = "youtube_url"
 
     crawl_artist_image_status = (db_session.query(
         Crawlingtask.id,
         Crawlingtask.objectid,
-        func.json_extract(Crawlingtask.taskdetail, "$.url").label(
-            "url"),
+        func.json_extract(Crawlingtask.taskdetail, f"$.{url}").label(
+                f"{url}"),
         func.json_extract(Crawlingtask.taskdetail, "$.when_exists").label(
             "when_exists"),
         Crawlingtask.status
@@ -141,21 +145,22 @@ def get_crawlingtask_image_status(gsheet_name: str, sheet_name: str):
                                  .select_from(Crawlingtask)
                                  .filter(
         func.json_extract(Crawlingtask.taskdetail, "$.PIC") == f"{gsheet_name}_{sheet_name}",
-        Crawlingtask.actionid == 'OA9CPKSUT6PBGI1ZHPLQUPQCGVYQ71S9')
+        Crawlingtask.actionid == actionid)
                                  .order_by(Crawlingtask.objectid, Crawlingtask.created_at.desc())
                                  )
     return crawl_artist_image_status
 
 
-
-
-
 if __name__ == "__main__":
     start_time = time.time()
-# #     Artist Page 30.12.2020_MP_3---204F065101834F11BC74251C64967ECF---F91244676ACD47BD9A9048CF2BA3FFC1
-    db_crawlingtask = get_crawlingtask_info(objectid="9587370BB39A4253B5F4381B7C9BD644",
-                                            PIC="Top 100 Albums 08.03.2021_08.03.2021",
-                                            actionid="OA9CPKSUT6PBGI1ZHPLQUPQCGVYQ71S9")
-    print(db_crawlingtask.id)
+    # #     Artist Page 30.12.2020_MP_3---204F065101834F11BC74251C64967ECF---F91244676ACD47BD9A9048CF2BA3FFC1
+    # db_crawlingtask = get_crawlingtask_youtube_info(objectid="08C35303A6B24BCAAFC181CE5486C238",
+    #                                                 PIC="Artist Page 20.01.2021_MP_4",
+    #                                                 actionid="F91244676ACD47BD9A9048CF2BA3FFC1")
+
+    db_crawlingtask = get_crawlingtask_image_status(gsheet_name="Artist Page 20.01.2021", sheet_name="MP_4", actionid="F91244676ACD47BD9A9048CF2BA3FFC1")
+    k = get_compiled_raw_mysql(db_crawlingtask)
+    print(k)
+
 #     print(k)
 #     print("--- %s seconds ---" % (time.time() - start_time))

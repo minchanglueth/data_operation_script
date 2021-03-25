@@ -57,10 +57,10 @@ if __name__ == "__main__":
     pd.set_option("display.max_rows", None, "display.max_columns", 50, 'display.width', 1000)
     # https://docs.google.com/spreadsheets/d/1eO8J2qqjxgRVnc3b1EWGskVHYc1baUAmDzdqT6hIdRg/edit#gid=926860952
     gsheet_id = '1eO8J2qqjxgRVnc3b1EWGskVHYc1baUAmDzdqT6hIdRg'
-    sheet_name = 'mp_3_2'
-    df = get_df_from_speadsheet(gsheet_id=gsheet_id,sheet_name=sheet_name)
+    sheet_name = 'mp_3_3'
+    df = get_df_from_speadsheet(gsheet_id=gsheet_id, sheet_name=sheet_name)
     df["DurationMs"].replace({"": "0"}, inplace=True)
-    df = df.loc[6200:7000]
+    df = df.loc[7198:8000]
     row_index = df.index
     start = row_index.start
     stop = row_index.stop
@@ -81,5 +81,6 @@ if __name__ == "__main__":
             f.append([k])
         joy1 = f"{sheet_name}!N{i+2}"
         update_value(list_result=f, range_to_update=joy1, gsheet_id=gsheet_id)
+
 
     print("--- %s seconds ---" % (time.time() - start_time))
