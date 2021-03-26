@@ -7,7 +7,7 @@ from core.crud.sql import artist, album
 
 from core.crud.get_df_from_query import get_df_from_query
 from core.crud.sql.query_supporter import get_crawlingtask_youtube_info, get_crawlingtask_info, \
-    get_crawlingtask_image_status
+    get_crawlingtask_status
 
 from tools.crawlingtask import crawl_youtube, WhenExist, crawl_image, object_type, sheet_type
 from core.models.data_source_format_master import DataSourceFormatMaster
@@ -114,10 +114,10 @@ def crawl_image_datalake(df: object, sheet_info: dict, object_type: str, when_ex
             f.write(query)
 
 
-def automate_check_crawl_image_status(gsheet_name: str, sheet_name: str):
+def automate_check_status(gsheet_name: str, sheet_name: str,actionid: str ):
     count = 0
     while True and count < 300:
-        df1 = get_df_from_query(get_crawlingtask_image_status(gsheet_name=gsheet_name, sheet_name=sheet_name))
+        df1 = get_df_from_query(get_crawlingtask_status(gsheet_name=gsheet_name, sheet_name=sheet_name,actionid=actionid))
         result = df1[
                      (df1.status != 'complete')
                      & (df1.status != 'incomplete')
@@ -183,11 +183,12 @@ def checking_crawlingtask_image_crawler_status(df: object):
             gsheet_name = json.loads(gsheet_info)['gsheet_name']
             sheet_name = json.loads(gsheet_info)['sheet_name']
             gsheet_id = json.loads(gsheet_info)['gsheet_id']
-            automate_check_crawl_image_status(gsheet_name=gsheet_name, sheet_name=sheet_name)
+            actionid = V4CrawlingTaskActionMaster.ARTIST_ALBUM_IMAGE
+            automate_check_status(gsheet_name=gsheet_name, sheet_name=sheet_name, actionid=actionid)
 
             # Step 3: upload image cant crawl
-            df1 = get_df_from_query(get_crawlingtask_image_status(gsheet_name=gsheet_name,
-                                                                  sheet_name=sheet_name)).reset_index().drop_duplicates(
+            df1 = get_df_from_query(get_crawlingtask_status(gsheet_name=gsheet_name,
+                                                            sheet_name=sheet_name, actionid=actionid)).reset_index().drop_duplicates(
                 subset=['objectid'],
                 keep='first')  # remove duplicate df by column (reset_index before drop_duplicate: because of drop_duplicate default reset index)
 
@@ -315,7 +316,6 @@ def checking_crawlingtask_mp3_mp4_crawler_status(df: object):
         actionid = V4CrawlingTaskActionMaster.DOWNLOAD_VIDEO_YOUTUBE
         PIC_taskdetail = f"{gsheet_name}_{sheet_name}"
         db_crawlingtask = get_crawlingtask_youtube_info(objectid=objectid, PIC=PIC_taskdetail, actionid=actionid)
-        print(db_crawlingtask)
         if db_crawlingtask:
             status = db_crawlingtask.status
             if url in db_crawlingtask.youtube_url:
@@ -325,24 +325,26 @@ def checking_crawlingtask_mp3_mp4_crawler_status(df: object):
         else:
             joy_check = f"file: {PIC_taskdetail}, uuid: {objectid} is missing"
             status = 'not have'
-        df.loc[i, 'check'] = joy_check
-        df.loc[i, 'status'] = status
-    k = list(set(df.check.tolist()))
+        df_crawled.loc[i, 'check'] = joy_check
+        df_crawled.loc[i, 'status'] = status
+
+
+    k = list(set(df_crawled.check.tolist()))
     if k != [True]:
-        print(df[['uuid', 'check']])
-    #
-    # # Step 2: autochecking status
+        print(df[['track_id', 'check']])
+
+    # Step 2: autochecking status
     else:
         print("checking accuracy correctly, now checking status")
-        gsheet_info_all = list(set(df.gsheet_info.tolist()))
+        gsheet_info_all = list(set(df_crawled.gsheet_info.tolist()))
         for gsheet_info in gsheet_info_all:
             gsheet_info = gsheet_info.replace("'", "\"")
             gsheet_name = json.loads(gsheet_info)['gsheet_name']
             sheet_name = json.loads(gsheet_info)['sheet_name']
-            gsheet_id = json.loads(gsheet_info)['gsheet_id']
-            automate_check_crawl_image_status(gsheet_name=gsheet_name, sheet_name=sheet_name)
-    #
-    #         # Step 3: upload image cant crawl
+            actionid = V4CrawlingTaskActionMaster.DOWNLOAD_VIDEO_YOUTUBE
+            automate_check_status(gsheet_name=gsheet_name, sheet_name=sheet_name, actionid=actionid)
+
+    # Step 3: upload youtube cant crawl
     #         df1 = get_df_from_query(get_crawlingtask_image_status(gsheet_name=gsheet_name,
     #                                                               sheet_name=sheet_name)).reset_index().drop_duplicates(
     #             subset=['objectid'],

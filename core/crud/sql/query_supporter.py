@@ -127,7 +127,7 @@ def get_crawlingtask_info(objectid: str, PIC: str, actionid: str):
     return get_crawlingtask_info
 
 
-def get_crawlingtask_image_status(gsheet_name: str, sheet_name: str, actionid: str):
+def get_crawlingtask_status(gsheet_name: str, sheet_name: str, actionid: str):
     if actionid == V4CrawlingTaskActionMaster.ARTIST_ALBUM_IMAGE:
         url = "url"
     else:
@@ -158,7 +158,7 @@ if __name__ == "__main__":
     #                                                 PIC="Artist Page 20.01.2021_MP_4",
     #                                                 actionid="F91244676ACD47BD9A9048CF2BA3FFC1")
 
-    db_crawlingtask = get_crawlingtask_image_status(gsheet_name="Artist Page 20.01.2021", sheet_name="MP_4", actionid="F91244676ACD47BD9A9048CF2BA3FFC1")
+    db_crawlingtask = get_crawlingtask_status(gsheet_name="Artist Page 20.01.2021", sheet_name="MP_4", actionid="F91244676ACD47BD9A9048CF2BA3FFC1")
     k = get_compiled_raw_mysql(db_crawlingtask)
     print(k)
 
