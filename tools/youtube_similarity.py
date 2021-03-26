@@ -60,7 +60,7 @@ if __name__ == "__main__":
     sheet_name = 'mp_3_3'
     df = get_df_from_speadsheet(gsheet_id=gsheet_id, sheet_name=sheet_name)
     df["DurationMs"].replace({"": "0"}, inplace=True)
-    df = df.loc[7198:8000]
+    # df = df.loc[7198:8000]
     row_index = df.index
     start = row_index.start
     stop = row_index.stop

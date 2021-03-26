@@ -301,7 +301,6 @@ def checking_crawlingtask_mp3_mp4_crawler_status(df: object):
     df["check"] = ''
     df["status"] = ''
     df_crawled = df[df['Memo'] == 'added']
-
     df_crawled = df_crawled.head(10)
     print(df_crawled)
 
@@ -388,6 +387,7 @@ if __name__ == "__main__":
     sheet_info = sheet_type.MP4_SHEET_NAME
     # df = process_image(urls=urls, sheet_info=sheet_info)
     df = process_mp3_mp4(sheet_info=sheet_info, urls=urls)
+    # print(df)
 
     # step2: crawl
     # crawl_image_datalake(df=df, sheet_info=sheet_info, object_type=sheet_info['object_type'])
@@ -395,6 +395,6 @@ if __name__ == "__main__":
 
     # step 3: check
     # checking_crawlingtask_image_crawler_status(df=df)
-    checking_crawlingtask_mp3_mp4_crawler_status(df=df)
+    # checking_crawlingtask_mp3_mp4_crawler_status(df=df)
 
     print("\n --- total time to process %s seconds ---" % (time.time() - start_time))
