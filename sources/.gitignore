@@ -1,3 +1,4 @@
 .idea
+requirements.txt
 sources/token.pickle
 sources/credentials.json

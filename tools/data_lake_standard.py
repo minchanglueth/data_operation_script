@@ -301,7 +301,7 @@ def checking_crawlingtask_mp3_mp4_crawler_status(df: object):
     df["check"] = ''
     df["status"] = ''
     df_crawled = df[df['Memo'] == 'added']
-    df_crawled = df_crawled.head(10)
+    df_crawled = df_crawled.head(20)
     print(df_crawled)
 
     row_index = df_crawled.index
