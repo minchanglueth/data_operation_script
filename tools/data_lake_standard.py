@@ -301,7 +301,7 @@ def checking_crawlingtask_mp3_mp4_crawler_status(df: object):
     df["check"] = ''
     df["status"] = ''
     df_crawled = df[df['Memo'] == 'added']
-    df_crawled = df_crawled.head(20)
+    df_crawled = df_crawled.head(30)
     print(df_crawled)
 
     row_index = df_crawled.index
@@ -327,10 +327,9 @@ def checking_crawlingtask_mp3_mp4_crawler_status(df: object):
         df_crawled.loc[i, 'check'] = joy_check
         df_crawled.loc[i, 'status'] = status
 
-
     k = list(set(df_crawled.check.tolist()))
     if k != [True]:
-        print(df[['track_id', 'check']])
+        print(df_crawled[['track_id', 'check']])
 
     # Step 2: autochecking status
     else:
@@ -342,16 +341,15 @@ def checking_crawlingtask_mp3_mp4_crawler_status(df: object):
             sheet_name = json.loads(gsheet_info)['sheet_name']
             actionid = V4CrawlingTaskActionMaster.DOWNLOAD_VIDEO_YOUTUBE
             automate_check_status(gsheet_name=gsheet_name, sheet_name=sheet_name, actionid=actionid)
+
             datasource_format_id = sheet_info['fomatid']
             gsheet_id = json.loads(gsheet_info)['gsheet_id']
-
-    # Step 3: upload youtube cant crawl
+    # # Step 3: upload youtube cant crawl
             df1 = get_df_from_query(get_crawlingtask_status(gsheet_name=gsheet_name,
                                                             sheet_name=sheet_name,
                                                             actionid=actionid)).reset_index().drop_duplicates(
                 subset=['objectid'],
                 keep='first')  # remove duplicate df by column (reset_index before drop_duplicate: because of drop_duplicate default reset index)
-            # df1['actual_youtube_url'] = df1['objectid'].apply(lambda x: artist.get_one_by_id(artist_uuid=x).name)
             df1['actual_youtube_url'] = df1['objectid'].apply(
                 lambda x: datasource.get_one_by_trackid_formatid(trackid=x, formatid=datasource_format_id).source_uri)
 
@@ -368,12 +366,10 @@ def checking_crawlingtask_mp3_mp4_crawler_status(df: object):
             update_value(list_result, range_to_update,
                          gsheet_id)  # validate_value type: object, int, category... NOT DATETIME
 
-    #         new_sheet_name = sheet_info['sub_sheet']
-    #         print(f"{gsheet_id}----{new_sheet_name}")
+            # print(f"{gsheet_id}----{new_sheet_name}")
 
 
 if __name__ == "__main__":
-    # joy xinh tests
     start_time = time.time()
     pd.set_option("display.max_rows", None, "display.max_columns", 30, 'display.width', 500)
     with open(query_path, "w") as f:
