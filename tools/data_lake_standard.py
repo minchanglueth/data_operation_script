@@ -3,7 +3,7 @@ from google_spreadsheet_api.function import get_df_from_speadsheet, get_list_of_
 
 from core.crud.sql.datasource import get_datasourceids_from_youtube_url_and_trackid, related_datasourceid, \
     get_youtube_info_from_trackid
-from core.crud.sql import artist, album
+from core.crud.sql import artist, album, datasource
 
 from core.crud.get_df_from_query import get_df_from_query
 from core.crud.sql.query_supporter import get_crawlingtask_youtube_info, get_crawlingtask_info, \
@@ -342,33 +342,34 @@ def checking_crawlingtask_mp3_mp4_crawler_status(df: object):
             sheet_name = json.loads(gsheet_info)['sheet_name']
             actionid = V4CrawlingTaskActionMaster.DOWNLOAD_VIDEO_YOUTUBE
             automate_check_status(gsheet_name=gsheet_name, sheet_name=sheet_name, actionid=actionid)
+            datasource_format_id = sheet_info['fomatid']
+            gsheet_id = json.loads(gsheet_info)['gsheet_id']
 
     # Step 3: upload youtube cant crawl
-    #         df1 = get_df_from_query(get_crawlingtask_image_status(gsheet_name=gsheet_name,
-    #                                                               sheet_name=sheet_name)).reset_index().drop_duplicates(
-    #             subset=['objectid'],
-    #             keep='first')  # remove duplicate df by column (reset_index before drop_duplicate: because of drop_duplicate default reset index)
-    #
-    #         if sheet_info['object_type'] == "artist":
-    #             df1['name'] = df1['objectid'].apply(lambda x: artist.get_one_by_id(artist_uuid=x).name)
-    #         else:
-    #             df1['title'] = df1['objectid'].apply(lambda x: album.get_one_by_id(artist_uuid=x).title)
-    #             df1['artist'] = df1['objectid'].apply(lambda x: album.get_one_by_id(artist_uuid=x).artist)
-    #
-    #         joy = df1[
-    #                   (df1.status == 'incomplete')
-    #               ].status.tolist() == []
-    #
-    #         if joy:
-    #             raw_df_to_upload = {'status': ['Upload thành công 100% nhé các em ^ - ^']}
-    #             df_to_upload = pd.DataFrame(data=raw_df_to_upload)
-    #         else:
-    #             df_to_upload = df1[(df1.status == 'incomplete')]
-    #         print(df_to_upload)
-    #
+            df1 = get_df_from_query(get_crawlingtask_status(gsheet_name=gsheet_name,
+                                                            sheet_name=sheet_name,
+                                                            actionid=actionid)).reset_index().drop_duplicates(
+                subset=['objectid'],
+                keep='first')  # remove duplicate df by column (reset_index before drop_duplicate: because of drop_duplicate default reset index)
+            # df1['actual_youtube_url'] = df1['objectid'].apply(lambda x: artist.get_one_by_id(artist_uuid=x).name)
+            df1['actual_youtube_url'] = df1['objectid'].apply(
+                lambda x: datasource.get_one_by_trackid_formatid(trackid=x, formatid=datasource_format_id).source_uri)
+
+            original_df = get_df_from_speadsheet(gsheet_id=gsheet_id, sheet_name=sheet_name)
+
+            merge_df = pd.merge(original_df, df1, how='left', left_on='track_id', right_on='objectid', validate='1:m')[
+                ['status', 'message', 'actual_youtube_url']].fillna(value='')
+
+            column_name = merge_df.columns.values.tolist()
+            list_result = merge_df.values.tolist()  # transfer data_frame to 2D list
+            list_result.insert(0, column_name)
+
+            range_to_update = f"{sheet_name}!K1"
+            update_value(list_result, range_to_update,
+                         gsheet_id)  # validate_value type: object, int, category... NOT DATETIME
+
     #         new_sheet_name = sheet_info['sub_sheet']
     #         print(f"{gsheet_id}----{new_sheet_name}")
-    #         creat_new_sheet_and_update_data_from_df(df_to_upload, gsheet_id, new_sheet_name)
 
 
 if __name__ == "__main__":
@@ -395,6 +396,6 @@ if __name__ == "__main__":
 
     # step 3: check
     # checking_crawlingtask_image_crawler_status(df=df)
-    # checking_crawlingtask_mp3_mp4_crawler_status(df=df)
+    checking_crawlingtask_mp3_mp4_crawler_status(df=df)
 
     print("\n --- total time to process %s seconds ---" % (time.time() - start_time))

@@ -126,6 +126,12 @@ def get_list_datasourceid():
         DataSource.updated_at.desc())
      return datasourceid
 
+def get_one_by_trackid_formatid(trackid: str, formatid: str):
+    return db_session.query(DataSource).filter((DataSource.valid == 1),
+                                               DataSource.track_id == trackid,
+                                               DataSource.format_id == formatid,
+                                               ).order_by(
+        DataSource.created_at.desc()).first()
 
 if __name__ == "__main__":
     track_ids = ["BDC6FC7C034446D993455E49B7F6C991"]

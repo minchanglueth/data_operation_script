@@ -140,7 +140,9 @@ def get_crawlingtask_status(gsheet_name: str, sheet_name: str, actionid: str):
                 f"{url}"),
         func.json_extract(Crawlingtask.taskdetail, "$.when_exists").label(
             "when_exists"),
-        Crawlingtask.status
+        Crawlingtask.status,
+        func.json_extract(Crawlingtask.ext, "$.message").label(
+            "message")
     )
                                  .select_from(Crawlingtask)
                                  .filter(
