@@ -21,6 +21,7 @@ import numpy as np
 from core.crud.sql.query_supporter import count_datasource_by_artistname_formatid, get_datasource_by_artistname_formatid
 from tools.data_lake_standard import update_data_reports
 
+
 def check_youtube_url_mp3(gsheet_id: str):
     '''
     TrackID	Memo	URL_to_add	Type	Assignee
@@ -326,11 +327,6 @@ def check_artist_wiki(gsheet_id: str):
 
 
 def check_box(urls: list):
-
-    '''
-        "https://docs.google.com/spreadsheets/d/1L17AVvNANbHYyLFKXlYRBEol8nZ14pvO3_KSGlQf0WE/edit#gid=1241019472",
-        "https://docs.google.com/spreadsheets/d/14tBa8mqCAXw50qcQfZsrTs70LeKIPEe9yISsXxYgQUk/edit",
-    '''
     for url in urls:
         gsheet_id = get_gsheet_id_from_url(url)
         gsheet_name = get_gsheet_name(gsheet_id=gsheet_id)
@@ -408,51 +404,12 @@ def check_box(urls: list):
             list_sheet_name = check_box_filtered['sheet_name'].tolist()
             for sheet_name in list_sheet_name:
                 gsheet_info = str({'url': f'{url}', 'gsheet_id': f'{gsheet_id}',
-                'gsheet_name': f'{get_gsheet_name(gsheet_id=gsheet_id)}',
-                'sheet_name': f'{sheet_name}'})
+                                   'gsheet_name': f'{get_gsheet_name(gsheet_id=gsheet_id)}',
+                                   'sheet_name': f'{sheet_name}'})
                 print(gsheet_info)
                 update_data_reports(gsheet_info=gsheet_info, notice="check_box completed")
 
         return check_box
-
-
-def process_mp3_mp4(sheet_info: dict, urls: list):
-    '''
-    Memo = not ok and url_to_add = 'none'
-        => if not existed in related_table: set valid = -10
-        => if existed in related_table:
-            - set trackid = blank and formatid = blank
-            - update trackcountlogs
-    Memo = not ok and url_to_add not null => crawl mode replace
-    Memo = added => crawl mode skip
-    '''
-
-    mp3_mp4_df = pd.DataFrame()
-    for url in urls:
-        gsheet_id = get_gsheet_id_from_url(url=url)
-
-        k = check_box(urls=[url])
-        check_box_filtered = k[~(
-                (k['status'] == "not ok")
-                & (k['comment'].str.contains('not found')))
-        ]
-        checking = 'not ok' in check_box_filtered.status.drop_duplicates().tolist()
-        if checking == 1:
-            return print("Please recheck check_box")
-        else:
-            sheet_name = sheet_info['sheet_name']
-            original_df = get_df_from_speadsheet(gsheet_id, sheet_name)
-            youtube_url = original_df[sheet_info['column_name']]
-            filter_df = youtube_url[
-                (youtube_url['Memo'] == 'not ok') | (youtube_url['Memo'] == 'added')].reset_index().drop_duplicates(
-                subset=['track_id'],
-                keep='first')  # remove duplicate df by column (reset_index before drop_duplicate: because of drop_duplicate default reset index)
-            info = {"url": f"{url}", "gsheet_id": f"{gsheet_id}",
-                    "gsheet_name": f"{get_gsheet_name(gsheet_id=gsheet_id)}",
-                    "sheet_name": f"{sheet_name}"}
-            filter_df['gsheet_info'] = f"{info}"
-            mp3_mp4_df = mp3_mp4_df.append(filter_df, ignore_index=True)
-    return mp3_mp4_df
 
 
 def get_gsheet_id_from_url(url: str):
@@ -463,11 +420,12 @@ def get_gsheet_id_from_url(url: str):
 
 def get_count_datasource_by_artist_and_formatid(artist_names: list, formatid: str):
     for artist_name in artist_names:
-        count = count_datasource_by_artistname_formatid(artist_name=artist_name,formatid=formatid)
+        count = count_datasource_by_artistname_formatid(artist_name=artist_name, formatid=formatid)
         print(f"{artist_name}----{count}")
 
 
-def get_df_datasource_by_artist_and_formatid(artist_names: list, formatid: str, df: object):
+def get_df_datasource_by_artist_and_formatid(artist_names: list, formatid: str, df: object, gsheet_id: str,
+                                             sheet_name: str):
     formatid = formatid
     for artist_name in artist_names:
         df = df.append(
@@ -480,25 +438,32 @@ def get_df_datasource_by_artist_and_formatid(artist_names: list, formatid: str, 
         print("Complete update data")
 
 
+def extract_artist_page_similarity(artist_names: list, urls: list, sheet_name: str):
+    # urls: list: only one url for artist page similarity
+    gsheet_id = get_gsheet_id_from_url(url=urls[0])
+    sheet_titles = get_list_of_sheet_title(gsheet_id=gsheet_id)
+    formatid = sheet_info.get('fomatid')
+    if sheet_name in sheet_titles:
+        df = get_df_from_speadsheet(gsheet_id=gsheet_id, sheet_name=sheet_name)
+    else:
+        df = pd.DataFrame()
+    get_df_datasource_by_artist_and_formatid(artist_names=artist_names, formatid=formatid, df=df, gsheet_id=gsheet_id,
+                                             sheet_name=sheet_name)
+
+
 if __name__ == "__main__":
     start_time = time.time()
     pd.set_option("display.max_rows", None, "display.max_columns", 50, 'display.width', 1000)
     with open(query_path, "w") as f:
         f.truncate()
-    urls = ["https://docs.google.com/spreadsheets/d/1oBbL-xRpL7ZAOCVshxoiUfNJSmN2pBRN2rBuVISWOcQ/edit#gid=1157687564"]
+    urls = ["https://docs.google.com/spreadsheets/d/1bKbrX9lul1njeUgBHgPvuzpmuCes7XNVP6AAlIqXONw/edit#gid=972224559"]
+
+    # Chạy check_box ở đây nhé em yêu :))
     check_box(urls=urls)
 
-    # sheet_titles = get_list_of_sheet_title(gsheet_id=gsheet_id)
-    # sheet_name = "mp4_full"
-    # if sheet_name in sheet_titles:
-    #     df = get_df_from_speadsheet(gsheet_id=gsheet_id,sheet_name=sheet_name)
-    # else:
-    #     df = pd.DataFrame()
-    # artists = [
-    #
-    # ]
-    # formatid = DataSourceFormatMaster.FORMAT_ID_MP4_FULL
-    # get_df_datasource_by_artist_and_formatid(artists, formatid, df=df)
-    # sheet_titles = sheet_type.MP3_SHEET_NAME
+    # Extract artist page similariry ở đây nhé cưng :))
+    sheet_name = "joy test"
+    sheet_info = sheet_type.MP3_SHEET_NAME
+    extract_artist_page_similarity(artist_names=["joy"], urls=urls, sheet_name=sheet_name)
 
     print("--- %s seconds ---" % (time.time() - start_time))
