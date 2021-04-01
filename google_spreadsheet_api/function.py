@@ -107,7 +107,7 @@ def update_value(list_result: list, range_to_update: str, gsheet_id: str):
     result = service().spreadsheets().values().update(
         spreadsheetId=gsheet_id, range=range_to_update,
         valueInputOption='RAW', body=body).execute()
-    return print("\n completed updating value")
+    print(f"\ncomplete create new sheet and update data, gsheet_id: {gsheet_id}, sheet_name: {range_to_update}")
 
 
 def get_df_from_speadsheet(gsheet_id: str, sheet_name: str):
@@ -160,7 +160,7 @@ def creat_new_sheet_and_update_data_from_df(df: object, gsheet_id: str, new_shee
         range_to_update = f"{new_sheet_name}!A1"
         update_value(list_result, range_to_update,
                      gsheet_id)  # validate_value type: object, int, category... NOT DATETIME
-    return print("\n complete create new sheet and update data")
+    print(f"\ncomplete create new sheet and update data, gsheet_id: {gsheet_id}, sheet_name: {new_sheet_name}")
 
 
 def create_new_gsheet(new_gsheet_title: str):

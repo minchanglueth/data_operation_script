@@ -415,15 +415,18 @@ if __name__ == "__main__":
         'https://docs.google.com/spreadsheets/d/1EoAgbDBVdJIXVDMwy5wEmiEpAFDMuoy3p0qOVf5QDtQ/edit#gid=0',
     ]
     # sheet_name_core = 'image'
-    # k = ["{'url': 'https://docs.google.com/spreadsheets/d/1XCtbHzP15FRduJzf_ena4tdye6oHwzpD-IRNdPV9jpM/edit#gid=0', 'gsheet_id': '1XCtbHzP15FRduJzf_ena4tdye6oHwzpD-IRNdPV9jpM', 'gsheet_name': 'Artist Page 27.01.2021', 'sheet_name': 'Artist_image'}", "{'url': 'https://docs.google.com/spreadsheets/d/1EoAgbDBVdJIXVDMwy5wEmiEpAFDMuoy3p0qOVf5QDtQ/edit#gid=0', 'gsheet_id': '1EoAgbDBVdJIXVDMwy5wEmiEpAFDMuoy3p0qOVf5QDtQ', 'gsheet_name': 'Artist Page 17.02.2021', 'sheet_name': 'Artist_image'}", "{'url': 'https://docs.google.com/spreadsheets/d/1pEZBzBwmduhZYN9k5doNbuYW75NSSx-dEb_EHqu8Ysw/edit#gid=0', 'gsheet_id': '1pEZBzBwmduhZYN9k5doNbuYW75NSSx-dEb_EHqu8Ysw', 'gsheet_name': 'Artist Page 20.01.2021', 'sheet_name': 'Artist_image'}"]
-    # for gsheet_info in k:
+    k = ["{'url': 'https://docs.google.com/spreadsheets/d/1XCtbHzP15FRduJzf_ena4tdye6oHwzpD-IRNdPV9jpM/edit#gid=0', 'gsheet_id': '1XCtbHzP15FRduJzf_ena4tdye6oHwzpD-IRNdPV9jpM', 'gsheet_name': 'Artist Page 27.01.2021', 'sheet_name': 'Artist_image'}", "{'url': 'https://docs.google.com/spreadsheets/d/1EoAgbDBVdJIXVDMwy5wEmiEpAFDMuoy3p0qOVf5QDtQ/edit#gid=0', 'gsheet_id': '1EoAgbDBVdJIXVDMwy5wEmiEpAFDMuoy3p0qOVf5QDtQ', 'gsheet_name': 'Artist Page 17.02.2021', 'sheet_name': 'Artist_image'}", "{'url': 'https://docs.google.com/spreadsheets/d/1pEZBzBwmduhZYN9k5doNbuYW75NSSx-dEb_EHqu8Ysw/edit#gid=0', 'gsheet_id': '1pEZBzBwmduhZYN9k5doNbuYW75NSSx-dEb_EHqu8Ysw', 'gsheet_name': 'Artist Page 20.01.2021', 'sheet_name': 'Artist_image'}"]
+    for gsheet_info in k:
+        print(gsheet_info)
+        print(type(gsheet_info))
+
     #     joy = update_data_reports(gsheet_info=gsheet_info, status="processing")
         # now = datetime.now()
         # print(now)
 
     # step 1:observe
-    sheet_info = sheet_type.ARTIST_IMAGE
-    df = process_image(urls=urls, sheet_info=sheet_info)
+    # sheet_info = sheet_type.ARTIST_IMAGE
+    # df = process_image(urls=urls, sheet_info=sheet_info)
     # df = process_mp3_mp4(sheet_info=sheet_info, urls=urls)
     # print(df)
 
@@ -432,7 +435,7 @@ if __name__ == "__main__":
     # crawl_mp3_mp4(df=df, sheet_info=sheet_info)
 
     # step 3: check
-    checking_crawlingtask_image_crawler_status(df=df)
+    # checking_crawlingtask_image_crawler_status(df=df)
     # checking_crawlingtask_mp3_mp4_crawler_status(df=df)
 
     print("\n --- total time to process %s seconds ---" % (time.time() - start_time))

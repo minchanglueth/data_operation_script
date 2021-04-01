@@ -19,6 +19,7 @@ from support_function.text_similarity.text_similarity import get_token_set_ratio
 from numpy import random
 import numpy as np
 from core.crud.sql.query_supporter import count_datasource_by_artistname_formatid, get_datasource_by_artistname_formatid
+from tools.data_lake_standard import update_data_reports
 
 def check_youtube_url_mp3(gsheet_id: str):
     '''
@@ -325,7 +326,7 @@ def check_artist_wiki(gsheet_id: str):
 
 
 def check_box(urls: list):
-    # Check all element:
+
     '''
         "https://docs.google.com/spreadsheets/d/1L17AVvNANbHYyLFKXlYRBEol8nZ14pvO3_KSGlQf0WE/edit#gid=1241019472",
         "https://docs.google.com/spreadsheets/d/14tBa8mqCAXw50qcQfZsrTs70LeKIPEe9yISsXxYgQUk/edit",
@@ -334,7 +335,7 @@ def check_box(urls: list):
         gsheet_id = get_gsheet_id_from_url(url)
         gsheet_name = get_gsheet_name(gsheet_id=gsheet_id)
         print(Fore.LIGHTYELLOW_EX + f" \n{gsheet_name}\n{url}\n" + Style.RESET_ALL)
-
+        # Step 1: check all elements
         list_of_sheet_title = get_list_of_sheet_title(gsheet_id)
         if 'MP_3' in list_of_sheet_title:
             youtube_url_mp3 = check_youtube_url_mp3(gsheet_id=gsheet_id).to_numpy().tolist()
@@ -371,31 +372,48 @@ def check_box(urls: list):
         else:
             artist_wiki = ["Artist_wiki not found"]
 
-        # Convert checking element result to df:
-        items = []
+        # Step 2: create check_box
+        sheet_name = []
         status = []
         comment = []
 
         dict_value = [youtube_url_mp3, youtube_url_mp4, version, album_image, artist_image, album_wiki, artist_wiki]
-        dict_key = ['youtube_url_mp3', 'youtube_url_mp4', 'version', 'album_image', 'artist_image', 'album_wiki',
-                    'artist_wiki']
+        dict_key = ['MP_3', 'MP_4', 'Version_done', 'Album_image', 'Artist_image', 'Album_wiki',
+                    'Artist_wiki']
         dict_result = dict(zip(dict_key, dict_value))
         for i, j in dict_result.items():
             if not j:
                 status.append('ok')
                 comment.append(None)
-                items.append(i)
+                sheet_name.append(i)
             else:
                 status.append('not ok')
                 comment.append(j)
-                items.append(i)
+                sheet_name.append(i)
+        d = {'sheet_name': sheet_name, 'status': status, 'comment': comment}
+        check_box = pd.DataFrame(data=d).astype(str)
+        print(check_box)
+        creat_new_sheet_and_update_data_from_df(check_box, gsheet_id, 'jane_to_check_result')
 
-        d = {'items': items, 'status': status, 'comment': comment}
-        df = pd.DataFrame(data=d).astype(str)
-        print(df)
+        # Step 3: update data_report if meet conditions
 
-        creat_new_sheet_and_update_data_from_df(df, gsheet_id, 'jane_to_check_result')
-        return df
+        check_box_filtered = check_box[~(
+                (check_box['status'] == "not ok")
+                & (check_box['comment'].str.contains('not found')))
+        ]
+        checking = 'not ok' in check_box_filtered.status.drop_duplicates().tolist()
+        if checking == 1:
+            print("Please recheck check_box")
+        else:
+            list_sheet_name = check_box_filtered['sheet_name'].tolist()
+            for sheet_name in list_sheet_name:
+                gsheet_info = str({'url': f'{url}', 'gsheet_id': f'{gsheet_id}',
+                'gsheet_name': f'{get_gsheet_name(gsheet_id=gsheet_id)}',
+                'sheet_name': f'{sheet_name}'})
+                print(gsheet_info)
+                update_data_reports(gsheet_info=gsheet_info, notice="check_box completed")
+
+        return check_box
 
 
 def process_mp3_mp4(sheet_info: dict, urls: list):
@@ -467,18 +485,20 @@ if __name__ == "__main__":
     pd.set_option("display.max_rows", None, "display.max_columns", 50, 'display.width', 1000)
     with open(query_path, "w") as f:
         f.truncate()
-    gsheet_id = "1bKbrX9lul1njeUgBHgPvuzpmuCes7XNVP6AAlIqXONw"
-    sheet_titles = get_list_of_sheet_title(gsheet_id=gsheet_id)
-    sheet_name = "mp4_full"
-    if sheet_name in sheet_titles:
-        df = get_df_from_speadsheet(gsheet_id=gsheet_id,sheet_name=sheet_name)
-    else:
-        df = pd.DataFrame()
-    artists = [
+    urls = ["https://docs.google.com/spreadsheets/d/1oBbL-xRpL7ZAOCVshxoiUfNJSmN2pBRN2rBuVISWOcQ/edit#gid=1157687564"]
+    check_box(urls=urls)
 
-    ]
-    formatid = DataSourceFormatMaster.FORMAT_ID_MP4_FULL
-    get_df_datasource_by_artist_and_formatid(artists, formatid, df=df)
-    sheet_titles = sheet_type.MP3_SHEET_NAME
+    # sheet_titles = get_list_of_sheet_title(gsheet_id=gsheet_id)
+    # sheet_name = "mp4_full"
+    # if sheet_name in sheet_titles:
+    #     df = get_df_from_speadsheet(gsheet_id=gsheet_id,sheet_name=sheet_name)
+    # else:
+    #     df = pd.DataFrame()
+    # artists = [
+    #
+    # ]
+    # formatid = DataSourceFormatMaster.FORMAT_ID_MP4_FULL
+    # get_df_datasource_by_artist_and_formatid(artists, formatid, df=df)
+    # sheet_titles = sheet_type.MP3_SHEET_NAME
 
     print("--- %s seconds ---" % (time.time() - start_time))
