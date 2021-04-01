@@ -40,6 +40,12 @@ class sheet_type:
                   "table_name": "albums"}
 
 
+class Data_reports:
+    column_name = ["gsheet_name", "gsheet_url", "type", "running_time", "status", "count_complete", "count_incomplete", "notice"]
+    status_type_processing = "processing"
+    status_type_done = "done"
+
+
 def crawl_itunes_album(ituneid: str, pic: str = "Joy_xinh", region: str = "us"):
     crawl_itunes_album = f"insert into crawlingtasks(Id, ActionId, TaskDetail, Priority) values (uuid4(), {V4CrawlingTaskActionMaster.ITUNES_ALBUM}, JSON_SET(IFNULL(crawlingtasks.TaskDetail, JSON_OBJECT()), '$.album_id', '{ituneid}', '$.region', '{region}', '$.PIC', '{pic}'), 999);\n"
     return crawl_itunes_album

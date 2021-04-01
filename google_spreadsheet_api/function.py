@@ -107,6 +107,7 @@ def update_value(list_result: list, range_to_update: str, gsheet_id: str):
     result = service().spreadsheets().values().update(
         spreadsheetId=gsheet_id, range=range_to_update,
         valueInputOption='RAW', body=body).execute()
+    return print("\n completed updating value")
 
 
 def get_df_from_speadsheet(gsheet_id: str, sheet_name: str):
