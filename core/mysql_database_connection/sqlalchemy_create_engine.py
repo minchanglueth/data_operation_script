@@ -15,7 +15,6 @@ if config.get('mysql', False):
         RDBMS, PIP_PACKAGE, mysql_config['user'], mysql_config['password'],
         mysql_config['host'], mysql_config['port'], mysql_config['database'])
 
-
     engine = create_engine(SQLALCHEMY_DATABASE_URI)
     if engine is None:
         print("failed to connect to MySQL")

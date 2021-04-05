@@ -19,7 +19,9 @@ from support_function.text_similarity.text_similarity import get_token_set_ratio
 from numpy import random
 import numpy as np
 from core.crud.sql.query_supporter import count_datasource_by_artistname_formatid, get_datasource_by_artistname_formatid
-from tools.data_lake_standard import update_data_reports
+from tools.data_lake_standard import update_data_reports, process_image, process_mp3_mp4, checking_crawlingtask_mp3_mp4_crawler_status, checking_crawlingtask_image_crawler_status, crawl_image_datalake
+from tools.youtube_similarity import similarity
+
 
 
 def check_youtube_url_mp3(gsheet_id: str):
@@ -451,19 +453,77 @@ def extract_artist_page_similarity(artist_names: list, urls: list, sheet_name: s
                                              sheet_name=sheet_name)
 
 
+def update_similarity(urls: list, sheet_name: str):
+    url = urls[0]
+    gsheet_id = get_gsheet_id_from_url(url=url)
+    df = get_df_from_speadsheet(gsheet_id=gsheet_id, sheet_name=sheet_name)
+    df["DurationMs"].replace({"": "0"}, inplace=True)
+    df = df.loc[:]
+    row_index = df.index
+    start = row_index.start
+    stop = row_index.stop
+    step = 25
+    for i in range(start, stop, step):
+        x = i + step
+        if x <= stop:
+            stop_range = x
+        else:
+            stop_range = stop
+        f = []
+        for j in range(i, stop_range):
+            track_title = df.track_title.loc[j]
+            SourceURI = df.SourceURI.loc[j]
+            FormatID = df.FormatID.loc[j]
+            DurationMs = df.DurationMs.loc[j]
+            k = similarity(track_title=track_title, youtube_url=SourceURI, formatid=FormatID, duration=DurationMs).get(
+                'similarity')
+            f.append([k])
+        joy1 = f"{sheet_name}!N{i + 2}"
+        update_value(list_result=f, range_to_update=joy1, gsheet_id=gsheet_id)
+
+
 if __name__ == "__main__":
     start_time = time.time()
     pd.set_option("display.max_rows", None, "display.max_columns", 50, 'display.width', 1000)
     with open(query_path, "w") as f:
         f.truncate()
-    urls = ["https://docs.google.com/spreadsheets/d/1bKbrX9lul1njeUgBHgPvuzpmuCes7XNVP6AAlIqXONw/edit#gid=972224559"]
+    artist_names = []
+    urls = [
+        "https://docs.google.com/spreadsheets/d/1pEZBzBwmduhZYN9k5doNbuYW75NSSx-dEb_EHqu8Ysw/edit#gid=0",
+        "https://docs.google.com/spreadsheets/d/1XCtbHzP15FRduJzf_ena4tdye6oHwzpD-IRNdPV9jpM/edit#gid=0",
+        "https://docs.google.com/spreadsheets/d/1EoAgbDBVdJIXVDMwy5wEmiEpAFDMuoy3p0qOVf5QDtQ/edit#gid=0"
+    ]
 
-    # Chạy check_box ở đây nhé em yêu :))
-    check_box(urls=urls)
+    # ***** Chạy check_box artist_page ở đây nhé em yêu :)) ******
+    # check_box(urls=urls)
 
-    # Extract artist page similariry ở đây nhé cưng :))
-    sheet_name = "joy test"
-    sheet_info = sheet_type.MP3_SHEET_NAME
-    extract_artist_page_similarity(artist_names=["joy"], urls=urls, sheet_name=sheet_name)
+    # ***** Extract artist page similariry ở đây nhé cưng :)) ******
+    # sheet_info = sheet_type.MP3_SHEET_NAME
+    # sheet_name = "joy test"
+    # extract_artist_page_similarity(artist_names=artist_names, urls=urls, sheet_name=sheet_name)
+    # ***** Update similarity *****
+    # sheet_name = "joy test"
+    # update_similarity(urls=urls, sheet_name=sheet_name)
+
+    # ***** artist page_artist image *****
+    # sheet_info = sheet_type.ARTIST_IMAGE
+    # ***** step 1: observe *****
+    # df = process_image(urls=urls, sheet_info=sheet_info)
+    # print(df)
+    # ***** step2: crawl *****
+    # crawl_image_datalake(df=df, sheet_info=sheet_info, object_type=sheet_info['object_type'])
+    # ***** step 3: check *****
+    # checking_crawlingtask_image_crawler_status(df=df, sheet_info=sheet_info)
+
+
+    # ***** artist page_artist mp3/mp4 *****
+    sheet_info = sheet_type.MP4_SHEET_NAME
+    # ***** step 1: observe *****
+    df = process_mp3_mp4(sheet_info=sheet_info, urls=urls)
+    # print(df)
+    # ***** step2: crawl *****
+    # crawl_mp3_mp4(df=df, sheet_info=sheet_info)
+    # ***** step 3: check *****
+    checking_crawlingtask_mp3_mp4_crawler_status(df=df, sheet_info=sheet_info)
 
     print("--- %s seconds ---" % (time.time() - start_time))
