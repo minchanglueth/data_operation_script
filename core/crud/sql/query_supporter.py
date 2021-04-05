@@ -57,7 +57,10 @@ def get_datasource_by_artistname_formatid(artist_name: str, formatid: str):
         ItunesRelease.itunes_url,
         ItunesRelease.track_seq,
         ItunesRelease.duration,
-        (extract('hour', ItunesRelease.duration) * 3600000 + extract('minute', ItunesRelease.duration) * 60000 + extract('second', ItunesRelease.duration) *1000).label("DurationMs"),
+        (extract('hour', ItunesRelease.duration) * 3600000 + extract('minute',
+                                                                     ItunesRelease.duration) * 60000 + extract('second',
+                                                                                                               ItunesRelease.duration) * 1000).label(
+            "DurationMs"),
         Track.id.label("trackid"),
         Track.title.label("track_title"),
         Track.artist.label("track_artist"),
@@ -76,10 +79,12 @@ def get_datasource_by_artistname_formatid(artist_name: str, formatid: str):
                                                                     DataSource.source_name == 'YouTube'))
                                              .filter(or_(ItunesRelease.album_artist.like("%" + artist_name + "%"),
                                                          ItunesRelease.track_artist.like("%" + artist_name + "%")))
-                                             .order_by(Track.title.asc(),Track.artist, ItunesRelease.album_uuid, ItunesRelease.track_seq.asc())
+                                             .order_by(Track.title.asc(), Track.artist, ItunesRelease.album_uuid,
+                                                       ItunesRelease.track_seq.asc())
                                              .group_by(Track.id, DataSource.id)
                                              )
     return get_datasource_by_artistname_formatid
+
 
 def get_crawlingtask_youtube_info(objectid: str, PIC: str, actionid: str):
     get_crawlingtask_info = (db_session.query(
@@ -94,14 +99,14 @@ def get_crawlingtask_youtube_info(objectid: str, PIC: str, actionid: str):
         Crawlingtask.status
 
     )
-                             .select_from(Crawlingtask)
-                             .filter(Crawlingtask.objectid == objectid,
-                                     Crawlingtask.actionid == actionid,
-                                     func.json_extract(Crawlingtask.taskdetail, "$.PIC") == PIC,
-                                     )
-                             .order_by(
-                                       Crawlingtask.created_at.desc())
-                             ).first()
+        .select_from(Crawlingtask)
+        .filter(Crawlingtask.objectid == objectid,
+                Crawlingtask.actionid == actionid,
+                func.json_extract(Crawlingtask.taskdetail, "$.PIC") == PIC,
+                )
+        .order_by(
+        Crawlingtask.created_at.desc())
+    ).first()
     return get_crawlingtask_info
 
 
@@ -116,14 +121,14 @@ def get_crawlingtask_info(objectid: str, PIC: str, actionid: str):
         Crawlingtask.status
 
     )
-                             .select_from(Crawlingtask)
-                             .filter(Crawlingtask.objectid == objectid,
-                                     Crawlingtask.actionid == actionid,
-                                     func.json_extract(Crawlingtask.taskdetail, "$.PIC") == PIC,
-                                     )
-                             .order_by(
-                                       Crawlingtask.created_at.desc())
-                             ).first()
+        .select_from(Crawlingtask)
+        .filter(Crawlingtask.objectid == objectid,
+                Crawlingtask.actionid == actionid,
+                func.json_extract(Crawlingtask.taskdetail, "$.PIC") == PIC,
+                )
+        .order_by(
+        Crawlingtask.created_at.desc())
+    ).first()
     return get_crawlingtask_info
 
 
@@ -137,7 +142,7 @@ def get_crawlingtask_status(gsheet_name: str, sheet_name: str, actionid: str):
         Crawlingtask.id,
         Crawlingtask.objectid,
         func.json_extract(Crawlingtask.taskdetail, f"$.{url}").label(
-                f"{url}"),
+            f"{url}"),
         func.json_extract(Crawlingtask.taskdetail, "$.when_exists").label(
             "when_exists"),
         Crawlingtask.status,
@@ -160,7 +165,8 @@ if __name__ == "__main__":
     #                                                 PIC="Artist Page 20.01.2021_MP_4",
     #                                                 actionid="F91244676ACD47BD9A9048CF2BA3FFC1")
 
-    db_crawlingtask = get_crawlingtask_status(gsheet_name="Artist Page 20.01.2021", sheet_name="MP_4", actionid="F91244676ACD47BD9A9048CF2BA3FFC1")
+    db_crawlingtask = get_crawlingtask_status(gsheet_name="Artist Page 20.01.2021", sheet_name="MP_4",
+                                              actionid="F91244676ACD47BD9A9048CF2BA3FFC1")
     k = get_compiled_raw_mysql(db_crawlingtask)
     print(k)
 
