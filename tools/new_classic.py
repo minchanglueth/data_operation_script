@@ -98,8 +98,16 @@ def get_album_title_artist(itune_album_id: str, itune_region: str = "us"):
         if web_response:
             html_content = web_response.content
             soup = BeautifulSoup(html_content, 'html.parser')
-            tag = soup.html
-            print(tag.name)
+            # tag = soup.p['class']
+
+            k = soup.find(id="page-container__first-linked-element")
+            print(k)
+            # print(soup.prettify())
+            # print(soup.head.contents)
+            # print(soup.body)
+            # print(soup.title)
+            # print(soup.a)
+
             # css_soup = soup.p
             # print(tag)
 
@@ -111,7 +119,9 @@ def get_album_title_artist(itune_album_id: str, itune_region: str = "us"):
         else:
             print(f"Got error when calling url:{web_url}")
 
-
+# <p class="song-stats-container typography-body">
+# <div>25 SONGS, 1 HOUR, 40 MINUTES</div>
+# </p>
 
 '''
 urls = ["https://docs.google.com/spreadsheets/d/1P1x71loZ1GlPCT45i3mqHV5kZI6ch-KhYYEcLi75o50/edit#gid=262810809"]
