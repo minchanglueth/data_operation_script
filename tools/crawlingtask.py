@@ -34,10 +34,12 @@ class sheet_type:
     ALBUM_IMAGE = {"sheet_name": "Album_image", "column_name": ["uuid", "Memo", "url_to_add"],
                    "object_type": object_type.ALBUM, "sub_sheet": "album image cant upload"}
 
-    ARTIST_WIKI = {"sheet_name": "Artist_wiki", "column_name": ["Artist_uuid", "Memo", "url_to_add", "content to add"],
+    ARTIST_WIKI = {"sheet_name": "Artist_wiki", "column_name": ["uuid", "Memo", "url_to_add", "content_to_add"],
                    "table_name": "artists"}
-    ALBUM_WIKI = {"sheet_name": "Album_wiki", "column_name": ["Album_uuid", "Memo", "url_to_add", "Content_to_add"],
+    ALBUM_WIKI = {"sheet_name": "Album_wiki", "column_name": ["uuid", "Memo", "url_to_add", "content_to_add"],
                   "table_name": "albums"}
+    TRACK_WIKI = {"sheet_name": "Track_wiki", "column_name": ["uuid", "Memo", "url_to_add", "content_to_add"],
+                  "table_name": "tracks"}
 
 
 class Data_reports:

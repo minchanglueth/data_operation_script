@@ -374,11 +374,11 @@ def checking_crawlingtask_mp3_mp4_crawler_status(df: object, sheet_info: object)
             gsheet_info = gsheet_info.replace("'", "\"")
             gsheet_name = json.loads(gsheet_info)['gsheet_name']
             sheet_name = json.loads(gsheet_info)['sheet_name']
+            gsheet_id = json.loads(gsheet_info)['gsheet_id']
             actionid = V4CrawlingTaskActionMaster.DOWNLOAD_VIDEO_YOUTUBE
             automate_check_status(gsheet_name=gsheet_name, sheet_name=sheet_name, actionid=actionid)
 
             datasource_format_id = sheet_info['fomatid']
-            gsheet_id = json.loads(gsheet_info)['gsheet_id']
             # # Step 3: upload youtube cant crawl
             df1 = get_df_from_query(get_crawlingtask_status(gsheet_name=gsheet_name,
                                                             sheet_name=sheet_name,
@@ -404,31 +404,140 @@ def checking_crawlingtask_mp3_mp4_crawler_status(df: object, sheet_info: object)
             # print(f"{gsheet_id}----{new_sheet_name}")
 
 
+def process_wiki(urls: list, sheet_info: dict):
+    '''
+    ARTIST_WIKI = {"sheet_name": "Artist_wiki", "column_name": ["uuid", "Memo", "url_to_add", "content_to_add"],
+                   "table_name": "artists"}
+    ALBUM_WIKI = {"sheet_name": "Album_wiki", "column_name": ["uuid", "Memo", "url_to_add", "content_to_add"],
+                  "table_name": "albums"}
+    TRACK_WIKI = {"sheet_name": "Track_wiki", "column_name": ["uuid", "Memo", "url_to_add", "content_to_add"],
+                  "table_name": "tracks"}
+    '''
+    wiki_df = pd.DataFrame()
+    for url in urls:
+        gsheet_id = get_gsheet_id_from_url(url=url)
+        list_of_sheet_title = get_list_of_sheet_title(gsheet_id)
+        sheet_name = sheet_info['sheet_name']
+        if sheet_name in list_of_sheet_title:
+            original_df = get_df_from_speadsheet(gsheet_id, sheet_name)
+        else:
+            continue
+    #     # Refactor column name before put into datalake
+        original_df.columns = original_df.columns.str.replace('Artist_UUID', 'uuid')
+        original_df.columns = original_df.columns.str.replace('Album_uuid', 'uuid')
+        original_df.columns = original_df.columns.str.replace('Artist_uuid', 'uuid')
+        original_df.columns = original_df.columns.str.replace('id', 'uuid')
+        original_df.columns = original_df.columns.str.replace('uuuuid', 'uuid')
+        original_df.columns = original_df.columns.str.replace('memo', 'Memo')
+        original_df.columns = original_df.columns.str.replace('content to add', 'content_to_add')
+        original_df.columns = original_df.columns.str.replace('Content_to_add', 'content_to_add')
+        original_df.columns = original_df.columns.str.replace('Url_to_add', 'url_to_add')
+
+        wiki = original_df[sheet_info['column_name']]
+        filter_df = wiki[
+            ((wiki.Memo == 'added') | (wiki.Memo == 'not ok'))  # filter df by conditions
+        ].reset_index().drop_duplicates(subset=['uuid'],
+                                        keep='first')  # remove duplicate df by column (reset_index before drop_duplicate: because of drop_duplicate default reset index)
+        info = {"url": f"{url}", "gsheet_id": f"{gsheet_id}",
+                "gsheet_name": f"{get_gsheet_name(gsheet_id=gsheet_id)}",
+                "sheet_name": f"{sheet_name}"}
+        filter_df['gsheet_info'] = f"{info}"
+        wiki_df = wiki_df.append(filter_df, ignore_index=True)
+    return wiki_df
+
+
+def update_wiki_result_to_gsheet(sheet_name: str, gsheet_id: str):  # both single page and album page
+    df_wiki = get_df_from_speadsheet(gsheet_id, sheet_name)
+    df_wiki.columns = df_wiki.columns.str.replace('Artist_UUID', 'uuid')
+    df_wiki.columns = df_wiki.columns.str.replace('Album_uuid', 'uuid')
+    df_wiki.columns = df_wiki.columns.str.replace('Artist_uuid', 'uuid')
+    df_wiki.columns = df_wiki.columns.str.replace('id', 'uuid')
+    df_wiki.columns = df_wiki.columns.str.replace('uuuuid', 'uuid')
+    df_wiki.columns = df_wiki.columns.str.replace('memo', 'Memo')
+    df_wiki.columns = df_wiki.columns.str.replace('content to add', 'content_to_add')
+    df_wiki.columns = df_wiki.columns.str.replace('Content_to_add', 'content_to_add')
+    df_wiki.columns = df_wiki.columns.str.replace('Url_to_add', 'url_to_add')
+
+    conditions = [  # create a list of condition => if true =>> update value tương ứng
+        ((df_wiki['Memo'] == 'not ok') | (df_wiki['Memo'] == 'added')) & (df_wiki['content_to_add'] != 'none') & (
+                df_wiki.url_to_add != 'none') & (df_wiki['content_to_add'] != '') & (df_wiki.url_to_add != ''),
+        ((df_wiki['Memo'] == 'not ok') | (df_wiki['Memo'] == 'added')) & (
+                (df_wiki['content_to_add'] == 'none') | (df_wiki.url_to_add == 'none') | (
+                df_wiki['content_to_add'] == '') | (df_wiki.url_to_add == '')),
+        True]
+    values = ['wiki added', 'remove wiki', None]  # create a list of the values tương ứng với conditions ơ trên
+    df_wiki['joy xinh'] = np.select(conditions,
+                                    values)  # create a new column and use np.select to assign values to it using our lists as arguments
+    column_title = ['Joy note']
+    list_result = np.array(df_wiki['joy xinh']).reshape(-1,
+                                                        1).tolist()  # Chuyển về list từ 1 chiều về 2 chiều sử dung Numpy
+    list_result.insert(0, column_title)
+    range_to_update = f"{sheet_name}!J1"
+
+    update_value(list_result, range_to_update, gsheet_id)
+
+
+def update_wiki(df: object, sheet_info: object):
+    '''
+    ARTIST_WIKI = {"sheet_name": "Artist_wiki", "column_name": ["Artist_uuid", "Memo", "url_to_add", "content to add"], "table_name": "artists"}
+    ALBUM_WIKI = {"sheet_name": "Album_wiki", "column_name": ["Album_uuid", "Memo", "url_to_add", "content to add"], "table_name": "albums"}
+    :param sheet_info:
+    :return:
+    '''
+
+    row_index = df.index
+    # column_name = sheet_info['column_name']
+    table_name = sheet_info['table_name']
+    # sheet_name = sheet_info['sheet_name']
+    with open(query_path, "w") as f:
+        for i in row_index:
+            uuid = df.uuid.loc[i]
+            url = df.url_to_add.loc[i]
+            content = df.content_to_add.loc[i].replace('\'', '\\\'').replace("\"", "\\\"")
+            if table_name == "tracks":
+                column_name = "id"
+            else:
+                column_name = "uuid"
+            joy_xinh = f"Update {table_name} set info =  Json_replace(Json_remove(info,'$.wiki'),'$.wiki_url','not ok') where {column_name} = '{uuid}';"
+            query = ""
+            if url != "" and content != "" and url != 'none' and content != 'none':
+                query = f"UPDATE {table_name} SET info = Json_set(if(info is null,JSON_OBJECT(),info), '$.wiki', JSON_OBJECT('brief', '{content}'), '$.wiki_url','{url}') WHERE {column_name} = '{uuid}';"
+            else:
+                query = query
+            f.write(joy_xinh + "\n" + query + "\n")
+            print(joy_xinh + "\n" + query + "\n")
+
+    # Step 3: update gsheet
+
+        gsheet_info_all = list(set(df.gsheet_info.tolist()))
+        for gsheet_info in gsheet_info_all:
+            gsheet_info = gsheet_info.replace("'", "\"")
+            sheet_name = json.loads(gsheet_info)['sheet_name']
+            gsheet_id = json.loads(gsheet_info)['gsheet_id']
+            update_wiki_result_to_gsheet(sheet_name=sheet_name, gsheet_id=gsheet_id)
+
+
 if __name__ == "__main__":
     start_time = time.time()
     pd.set_option("display.max_rows", None, "display.max_columns", 30, 'display.width', 500)
     with open(query_path, "w") as f:
         f.truncate()
     urls = [
-        'https://docs.google.com/spreadsheets/d/1pEZBzBwmduhZYN9k5doNbuYW75NSSx-dEb_EHqu8Ysw/edit#gid=0',
-        'https://docs.google.com/spreadsheets/d/1XCtbHzP15FRduJzf_ena4tdye6oHwzpD-IRNdPV9jpM/edit#gid=0',
-        'https://docs.google.com/spreadsheets/d/1EoAgbDBVdJIXVDMwy5wEmiEpAFDMuoy3p0qOVf5QDtQ/edit#gid=0',
+        'https://docs.google.com/spreadsheets/d/1EGpoxFvQKsQZY9tOiiNzk5snQoGmKAJ68T858A1bx0k/edit#gid=1822912300',
+        'https://docs.google.com/spreadsheets/d/14ARS5uG8u_LEQHlMdHLi6moTIobCPXWg9TcmUA2N-cc/edit#gid=0',
     ]
-    # sheet_name_core = 'image'
 
     # joy = update_data_reports(gsheet_info=gsheet_info, status="processing")
     # now = datetime.now()
     # print(now)
 
     # step 1:observe
-    # sheet_info = sheet_type.ARTIST_IMAGE
-    # df = process_image(urls=urls, sheet_info=sheet_info)
-    # df = process_mp3_mp4(sheet_info=sheet_info, urls=urls)
+    sheet_info = sheet_type.ALBUM_WIKI
+    df = process_wiki(urls=urls, sheet_info=sheet_info)
     # print(df)
+    # step2: update wiki
+    update_wiki(df=df, sheet_info=sheet_info)
 
-    # step2: crawl
-    # crawl_image_datalake(df=df, sheet_info=sheet_info, object_type=sheet_info['object_type'])
-    # crawl_mp3_mp4(df=df, sheet_info=sheet_info)
 
     # step 3: check
     # checking_crawlingtask_image_crawler_status(df=df)

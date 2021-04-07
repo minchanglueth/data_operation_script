@@ -487,7 +487,8 @@ if __name__ == "__main__":
     pd.set_option("display.max_rows", None, "display.max_columns", 50, 'display.width', 1000)
     with open(query_path, "w") as f:
         f.truncate()
-    artist_names = []
+
+    artist_names = ["joy"]
     urls = [
         "https://docs.google.com/spreadsheets/d/1pEZBzBwmduhZYN9k5doNbuYW75NSSx-dEb_EHqu8Ysw/edit#gid=0",
         "https://docs.google.com/spreadsheets/d/1XCtbHzP15FRduJzf_ena4tdye6oHwzpD-IRNdPV9jpM/edit#gid=0",
@@ -500,13 +501,13 @@ if __name__ == "__main__":
     # ***** Extract artist page similariry ở đây nhé cưng :)) ******
     # sheet_info = sheet_type.MP3_SHEET_NAME
     # sheet_name = "joy test"
-    # extract_artist_page_similarity(artist_names=artist_names, urls=urls, sheet_name=sheet_name)
+    extract_artist_page_similarity(artist_names=artist_names, urls=urls, sheet_name=sheet_name)
     # ***** Update similarity *****
     # sheet_name = "joy test"
     # update_similarity(urls=urls, sheet_name=sheet_name)
 
     # ***** artist page_artist image *****
-    # sheet_info = sheet_type.ARTIST_IMAGE
+    # sheet_info = sheet_type.ALBUM_IMAGE
     # ***** step 1: observe *****
     # df = process_image(urls=urls, sheet_info=sheet_info)
     # print(df)
@@ -515,9 +516,8 @@ if __name__ == "__main__":
     # ***** step 3: check *****
     # checking_crawlingtask_image_crawler_status(df=df, sheet_info=sheet_info)
 
-
     # ***** artist page_artist mp3/mp4 *****
-    # sheet_info = sheet_type.MP4_SHEET_NAME
+    # sheet_info = sheet_type.MP3_SHEET_NAME
     # ***** step 1: observe *****
     # df = process_mp3_mp4(sheet_info=sheet_info, urls=urls)
     # print(df)
