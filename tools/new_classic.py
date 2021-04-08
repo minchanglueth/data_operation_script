@@ -12,6 +12,9 @@ from google_spreadsheet_api.function import get_df_from_speadsheet, get_list_of_
 import random
 from support_function.text_similarity.text_similarity import get_token_set_ratio
 
+from tools.crawlingtask import crawl_itunes_album
+from core import query_path
+
 
 def get_itunes_api_result(url: str) -> List[dict]:
     try:
@@ -143,8 +146,6 @@ def get_tracklist_from_album_itune(itune_album_id: str, itune_region: str = "us"
                 track_2D = [track_title, track_artist]
                 track_info.append(track_2D)
 
-
-
     else:
         #   Step 2: check web url
         web_url = f"https://music.apple.com/{itune_region}/album/{itune_album_id}"
@@ -202,20 +203,33 @@ if __name__ == "__main__":
     # get_max_ratio(itune_album_id=itune_album_id, input_album_title="deja vu")
     # 1553308273
     # 1556175419
-    urls = [
-        "https://docs.google.com/spreadsheets/d/1W2QmYccbfeEAOEboKGSFWhv9hsXoQGPSZUhMP9Njsfw/edit#gid=1941765562"
-    ]
 
-    for url in urls:
-        gsheet_id = get_gsheet_id_from_url(url)
-        s11_df = get_df_from_speadsheet(gsheet_id=gsheet_id, sheet_name="S_11")
-        s11_df = s11_df[(s11_df['Itunes_Album_URL'] != "not found")]
-        # s11_df = s11_df.head(10)
-        s11_df['checking_validate_itune'] = s11_df['Apple ID'].apply(lambda x: check_validate_itune(x))
-        s11_df['album_title'] = s11_df['Apple ID'].apply(lambda x: get_album_title_artist(x)[0])
-        # s11_df['artist_album'] = s11_df['Apple ID'].apply(lambda x: get_album_title_artist(x)[1])
-        s11_df['token_set_ratio'] = s11_df.apply(
-            lambda x: get_max_ratio(itune_album_id=x['Apple ID'], input_album_title=x.AlbumTitle), axis=1)
-        print(s11_df)
+    # urls = [
+    #     "https://docs.google.com/spreadsheets/d/1W2QmYccbfeEAOEboKGSFWhv9hsXoQGPSZUhMP9Njsfw/edit#gid=1941765562"
+    # ]
+    # for url in urls:
+    #     gsheet_id = get_gsheet_id_from_url(url)
+    #     s11_df = get_df_from_speadsheet(gsheet_id=gsheet_id, sheet_name="S_11")
+    #     s11_df = s11_df[(s11_df['Itunes_Album_URL'] != "not found")]
+    #     # s11_df = s11_df.head(10)
+    #     s11_df['checking_validate_itune'] = s11_df['Apple ID'].apply(lambda x: check_validate_itune(x))
+    #     s11_df['album_title'] = s11_df['Apple ID'].apply(lambda x: get_album_title_artist(x)[0])
+    #     # s11_df['artist_album'] = s11_df['Apple ID'].apply(lambda x: get_album_title_artist(x)[1])
+    #     s11_df['token_set_ratio'] = s11_df.apply(
+    #         lambda x: get_max_ratio(itune_album_id=x['Apple ID'], input_album_title=x.AlbumTitle), axis=1)
+    #     print(s11_df)
+
+    with open(query_path, "a+") as f:
+        df = get_df_from_speadsheet(gsheet_id="1HUnal5ZfTngeSlKVCLH0kTnz0ZMa_RwvDv5uTqJSM6Q", sheet_name="joy")
+        gsheet_name = get_gsheet_name(gsheet_id="1HUnal5ZfTngeSlKVCLH0kTnz0ZMa_RwvDv5uTqJSM6Q")
+        sheet_name = "joy"
+        pic = f"{gsheet_name}_{sheet_name}"
+        row_index = df.index
+        for i in row_index:
+            itune_id = df.id.loc[i]
+            region = df["region"].loc[i]
+            crawling_task = crawl_itunes_album(ituneid=itune_id, pic=pic, region=region)
+            print(crawling_task)
+            f.write(crawling_task)
 
     print("--- %s seconds ---" % (time.time() - start_time))

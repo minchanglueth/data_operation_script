@@ -49,7 +49,7 @@ class Data_reports:
 
 
 def crawl_itunes_album(ituneid: str, pic: str = "Joy_xinh", region: str = "us"):
-    crawl_itunes_album = f"insert into crawlingtasks(Id, ActionId, TaskDetail, Priority) values (uuid4(), {V4CrawlingTaskActionMaster.ITUNES_ALBUM}, JSON_SET(IFNULL(crawlingtasks.TaskDetail, JSON_OBJECT()), '$.album_id', '{ituneid}', '$.region', '{region}', '$.PIC', '{pic}'), 999);\n"
+    crawl_itunes_album = f"insert into crawlingtasks(Id, ActionId, TaskDetail, Priority) values (uuid4(), '{V4CrawlingTaskActionMaster.ITUNES_ALBUM}', JSON_SET(IFNULL(crawlingtasks.TaskDetail, JSON_OBJECT()), '$.album_id', '{ituneid}', '$.region', '{region}', '$.PIC', '{pic}'), 999);\n"
     return crawl_itunes_album
 
 

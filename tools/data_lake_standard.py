@@ -532,15 +532,14 @@ if __name__ == "__main__":
     # print(now)
 
     # step 1:observe
-    sheet_info = sheet_type.ALBUM_WIKI
-    df = process_wiki(urls=urls, sheet_info=sheet_info)
-    # print(df)
+    sheet_info = sheet_type.ARTIST_IMAGE
+    df = process_image(urls=urls, sheet_info=sheet_info, sheet_name_core="image")
+    print(df)
     # step2: update wiki
-    update_wiki(df=df, sheet_info=sheet_info)
-
+    # crawl_image_datalake(df=df, sheet_info=sheet_info, object_type=object_type.ARTIST)
 
     # step 3: check
-    # checking_crawlingtask_image_crawler_status(df=df)
+    checking_crawlingtask_image_crawler_status(df=df, sheet_info=sheet_info)
     # checking_crawlingtask_mp3_mp4_crawler_status(df=df)
 
     print("\n --- total time to process %s seconds ---" % (time.time() - start_time))
