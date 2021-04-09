@@ -1,6 +1,7 @@
 insert into crawlingtasks(Id, ActionId, TaskDetail, Priority) values (uuid4(), '9C8473C36E57472281A1C7936108FC06', JSON_SET(IFNULL(crawlingtasks.TaskDetail, JSON_OBJECT()), '$.album_id', '1553308273', '$.region', 'us', '$.PIC', 're-crawl web error_joy'), 999);
 insert into crawlingtasks(Id, ActionId, TaskDetail, Priority) values (uuid4(), '9C8473C36E57472281A1C7936108FC06', JSON_SET(IFNULL(crawlingtasks.TaskDetail, JSON_OBJECT()), '$.album_id', '941357259', '$.region', 'us', '$.PIC', 're-crawl web error_joy'), 999);
 insert into crawlingtasks(Id, ActionId, TaskDetail, Priority) values (uuid4(), '9C8473C36E57472281A1C7936108FC06', JSON_SET(IFNULL(crawlingtasks.TaskDetail, JSON_OBJECT()), '$.album_id', '1498146903', '$.region', 'us', '$.PIC', 're-crawl web error_joy'), 999);
+
 insert into crawlingtasks(Id, ActionId, TaskDetail, Priority) values (uuid4(), '9C8473C36E57472281A1C7936108FC06', JSON_SET(IFNULL(crawlingtasks.TaskDetail, JSON_OBJECT()), '$.album_id', '1542651627', '$.region', 'us', '$.PIC', 're-crawl web error_joy'), 999);
 insert into crawlingtasks(Id, ActionId, TaskDetail, Priority) values (uuid4(), '9C8473C36E57472281A1C7936108FC06', JSON_SET(IFNULL(crawlingtasks.TaskDetail, JSON_OBJECT()), '$.album_id', '1460036626', '$.region', 'us', '$.PIC', 're-crawl web error_joy'), 999);
 insert into crawlingtasks(Id, ActionId, TaskDetail, Priority) values (uuid4(), '9C8473C36E57472281A1C7936108FC06', JSON_SET(IFNULL(crawlingtasks.TaskDetail, JSON_OBJECT()), '$.album_id', '1519291115', '$.region', 'us', '$.PIC', 're-crawl web error_joy'), 999);

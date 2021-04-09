@@ -453,12 +453,12 @@ def extract_artist_page_similarity(artist_names: list, urls: list, sheet_name: s
                                              sheet_name=sheet_name)
 
 
-def update_similarity(urls: list, sheet_name: str):
+def update_similarity(urls: list, sheet_name: str, start_row: int, stop_row: int):
     url = urls[0]
     gsheet_id = get_gsheet_id_from_url(url=url)
     df = get_df_from_speadsheet(gsheet_id=gsheet_id, sheet_name=sheet_name)
     df["DurationMs"].replace({"": "0"}, inplace=True)
-    df = df.loc[:]
+    df = df.loc[start_row:stop_row]
     row_index = df.index
     start = row_index.start
     stop = row_index.stop
@@ -501,10 +501,12 @@ if __name__ == "__main__":
     # ***** Extract artist page similariry ở đây nhé cưng :)) ******
     # sheet_info = sheet_type.MP3_SHEET_NAME
     # sheet_name = "joy test"
-    extract_artist_page_similarity(artist_names=artist_names, urls=urls, sheet_name=sheet_name)
+    # extract_artist_page_similarity(artist_names=artist_names, urls=urls, sheet_name=sheet_name)
     # ***** Update similarity *****
-    # sheet_name = "joy test"
-    # update_similarity(urls=urls, sheet_name=sheet_name)
+    sheet_name = "joy test"
+    start_row = 10
+    stop_row = 20
+    update_similarity(urls=urls, sheet_name=sheet_name, start_row=start_row, stop_row=stop_row)
 
     # ***** artist page_artist image *****
     # sheet_info = sheet_type.ALBUM_IMAGE
