@@ -40,6 +40,8 @@ class sheet_type:
                   "table_name": "albums"}
     TRACK_WIKI = {"sheet_name": "Track_wiki", "column_name": ["uuid", "Memo", "url_to_add", "content_to_add"],
                   "table_name": "tracks"}
+    S_11 = {"sheet_name": "S_11",
+            "column_name": ["Release_date", "AlbumTitle", "AlbumArtist", "Itunes_Album_URL", "AlbumURL"]}
 
 
 class Data_reports:

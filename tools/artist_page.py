@@ -1,27 +1,17 @@
 from google_spreadsheet_api.function import get_df_from_speadsheet, get_list_of_sheet_title, update_value, \
     creat_new_sheet_and_update_data_from_df, get_gsheet_name
 from google_spreadsheet_api.create_new_sheet_and_update_data_from_df import creat_new_sheet_and_update_data_from_df
-from tools.data_lake_standard import crawl_mp3_mp4
-from tools.crawlingtask import sheet_type
+from Data_lake_process.crawlingtask import sheet_type
 
-from core.crud.sql.datasource import get_datasourceids_from_youtube_url_and_trackid, related_datasourceid, \
-    get_youtube_info_from_trackid
-from core.models.data_source_format_master import DataSourceFormatMaster
 from core.crud.get_df_from_query import get_df_from_query
-from youtube_dl_fuction.fuctions import get_raw_title_uploader_from_youtube_url
 
-from itertools import chain
 import pandas as pd
 import time
 from colorama import Fore, Style
 from core import query_path
-from support_function.text_similarity.text_similarity import get_token_set_ratio
-from numpy import random
-import numpy as np
 from core.crud.sql.query_supporter import count_datasource_by_artistname_formatid, get_datasource_by_artistname_formatid
-from tools.data_lake_standard import update_data_reports, process_image, process_mp3_mp4, checking_crawlingtask_mp3_mp4_crawler_status, checking_crawlingtask_image_crawler_status, crawl_image_datalake
-from tools.youtube_similarity import similarity
-
+from Data_lake_process.data_lake_standard import update_data_reports
+from Data_lake_process.youtube_similarity import similarity
 
 
 def check_youtube_url_mp3(gsheet_id: str):
@@ -488,7 +478,7 @@ if __name__ == "__main__":
     with open(query_path, "w") as f:
         f.truncate()
 
-    artist_names = ["joy"]
+    artist_names = ["Girls' Generation"]
     urls = [
         "https://docs.google.com/spreadsheets/d/1pEZBzBwmduhZYN9k5doNbuYW75NSSx-dEb_EHqu8Ysw/edit#gid=0",
         "https://docs.google.com/spreadsheets/d/1XCtbHzP15FRduJzf_ena4tdye6oHwzpD-IRNdPV9jpM/edit#gid=0",
@@ -499,14 +489,14 @@ if __name__ == "__main__":
     # check_box(urls=urls)
 
     # ***** Extract artist page similariry ở đây nhé cưng :)) ******
-    # sheet_info = sheet_type.MP3_SHEET_NAME
-    # sheet_name = "joy test"
-    # extract_artist_page_similarity(artist_names=artist_names, urls=urls, sheet_name=sheet_name)
+    sheet_info = sheet_type.MP4_SHEET_NAME
+    sheet_name = "joy test 1"
+    extract_artist_page_similarity(artist_names=artist_names, urls=urls, sheet_name=sheet_name)
     # ***** Update similarity *****
-    sheet_name = "joy test"
-    start_row = 10
-    stop_row = 20
-    update_similarity(urls=urls, sheet_name=sheet_name, start_row=start_row, stop_row=stop_row)
+    # sheet_name = "joy test"
+    # start_row = 10
+    # stop_row = 20
+    # update_similarity(urls=urls, sheet_name=sheet_name, start_row=start_row, stop_row=stop_row)
 
     # ***** artist page_artist image *****
     # sheet_info = sheet_type.ALBUM_IMAGE
