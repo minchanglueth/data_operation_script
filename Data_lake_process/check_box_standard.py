@@ -1,34 +1,79 @@
 from google_spreadsheet_api.function import get_df_from_speadsheet, get_list_of_sheet_title, update_value, \
     creat_new_sheet_and_update_data_from_df, get_gsheet_name
-from google_spreadsheet_api.create_new_sheet_and_update_data_from_df import creat_new_sheet_and_update_data_from_df
-from Data_lake_process.class_definition import WhenExist, SheetNameType, DataReports, PageType
-
-from core.crud.get_df_from_query import get_df_from_query
+from Data_lake_process.crawlingtask import sheet_type
+from Data_lake_process.data_lake_standard import get_gsheet_id_from_url
+from crawl_itune.functions import get_max_ratio, check_validate_itune, get_itune_id_region_from_itune_url
 
 import pandas as pd
 import time
 from colorama import Fore, Style
-from core import query_path
-from core.crud.sql.query_supporter import count_datasource_by_artistname_formatid, get_datasource_by_artistname_formatid
-from Data_lake_process.data_lake_standard import update_data_reports, process_image, crawl_image_datalake, checking_image_crawler_status
-from Data_lake_process.youtube_similarity import similarity
+from Data_lake_process.data_lake_standard import update_data_reports
+
+
+# S_11 = {"sheet_name": "S_11",
+#         "column_name": ["release_date", "album_title", "album_artist", "itune_album_url", "sportify_album_url"]}
+
+# Step 1: convert data into standard format:
+def check_box_S_11_validate(gsheet_id: str):
+    '''
+    S_11 = {"sheet_name": "S_11",
+            "column_name": ["release_date", "album_title", "album_artist", "itune_album_url", "sportify_album_url"]}
+    '''
+
+    sheet_info = sheet_type.S_11
+    sheet_name = sheet_info.get('sheet_name')
+    column_name = sheet_info.get('column_name')
+    S_11_df = get_df_from_speadsheet(gsheet_id=gsheet_id, sheet_name=sheet_name)
+    S_11_df.columns = S_11_df.columns.str.replace('Release_date', 'release_date')
+    S_11_df.columns = S_11_df.columns.str.replace('AlbumTitle', 'album_title')
+    S_11_df.columns = S_11_df.columns.str.replace('AlbumArtist', 'album_artist')
+    S_11_df.columns = S_11_df.columns.str.replace('Itunes_Album_URL', 'itune_album_url')
+    S_11_df.columns = S_11_df.columns.str.replace('AlbumURL', 'sportify_album_url')
+    S_11_df = S_11_df[column_name].head(10)
+
+    # Step 2: check validate format
+
+    check_format_album_wiki = S_11_df[~((S_11_df['itune_album_url'] == 'not found')| (S_11_df['itune_album_url'].str[:32] == 'https://music.apple.com/us/album'))]
+    S_11_format_validate = check_format_album_wiki.album_title.str.upper().to_numpy().tolist()
+    if S_11_format_validate:
+        print(check_format_album_wiki)
+        return S_11_format_validate
+    # Step 3: check validate itune_url
+    else:
+        S_11_df['itune_id'] = S_11_df['itune_album_url'].apply(
+            lambda x: get_itune_id_region_from_itune_url(url=x)[0] if x != 'not found' else 'None')
+        S_11_df['region'] = S_11_df['itune_album_url'].apply(
+            lambda x: get_itune_id_region_from_itune_url(url=x)[1] if x != 'not found' else 'None')
+        S_11_df['checking_validate_itune'] = S_11_df['itune_id'].apply(lambda x: check_validate_itune(x) if x != 'None' else 'None')
+        S_11_df['token_set_ratio'] = S_11_df.apply(
+            lambda x: get_max_ratio(itune_album_id=x['itune_id'], input_album_title=x['album_title']) if x['itune_id'] != 'None' else 'None', axis=1)
+
+        # Step 4 update value:
+        column_name = ['itune_id', 'region', 'checking_validate_itune', 'token_set_ratio']
+        updated_df = S_11_df[column_name]
+
+        list_result = updated_df.values.tolist()  # transfer data_frame to 2D list
+        list_result.insert(0, column_name)
+        range_to_update = f"{sheet_name}!M1"
+        update_value(list_result, range_to_update,
+                     gsheet_id)  # validate_value type: object, int, category... NOT DATETIME
 
 
 def check_youtube_url_mp3(gsheet_id: str):
     '''
-    TrackID	Memo	URL_to_add	Type	Assignee
-                                        no need to check
-    not null	added	length = 43	    C/D/Z
-    not null	not found	none	none
-    :return:
+    MP3_SHEET_NAME = {"sheet_name": "MP_3", "fomatid": DataSourceFormatMaster.FORMAT_ID_MP3_FULL,
+                      "column_name": ["track_id", "Memo", "Mp3_link", "url_to_add"]}
     '''
-    sheet_name = 'MP_3'
+    sheet_info = sheet_type.MP3_SHEET_NAME
+    sheet_name = sheet_info.get('sheet_name')
+    column_name = sheet_info.get('column_name') + ['Type']
     original_df = get_df_from_speadsheet(gsheet_id, sheet_name).applymap(str.lower)
+    original_df.columns = original_df.columns.str.replace('TrackId', 'track_id')
+    original_df.columns = original_df.columns.str.replace('MP3_link', 'Mp3_link')
+    youtube_url_mp3 = original_df[column_name].copy()
+    youtube_url_mp3['len'] = youtube_url_mp3['url_to_add'].apply(lambda x: len(x))
 
-    original_df['len'] = original_df['url_to_add'].apply(lambda x: len(x))
-    youtube_url_mp3 = original_df[['track_id', 'Memo', 'url_to_add', 'len', 'Type', 'Assignee']]
-
-    check_youtube_url_mp3 = youtube_url_mp3[~
+    check_youtube_url_mp3 = youtube_url_mp3[
     ((
              (youtube_url_mp3['track_id'] != '')
              & (youtube_url_mp3['Memo'] == 'added')
@@ -38,16 +83,12 @@ def check_youtube_url_mp3(gsheet_id: str):
      (
              (youtube_url_mp3['track_id'] != '')
              & (youtube_url_mp3['Memo'] == 'not found')
-             & (youtube_url_mp3['url_to_add'] == 'none')
-             & (youtube_url_mp3['Type'] == 'none')
-     ) |
-     (
-
-         (youtube_url_mp3['Assignee'] == 'no need to check')
+             & (youtube_url_mp3['url_to_add'] == '')
+             & (youtube_url_mp3['Type'] == '')
      ))
     ]
-
-    return check_youtube_url_mp3.track_id.str.upper()
+    print(check_youtube_url_mp3)
+    # return check_youtube_url_mp3.track_id.str.upper()
 
 
 def check_youtube_url_mp4(gsheet_id: str):
@@ -404,90 +445,19 @@ def check_box(urls: list):
         return check_box
 
 
-def get_gsheet_id_from_url(url: str):
-    url_list = url.split("/")
-    gsheet_id = url_list[5]
-    return gsheet_id
-
-
-def get_count_datasource_by_artist_and_formatid(artist_names: list, formatid: str):
-    for artist_name in artist_names:
-        count = count_datasource_by_artistname_formatid(artist_name=artist_name, formatid=formatid)
-        print(f"{artist_name}----{count}")
-
-
-def get_df_datasource_by_artist_and_formatid(artist_names: list, formatid: str, df: object, gsheet_id: str,
-                                             sheet_name: str):
-    formatid = formatid
-    for artist_name in artist_names:
-        df = df.append(
-            get_df_from_query(get_datasource_by_artistname_formatid(artist_name=artist_name, formatid=formatid)).fillna(
-                ""), ignore_index=True)
-        print(artist_name)
-        print(df)
-        creat_new_sheet_and_update_data_from_df(df=df, gsheet_id=gsheet_id,
-                                                new_sheet_name=f"{sheet_name}")
-        print("Complete update data")
-
-
-def extract_artist_page_similarity(artist_names: list, urls: list, sheet_name: str):
-    # urls: list: only one url for artist page similarity
-    gsheet_id = get_gsheet_id_from_url(url=urls[0])
-    sheet_titles = get_list_of_sheet_title(gsheet_id=gsheet_id)
-    formatid = sheet_info.get('fomatid')
-    if sheet_name in sheet_titles:
-        df = get_df_from_speadsheet(gsheet_id=gsheet_id, sheet_name=sheet_name)
-    else:
-        df = pd.DataFrame()
-    get_df_datasource_by_artist_and_formatid(artist_names=artist_names, formatid=formatid, df=df, gsheet_id=gsheet_id,
-                                             sheet_name=sheet_name)
-
-
-def update_similarity(urls: list, sheet_name: str, start_row: int, stop_row: int):
-    url = urls[0]
-    gsheet_id = get_gsheet_id_from_url(url=url)
-    df = get_df_from_speadsheet(gsheet_id=gsheet_id, sheet_name=sheet_name)
-    df["DurationMs"].replace({"": "0"}, inplace=True)
-    df = df.loc[start_row:stop_row]
-    row_index = df.index
-    start = row_index.start
-    stop = row_index.stop
-    step = 25
-    for i in range(start, stop, step):
-        x = i + step
-        if x <= stop:
-            stop_range = x
-        else:
-            stop_range = stop
-        f = []
-        for j in range(i, stop_range):
-            track_title = df.track_title.loc[j]
-            SourceURI = df.SourceURI.loc[j]
-            FormatID = df.FormatID.loc[j]
-            DurationMs = df.DurationMs.loc[j]
-            k = similarity(track_title=track_title, youtube_url=SourceURI, formatid=FormatID, duration=DurationMs).get(
-                'similarity')
-            f.append([k])
-        joy1 = f"{sheet_name}!N{i + 2}"
-        update_value(list_result=f, range_to_update=joy1, gsheet_id=gsheet_id)
-
-
 if __name__ == "__main__":
     start_time = time.time()
-    pd.set_option("display.max_rows", None, "display.max_columns", 30, 'display.width', 500)
-    with open(query_path, "w") as f:
-        f.truncate()
+    pd.set_option("display.max_rows", None, "display.max_columns", 50, 'display.width', 1000)
     urls = [
-        "https://docs.google.com/spreadsheets/d/1KKtmAEV_MifOehcv7wwBd1I7CrN3kBm3uYfJgSMQogI/edit#gid=1153988175",
-        "https://docs.google.com/spreadsheets/d/1L9g_sQmJQLTZZooSSES3rG-bbhLqW7t6quEhL6ZmAO0/edit#gid=1989088347"
+        "https://docs.google.com/spreadsheets/d/1W2QmYccbfeEAOEboKGSFWhv9hsXoQGPSZUhMP9Njsfw/edit#gid=1941765562",
+        # "https://docs.google.com/spreadsheets/d/15LL8rcVnsWjE7D4RvrIMRpH8Y9Lgyio-kcs4mE540MI/edit#gid=1308575784"
     ]
-    df = pd.DataFrame()
     for url in urls:
-        page_type = PageType.TopSingle(url=url)
-        sheet_info = SheetNameType.MP3_SHEET_NAME
-        df_ = page_type.media_file(sheet_info=sheet_info)
-        df = df.append(df_, ignore_index=True)
-    print(df.head(10))
-    print("\n --- total time to process %s seconds ---" % (time.time() - start_time))
+        gsheet_id = get_gsheet_id_from_url(url)
+        k = get_list_of_sheet_title(gsheet_id)
+        check_youtube_url_mp3(gsheet_id=gsheet_id)
 
+        # print(k)
+
+    # k = check_youtube_url_mp3(gsheet_id="1W2QmYccbfeEAOEboKGSFWhv9hsXoQGPSZUhMP9Njsfw", sheet_info=sheet_info)
     print("--- %s seconds ---" % (time.time() - start_time))

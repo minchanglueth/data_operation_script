@@ -2,52 +2,13 @@ from core.models.data_source_format_master import DataSourceFormatMaster
 import time
 import pandas as pd
 from core.models.crawlingtask_action_master import V4CrawlingTaskActionMaster
-import json
-from core import query_path
-from google_spreadsheet_api.function import get_df_from_speadsheet
+from Data_lake_process.class_definition import WhenExist
 
 
-class WhenExist():
-    SKIP = "skip"
-    REPLACE = "replace"
-    KEEP_BOTH = "keep both"
-
-
-class object_type():
-    ARTIST = "artist"
-    ALBUM = "album"
-    TRACK = "track"
-
-
-class sheet_type:
-    MP3_SHEET_NAME = {"sheet_name": "MP_3", "fomatid": DataSourceFormatMaster.FORMAT_ID_MP3_FULL,
-                      "column_name": ["track_id", "Memo", "Mp3_link", "url_to_add"]}
-    MP4_SHEET_NAME = {"sheet_name": "MP_4", "fomatid": DataSourceFormatMaster.FORMAT_ID_MP4_FULL,
-                      "column_name": ["track_id", "Memo", "MP4_link", "url_to_add"]}
-    VERSION_SHEET_NAME = {"sheet_name": "Version_done", "fomatid": [DataSourceFormatMaster.FORMAT_ID_MP4_REMIX,
-                                                                    DataSourceFormatMaster.FORMAT_ID_MP4_LIVE],
-                          "column_name": ["track_id", "Remix_url", "Remix_artist", "Live_url", "Live_venue",
-                                          "Live_year"]}
-
-    ARTIST_IMAGE = {"sheet_name": "Artist_image", "column_name": ["uuid", "Memo", "url_to_add"],
-                    "object_type": object_type.ARTIST, "sub_sheet": "artist image cant upload"}
-    ALBUM_IMAGE = {"sheet_name": "Album_image", "column_name": ["uuid", "Memo", "url_to_add"],
-                   "object_type": object_type.ALBUM, "sub_sheet": "album image cant upload"}
-
-    ARTIST_WIKI = {"sheet_name": "Artist_wiki", "column_name": ["uuid", "Memo", "url_to_add", "content_to_add"],
-                   "table_name": "artists"}
-    ALBUM_WIKI = {"sheet_name": "Album_wiki", "column_name": ["uuid", "Memo", "url_to_add", "content_to_add"],
-                  "table_name": "albums"}
-    TRACK_WIKI = {"sheet_name": "Track_wiki", "column_name": ["uuid", "Memo", "url_to_add", "content_to_add"],
-                  "table_name": "tracks"}
-    S_11 = {"sheet_name": "S_11",
-            "column_name": ["Release_date", "AlbumTitle", "AlbumArtist", "Itunes_Album_URL", "AlbumURL"]}
-
-
-class Data_reports:
-    column_name = ["gsheet_name", "gsheet_url", "type", "running_time", "status", "count_complete", "count_incomplete", "notice"]
-    status_type_processing = "processing"
-    status_type_done = "done"
+def get_gsheet_id_from_url(url: str):
+    url_list = url.split("/")
+    gsheet_id = url_list[5]
+    return gsheet_id
 
 
 def crawl_itunes_album(ituneid: str, pic: str = "Joy_xinh", region: str = "us"):
@@ -82,7 +43,8 @@ def crawl_youtube(track_id: str, youtube_url: str, format_id: str, when_exist: s
     return crawlingtask
 
 
-def crawl_image(objectid: str, url: str, object_type: str,when_exists: str = WhenExist.REPLACE, pic: str = "Joy_xinh", priority: int = 1999):
+def crawl_image(objectid: str, url: str, object_type: str, when_exists: str = WhenExist.REPLACE, pic: str = "Joy_xinh",
+                priority: int = 1999):
     crawl_image = f"insert into crawlingtasks(Id, ObjectID, ActionId, TaskDetail, Priority) values (uuid4(), '{objectid}', '{V4CrawlingTaskActionMaster.ARTIST_ALBUM_IMAGE}', JSON_SET(IFNULL(crawlingtasks.TaskDetail, JSON_OBJECT()), '$.url', '{url}', '$.object_type', '{object_type}', '$.when_exists', '{when_exists}', '$.PIC', '{pic}'), {priority});\n"
     return crawl_image
 
@@ -98,9 +60,10 @@ def convert_dict(raw_dict: dict):
     # convert_dict(joy)
 
 
-# if __name__ == "__main__":
-#     start_time = time.time()
-#     k = crawl_youtube(track_id='joy', youtube_url='joy', format_id=DataSourceFormatMaster.FORMAT_ID_MP4_FULL)
-#     k = crawl_image(objectid='joy xinh', url='url', object_type=object_type.ARTIST)
-#     print(k)
-#     pd.set_option("display.max_rows", None, "display.max_columns", 50, 'display.width', 1000)
+if __name__ == "__main__":
+    start_time = time.time()
+    pd.set_option("display.max_rows", None, "display.max_columns", 50, 'display.width', 1000)
+    # k = page_type
+    # print(k.joy)
+
+    print("\n --- total time to process %s seconds ---" % (time.time() - start_time))

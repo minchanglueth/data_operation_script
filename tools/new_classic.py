@@ -3,15 +3,11 @@ import pandas as pd
 from crawl_itune.functions import get_max_ratio, check_validate_itune, get_itune_id_region_from_itune_url
 from google_spreadsheet_api.function import get_df_from_speadsheet, get_list_of_sheet_title
 from Data_lake_process.crawlingtask import sheet_type
+from Data_lake_process.data_lake_standard import process_S_11
+import json
 
 
-def check_validate(gsheet_id: str, sheet_info: object):
-    list_of_sheet_title = get_list_of_sheet_title(gsheet_id=gsheet_id)
-    print(list_of_sheet_title)
-    sheet_name = 'S_11'
-    original_df = get_df_from_speadsheet(gsheet_id, sheet_name).applymap(str.lower)[
-        sheet_info.get('column_name')]
-
+def check_validate():
     original_df['itune_id'] = original_df['Itunes_Album_URL'].apply(
         lambda x: get_itune_id_region_from_itune_url(url=x)[0])
     original_df['region'] = original_df['Itunes_Album_URL'].apply(
@@ -20,8 +16,8 @@ def check_validate(gsheet_id: str, sheet_info: object):
     original_df['token_set_ratio'] = original_df.apply(
         lambda x: get_max_ratio(itune_album_id=x['itune_id'], input_album_title=x.AlbumTitle), axis=1)
     print(original_df)
-    check_original_df = original_df[(original_df['checking_validate_itune'] != True)]
-    return check_original_df.checking_validate_itune
+    # check_original_df = original_df[(original_df['checking_validate_itune'] != True)]
+    # return check_original_df.checking_validate_itune
 
 
 def check_youtube_url_mp3(gsheet_id: str, sheet_info: object):
@@ -64,27 +60,16 @@ def check_youtube_url_mp3(gsheet_id: str, sheet_info: object):
     # ]
 
     # return check_youtube_url_mp3.track_id.str.upper()
-
-
 if __name__ == "__main__":
     start_time = time.time()
     pd.set_option("display.max_rows", None, "display.max_columns", 50, 'display.width', 1000)
     urls = [
-        "https://docs.google.com/spreadsheets/d/1W2QmYccbfeEAOEboKGSFWhv9hsXoQGPSZUhMP9Njsfw/edit#gid=1941765562"
+        "https://docs.google.com/spreadsheets/d/1W2QmYccbfeEAOEboKGSFWhv9hsXoQGPSZUhMP9Njsfw/edit#gid=1941765562",
+        "https://docs.google.com/spreadsheets/d/15LL8rcVnsWjE7D4RvrIMRpH8Y9Lgyio-kcs4mE540MI/edit#gid=1308575784"
     ]
-    # for url in urls:
-    #     gsheet_id = get_gsheet_id_from_url(url)
-    #     sheet_name = "S_11"
-    #     s11_df = get_df_from_speadsheet(gsheet_id=gsheet_id, sheet_name="")
-    #     s11_df = s11_df[(s11_df['Itunes_Album_URL'] != "not found")]
-    #     s11_df = s11_df.head(10)
-    #     s11_df['checking_validate_itune'] = s11_df['Apple ID'].apply(lambda x: check_validate_itune(x))
-    #     s11_df['album_title'] = s11_df['Apple ID'].apply(lambda x: get_album_title_artist(x)[0])
-    # s11_df['artist_album'] = s11_df['Apple ID'].apply(lambda x: get_album_title_artist(x)[1])
-    # s11_df['token_set_ratio'] = s11_df.apply(
-    #     lambda x: get_max_ratio(itune_album_id=x['Apple ID'], input_album_title=x.AlbumTitle), axis=1)
-    # print(s11_df)
-    sheet_info = sheet_type.MP3_SHEET_NAME
-    # k = check_validate(urls=urls, sheet_info=sheet_info)
-    k = check_youtube_url_mp3(gsheet_id="1W2QmYccbfeEAOEboKGSFWhv9hsXoQGPSZUhMP9Njsfw", sheet_info=sheet_info)
+    sheet_info = sheet_type.S_11
+    joy = process_S_11(urls=urls, sheet_info=sheet_info)
+    k = check_validate(df=joy)
+
+    # k = check_youtube_url_mp3(gsheet_id="1W2QmYccbfeEAOEboKGSFWhv9hsXoQGPSZUhMP9Njsfw", sheet_info=sheet_info)
     print("--- %s seconds ---" % (time.time() - start_time))

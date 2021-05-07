@@ -139,5 +139,5 @@ wcwidth==0.2.5
 webencodings==0.5.1
 widgetsnbextension==3.5.1
 yarl==1.6.2
-youtube-dl==2021.3.3
+youtube-dl==2021.4.7
 zope.interface==5.1.0

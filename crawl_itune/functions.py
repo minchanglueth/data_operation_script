@@ -233,8 +233,9 @@ if __name__ == "__main__":
     # https://music.apple.com/us/album/fearless-taylors-version/1552791073
     # https://music.apple.com/us/album/montero-call-me-by-your-name-single/joytest
     joy = get_itune_id_region_from_itune_url(url=itune_url)
-    k = get_album_title_artist(itune_album_id=joy[0], itune_region=joy[1])
+
+    # k = get_album_title_artist(itune_album_id=joy[0], itune_region=joy[1])
     # get_max_ratio(itune_album_id=joy)
-    print(k)
+    print(joy)
 
     print("--- %s seconds ---" % (time.time() - start_time))

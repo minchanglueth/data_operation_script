@@ -3,12 +3,26 @@ from google_spreadsheet_api.function import get_gsheet_name, get_list_of_sheet_t
 import time
 import pandas as pd
 from termcolor import colored
+import json
 
 
 def get_gsheet_id_from_url(url: object) -> object:
     url_list = url.split("/")
     gsheet_id = url_list[5]
     return gsheet_id
+
+
+def get_key_value_from_gsheet_info(gsheet_info: str, key: str):
+    value = json.loads(gsheet_info)[key]
+    return value
+
+
+def add_key_value_from_gsheet_info(gsheet_info: str, key_value: dict):
+    sheet_info_log_ = json.loads(gsheet_info)
+    for key, value in key_value.items():
+        sheet_info_log_[key] = value
+    sheet_info_log = json.dumps(sheet_info_log_)
+    return sheet_info_log
 
 
 class WhenExist:
@@ -76,12 +90,11 @@ class Page(object):
                                                        DataSourceFormatMaster.FORMAT_ID_MP4_LIVE],
                                            "column_name": ["track_id", "remix_url", "remix_artist", "live_url",
                                                            "live_venue", "live_year"]}
-            if "artist image cant upload" in list_of_sheet_title:
-                if get_df_from_speadsheet(gsheet_id, "artist image cant upload").values.tolist() == [
-                    ['Upload thành công 100% nhé các em ^ - ^']]:
+            if f"{SheetNames.ARTIST_IMAGE} cant upload" in list_of_sheet_title:
+                if get_df_from_speadsheet(gsheet_id, f"{SheetNames.ARTIST_IMAGE} cant upload").values.tolist() == [['Upload thành công 100% nhé các em ^ - ^']]:
                     pass
                 else:
-                    sheet_name = "artist image cant upload"
+                    sheet_name = f"{SheetNames.ARTIST_IMAGE} cant upload"
                     self.ARTIST_IMAGE = {"sheet_name": f"{sheet_name}", "column_name": ["uuid", "memo", "url_to_add"],
                                          "object_type": ObjectType.ARTIST}
             elif "image" in list_of_sheet_title:
@@ -96,7 +109,7 @@ class Page(object):
                 pass
             if "Album_image" in sheet_names:
                 self.ALBUM_IMAGE = {"sheet_name": "Album_image", "column_name": ["uuid", "memo", "url_to_add"],
-                                    "object_type": ObjectType.ALBUM, "sub_sheet": "album image cant upload"}
+                                    "object_type": ObjectType.ALBUM}
             if "Artist_wiki" in sheet_names:
                 self.ARTIST_WIKI = {"sheet_name": "Artist_wiki",
                                     "column_name": ["uuid", "memo", "url_to_add", "content_to_add"],
@@ -135,7 +148,7 @@ class Page(object):
 
             df.columns = df.columns.str.replace('Memo', 'memo')
             df.columns = df.columns.str.replace('s12', 'memo')
-            df.columns = df.columns.str.replace('A11', 'memo')
+            df.columns = df.columns.str.replace('A12', 'memo')
 
             df.columns = df.columns.str.replace('Mp3_link', 'mp3_link')
             df.columns = df.columns.str.replace('MP3_link', 'mp3_link')
@@ -156,6 +169,7 @@ class Page(object):
 
             df.columns = df.columns.str.replace('Uuid', 'uuid')
             df.columns = df.columns.str.replace('Artist_UUID', 'uuid')
+            df.columns = df.columns.str.replace('objectid', 'uuid')
 
             df.columns = df.columns.str.replace('Content_to_add', 'content_to_add')
             df.columns = df.columns.str.replace('content tomadd', 'content_to_add')
@@ -174,8 +188,7 @@ class Page(object):
                 "page_type": "top_single",
                 "page_priority": page_priority
                 }
-        df['gsheet_info'] = f"{info}"
-        print(info)
+        df['gsheet_info'] = df.apply(lambda x: json.dumps(info), axis=1)
         return df
 
 
@@ -192,26 +205,25 @@ def merge_file(sheet_name: str, urls: list, page_type: object = None):
             sheet_info = getattr(page.sheet_name_type, sheet_name)
             df_ = page.media_file(sheet_info=sheet_info, page_priority=priority)
             df = df.append(df_, ignore_index=True)
-        except:
-            AttributeError
-            print(colored(f"AttributeError: {page.page_name} object has no attribute \'ARTIST_IMAGE\'\nurl: {url}",
+        except AttributeError:
+            print(colored(f"AttributeError: {page.page_name} object has no attribute {sheet_name}\nurl: {url}",
                           'yellow'))
-    print(df)
+    return df
 
 
 if __name__ == "__main__":
     start_time = time.time()
     pd.set_option("display.max_rows", None, "display.max_columns", 50, 'display.width', 1000)
     urls = [
-        "https://docs.google.com/spreadsheets/d/1KKtmAEV_MifOehcv7wwBd1I7CrN3kBm3uYfJgSMQogI/edit#gid=1914396871",
-        "https://docs.google.com/spreadsheets/d/1KKtmAEV_MifOehcv7wwBd1I7CrN3kBm3uYfJgSMQogI/edit#gid=1153988175",
-        "https://docs.google.com/spreadsheets/d/1L9g_sQmJQLTZZooSSES3rG-bbhLqW7t6quEhL6ZmAO0/edit#gid=1989088347"
+        "https://docs.google.com/spreadsheets/d/1Ui62USL6FiN0Z6q88_jArnV18NeuaarakFfaQ1imm_c/edit#gid=1400083434",
+        "https://docs.google.com/spreadsheets/d/1tRfdBnlDZ2MgBBmKr333Rz4qZpHWkgssym9S9WoybrE/edit#gid=1055124011"
 
     ]
-    # urls = "https://docs.google.com/spreadsheets/d/1KKtmAEV_MifOehcv7wwBd1I7CrN3kBm3uYfJgSMQogI/edit#gid=1914396871"
     sheet_name = SheetNames.ARTIST_IMAGE
     page_type = PageType.TopSingle
+    k = merge_file(sheet_name=sheet_name, urls=urls, page_type=page_type)
+    print(k)
 
-    merge_file(sheet_name=sheet_name, urls=urls, page_type=page_type)
+
 
     print("\n --- total time to process %s seconds ---" % (time.time() - start_time))
