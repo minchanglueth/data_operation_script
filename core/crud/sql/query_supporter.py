@@ -165,10 +165,9 @@ if __name__ == "__main__":
     #                                                 PIC="Artist Page 20.01.2021_MP_4",
     #                                                 actionid="F91244676ACD47BD9A9048CF2BA3FFC1")
 
-    db_crawlingtask = get_crawlingtask_status(gsheet_name="Artist Page 20.01.2021", sheet_name="MP_4",
-                                              actionid="F91244676ACD47BD9A9048CF2BA3FFC1")
-    k = get_compiled_raw_mysql(db_crawlingtask)
-    print(k)
+    # db_crawlingtask = get_crawlingtask_info(objectid="0D153F2A3C7F4330A21CA3A689557A61",PIC=)
+    # k = get_compiled_raw_mysql(db_crawlingtask)
+    # print(k)
 
 #     print(k)
 #     print("--- %s seconds ---" % (time.time() - start_time))
