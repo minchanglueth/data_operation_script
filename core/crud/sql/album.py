@@ -28,6 +28,6 @@ def get_all_by_ids(artist_uuids: list):
                                           Album.uuid.in_(artist_uuids)).order_by(Album.created_at.desc()).all()
 
 
-def get_one_by_id(artist_uuid: str):
+def get_one_by_id(album_uuid: str):
     return db_session.query(Album).filter((Album.valid == 1),
-                                          Album.uuid == artist_uuid).order_by(Album.created_at.desc()).first()
+                                          Album.uuid == album_uuid).order_by(Album.created_at.desc()).first()

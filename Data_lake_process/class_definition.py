@@ -80,7 +80,7 @@ class Page(object):
             sheet_names = get_list_of_sheet_title(gsheet_id=gsheet_id)
             if "MP_3" in sheet_names:
                 self.MP3_SHEET_NAME = {"sheet_name": "MP_3", "fomatid": DataSourceFormatMaster.FORMAT_ID_MP3_FULL,
-                                       "column_name": ["track_id", "memo", "mp3_link", "url_to_add"]}
+                                       "column_name": ["track_id", "memo", "mp3_link", "url_to_add", "type"]}
             if "MP_4" in sheet_names:
                 self.MP4_SHEET_NAME = {"sheet_name": "MP_4", "fomatid": DataSourceFormatMaster.FORMAT_ID_MP4_FULL,
                                        "column_name": ["track_id", "memo", "mp4_link", "url_to_add"]}
@@ -149,6 +149,8 @@ class Page(object):
             df.columns = df.columns.str.replace('Memo', 'memo')
             df.columns = df.columns.str.replace('s12', 'memo')
             df.columns = df.columns.str.replace('A12', 'memo')
+
+            df.columns = df.columns.str.replace('Type', 'type')
 
             df.columns = df.columns.str.replace('Mp3_link', 'mp3_link')
             df.columns = df.columns.str.replace('MP3_link', 'mp3_link')

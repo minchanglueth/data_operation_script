@@ -164,10 +164,14 @@ if __name__ == "__main__":
     # db_crawlingtask = get_crawlingtask_youtube_info(objectid="08C35303A6B24BCAAFC181CE5486C238",
     #                                                 PIC="Artist Page 20.01.2021_MP_4",
     #                                                 actionid="F91244676ACD47BD9A9048CF2BA3FFC1")
+    # F405C0395ADD45F298383B782DA81066---Top 100 Album 03.05.2021_image---OA9CPKSUT6PBGI1ZHPLQUPQCGVYQ71S9
+    objectid = "F405C0395ADD45F298383B782DA81066"
+    PIC = "Top 100 Album 03.05.2021_image"
+    acctinid = "OA9CPKSUT6PBGI1ZHPLQUPQCGVYQ71S9"
 
-    # db_crawlingtask = get_crawlingtask_info(objectid="0D153F2A3C7F4330A21CA3A689557A61",PIC=)
-    # k = get_compiled_raw_mysql(db_crawlingtask)
-    # print(k)
+    db_crawlingtask = get_crawlingtask_info(objectid=objectid, PIC=PIC, actionid=acctinid)
+    k = get_compiled_raw_mysql(db_crawlingtask)
+    print(k)
 
 #     print(k)
 #     print("--- %s seconds ---" % (time.time() - start_time))

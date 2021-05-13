@@ -14,9 +14,157 @@ from itertools import chain
 from colorama import Fore, Style
 import json
 from Data_lake_process.crawlingtask import crawl_youtube, crawl_image
-from Data_lake_process.class_definition import WhenExist, PageType, SheetNames, merge_file, Page, DataReports, get_key_value_from_gsheet_info, add_key_value_from_gsheet_info
+from Data_lake_process.class_definition import WhenExist, PageType, SheetNames, merge_file, Page, DataReports, \
+    get_key_value_from_gsheet_info, add_key_value_from_gsheet_info, get_gsheet_id_from_url
 from core.models.crawlingtask_action_master import V4CrawlingTaskActionMaster
 import csv
+
+
+def automate_check_status(gsheet_name: str, sheet_name: str, actionid: str):
+    count = 0
+    while True and count < 300:
+        df1 = get_df_from_query(
+            get_crawlingtask_status(gsheet_name=gsheet_name, sheet_name=sheet_name, actionid=actionid))
+        result = df1[
+                     (df1.status != 'complete')
+                     & (df1.status != 'incomplete')
+                     ].status.tolist() == []
+        if result == 1:
+            # print('\n', 'Checking crawlingtask status \n', df1, '\n')
+            print(
+                Fore.LIGHTYELLOW_EX + f"File: {gsheet_name}, sheet_name: {sheet_name} has been crawled complete already" + Style.RESET_ALL)
+            break
+        else:
+            count += 1
+            time.sleep(5)
+            print(count, "-----", result)
+
+
+def update_data_reports(gsheet_info: object, status: str = None, count_complete: int = 0, count_incomlete: int = 0,
+                        notice: str = None):
+    gsheet_name = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key='gsheet_name')
+    sheet_name = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key='sheet_name')
+    gsheet_id = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key='gsheet_id')
+    gsheet_url = f"https://docs.google.com/spreadsheets/d/{gsheet_id}"
+    # https://docs.google.com/spreadsheets/d/1MHDksbs-RKXhZZ-LRgRhVy_ldAxK8lSzyoJK4sA_Uyo
+    print(f"updating data_reports gsheet_name: {gsheet_name}, type: {sheet_name}")
+    reports_df = get_df_from_speadsheet(gsheet_id="1MHDksbs-RKXhZZ-LRgRhVy_ldAxK8lSzyoJK4sA_Uyo", sheet_name="demo")
+    row_index = reports_df.index
+    for i in row_index:
+        reports_gsheet_name = reports_df['gsheet_name'].loc[i]
+        reports_sheet_name = reports_df['type'].loc[i]
+        if gsheet_name == reports_gsheet_name and sheet_name == reports_sheet_name:
+            range_to_update = f"demo!A{i + 2}"
+            break
+        else:
+            range_to_update = f"demo!A{row_index.stop + 2}"
+    list_result = [
+        [gsheet_name, gsheet_url, sheet_name, f"{datetime.now()}", status, count_complete, count_incomlete, notice]]
+    update_value(list_result=list_result, range_to_update=range_to_update,
+                 gsheet_id="1MHDksbs-RKXhZZ-LRgRhVy_ldAxK8lSzyoJK4sA_Uyo")
+
+
+def checking_image_accuracy(df: object):
+    df['check'] = ''
+    df['status'] = ''
+    df['crawlingtask_id'] = ''
+    row_index = df.index
+    for i in row_index:
+        objectid = df.uuid.loc[i]
+        url = df.url_to_add.loc[i]
+        gsheet_info = df.gsheet_info.loc[i]
+        gsheet_name = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key='gsheet_name')
+        sheet_name = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key='sheet_name')
+        actionid = V4CrawlingTaskActionMaster.ARTIST_ALBUM_IMAGE
+        PIC_taskdetail = f"{gsheet_name}_{sheet_name}"
+        db_crawlingtask = get_crawlingtask_info(objectid=objectid, PIC=PIC_taskdetail, actionid=actionid)
+        if db_crawlingtask:
+            status = db_crawlingtask.status
+            crawlingtask_id = db_crawlingtask.id
+            if url in db_crawlingtask.url:
+                check_accuracy = True
+            else:
+                check_accuracy = f"crawlingtask_id: {db_crawlingtask.id}: uuid and url not match"
+                print(check_accuracy)
+        else:
+            check_accuracy = f"file: {PIC_taskdetail}, uuid: {objectid} is missing"
+            print(check_accuracy)
+            status = 'missing'
+            crawlingtask_id = 'missing'
+        df.loc[i, 'check'] = check_accuracy
+        df.loc[i, 'status'] = status
+        df.loc[i, 'crawlingtask_id'] = crawlingtask_id
+    return df
+
+
+def automate_checking_status(df: object):
+    gsheet_infos = list(set(df.gsheet_info.tolist()))
+    count = 0
+    while True and count < 300:
+        checking_accuracy_result = checking_image_accuracy(df=df)
+        result = checking_accuracy_result[
+                     (checking_accuracy_result['status'] != 'complete')
+                     & (checking_accuracy_result['status'] != 'incomplete')
+                     ].status.tolist() == []
+        if result == 1:
+            for gsheet_info in gsheet_infos:
+                gsheet_name = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key='gsheet_name')
+                sheet_name = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key='sheet_name')
+                print(
+                    Fore.LIGHTYELLOW_EX + f"File: {gsheet_name}, sheet_name: {sheet_name} has been crawled complete already" + Style.RESET_ALL)
+            break
+        else:
+            count += 1
+            time.sleep(2)
+            print(count, "-----", result)
+
+
+def upload_image_cant_crawl(checking_accuracy_result: object, sheet_name: str):
+    gsheet_infos = list(set(checking_accuracy_result.gsheet_info.tolist()))
+    df_incomplete = checking_accuracy_result[(checking_accuracy_result['status'] == 'incomplete')].reset_index().copy()
+
+    df_incomplete['url'] = df_incomplete['gsheet_info'].apply(
+        lambda x: get_key_value_from_gsheet_info(gsheet_info=x, key='url'))
+    df_incomplete['url_to_add'] = ''
+    if sheet_name == SheetNames.ARTIST_IMAGE:
+        df_incomplete['name'] = df_incomplete['uuid'].apply(
+            lambda x: artist.get_one_by_id(artist_uuid=x).name)
+    else:
+        df_incomplete['title'] = df_incomplete['uuid'].apply(lambda x: artist.get_one_by_id(artist_uuid=x).title)
+        df_incomplete['artist'] = df_incomplete['uuid'].apply(lambda x: album.get_one_by_id(album_uuid=x).artist)
+
+    df_incomplete = df_incomplete[
+        ['uuid', 'name', 'status', 'crawlingtask_id', 'url', 'memo', 'url_to_add']]
+
+    for gsheet_info in gsheet_infos:
+        url = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key='url')
+        df_incomplete_to_upload = df_incomplete[df_incomplete['url'] == url].reset_index()
+        count_incomplete = df_incomplete_to_upload.index.stop
+        joy = df_incomplete_to_upload['status'].tolist() == []
+
+        if joy:
+            raw_df_to_upload = {'status': ['Upload thành công 100% nhé các em ^ - ^']}
+            df_to_upload = pd.DataFrame(data=raw_df_to_upload)
+            # Step 3.1: upload image cant crawl: update reports
+            # update_data_reports(gsheet_info=gsheet_info, status=DataReports.status_type_done,
+            #                     count_complete=0, count_incomlete=count_incomplete)
+        else:
+            df_to_upload = df_incomplete_to_upload.drop(['url', 'index'], axis=1)
+
+            # update_data_reports(gsheet_info=get_gsheet_id_from_url(url), status=DataReports.status_type_processing,
+            #                     count_complete=0, count_incomlete=count_incomplete)
+        new_sheet_name = f"{sheet_name_} cant upload"
+        print(df_to_upload)
+        creat_new_sheet_and_update_data_from_df(df_to_upload, get_gsheet_id_from_url(url), new_sheet_name)
+
+
+def query_pandas_to_csv(df: object, column: str):
+    row_index = df.index
+    with open(query_path, "w") as f:
+        for i in row_index:
+            line = df[column].loc[i]
+            f.write(line)
+    f.close()
 
 
 class ImageWorking:
@@ -52,188 +200,104 @@ class ImageWorking:
 
     def crawl_image_datalake(self, when_exists: str = WhenExist.REPLACE):
         df = self.image_filter()
-        df['query'] = df.apply(lambda x: crawl_image(object_type=get_key_value_from_gsheet_info(gsheet_info=x['gsheet_info'], key='object_type'), url=x['url_to_add'], objectid=x['uuid'],
-                                                     when_exists=when_exists,
-                                                     pic=f"{get_key_value_from_gsheet_info(gsheet_info=x['gsheet_info'], key='gsheet_name')}_{get_key_value_from_gsheet_info(gsheet_info=x['gsheet_info'], key='sheet_name')}"),
-                               axis=1)
-        df['query'].to_csv(query_path, header=False, index=None, sep='\t', mode='w', quoting=csv.QUOTE_NONE,
-                           escapechar=' ')
+        if df.empty:
+            print(Fore.LIGHTYELLOW_EX + f"Image file is empty" + Style.RESET_ALL)
+        else:
+            df['query'] = df.apply(lambda x: crawl_image(
+                object_type=get_key_value_from_gsheet_info(gsheet_info=x['gsheet_info'], key='object_type'),
+                url=x['url_to_add'], objectid=x['uuid'],
+                when_exists=when_exists,
+                pic=f"{get_key_value_from_gsheet_info(gsheet_info=x['gsheet_info'], key='gsheet_name')}_{get_key_value_from_gsheet_info(gsheet_info=x['gsheet_info'], key='sheet_name')}"),
+                                   axis=1)
+            query_pandas_to_csv(df=df, column='query')
 
     def checking_image_crawler_status(self):
-        # Step 1.1: checking accuracy
         print("checking accuracy")
         df = self.image_filter().copy()
+        gsheet_infos = list(set(df.gsheet_info.tolist()))
+        # step 1.1: checking accuracy
+        checking_accuracy_result = checking_image_accuracy(df=df)
+        print(checking_accuracy_result)
+        accuracy_checking = list(set(checking_accuracy_result['check'].tolist()))
 
-        def checking_accuracy(df: object):
-            df['check'] = ''
-            df['status'] = ''
-            df['crawlingtask_id'] = ''
-            row_index = df.index
-            for i in row_index:
-                objectid = df.uuid.loc[i]
-                url = df.url_to_add.loc[i]
-                gsheet_info = df.gsheet_info.loc[i]
-                gsheet_name = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key='gsheet_name')
-                sheet_name = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key='sheet_name')
-                actionid = V4CrawlingTaskActionMaster.ARTIST_ALBUM_IMAGE
-                PIC_taskdetail = f"{gsheet_name}_{sheet_name}"
-                db_crawlingtask = get_crawlingtask_info(objectid=objectid, PIC=PIC_taskdetail, actionid=actionid)
-                if db_crawlingtask:
-                    status = db_crawlingtask.status
-                    crawlingtask_id = db_crawlingtask.id
-                    if url in db_crawlingtask.url:
-                        check_accuracy = True
-                    else:
-                        check_accuracy = f"file: {PIC_taskdetail}, uuid: {objectid}, crawlingtask_id: {db_crawlingtask.id}: uuid and url not match"
-                else:
-                    check_accuracy = f"file: {PIC_taskdetail}, uuid: {objectid} is missing"
-                    status = 'missing'
-                    crawlingtask_id = 'missing'
-                df.loc[i, 'check'] = check_accuracy
-                df.loc[i, 'status'] = status
-                df.loc[i, 'crawlingtask_id'] = crawlingtask_id
-            return df
-        checking_accuracy_result = checking_accuracy(df=df)
-        k = list(set(checking_accuracy_result['check'].tolist()))
-        # gsheet_infos = list(set(df.gsheet_info.tolist()))
-        gsheet_info_all = list(set(df.gsheet_info.tolist()))
-        if k != [True]:
-            print(df[['uuid', 'check']])
-            # Step 1.2: checking accuracy update data_reports if fail
-            for gsheet_info in gsheet_info_all:
+        if accuracy_checking != [True]:
+            print(checking_accuracy_result[['uuid', 'check', 'status', 'crawlingtask_id']])
+            # Step 1.2: update data_reports if checking accuracy fail
+            for gsheet_info in gsheet_infos:
                 update_data_reports(gsheet_info=gsheet_info, status=DataReports.status_type_processing,
                                     notice="check accuracy fail")
-            # Step 2: auto checking status
+        # Step 2: auto checking status
         else:
             print("checking accuracy correctly, now checking status")
-            for gsheet_info in gsheet_info_all:
-                print(gsheet_info)
-                gsheet_name = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key='gsheet_name')
-                sheet_name = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key='sheet_name')
-                gsheet_id = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key='gsheet_id')
-                object_type = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key='object_type')
-                actionid = V4CrawlingTaskActionMaster.ARTIST_ALBUM_IMAGE
-                automate_check_status(gsheet_name=gsheet_name, sheet_name=sheet_name, actionid=actionid)
-                # Step 3: upload image cant crawl
-                df1 = get_df_from_query(get_crawlingtask_status(gsheet_name=gsheet_name,
-                                                                sheet_name=sheet_name,
-                                                                actionid=actionid)).drop_duplicates(subset=['objectid'],
-                                                                                                    keep='first').reset_index()
-                if object_type == 'artist':
-                    df1['name'] = df1['objectid'].apply(lambda x: artist.get_one_by_id(artist_uuid=x).name)
-                else:
-                    df1['title'] = df1['objectid'].apply(lambda x: album.get_one_by_id(artist_uuid=x).title)
-                    df1['artist'] = df1['objectid'].apply(lambda x: album.get_one_by_id(artist_uuid=x).artist)
-                count_incomplete = df1[(df1.status == 'incomplete')].reset_index().index.stop
-                count_complete = df1[(df1.status == 'complete')].reset_index().index.stop
-                joy = df1[
-                          (df1.status == 'incomplete')
-                      ].status.tolist() == []
-
-                if joy:
-                    raw_df_to_upload = {'status': ['Upload thành công 100% nhé các em ^ - ^']}
-                    df_to_upload = pd.DataFrame(data=raw_df_to_upload)
-
-                    # Step 4: upload image cant crawl: update reports
-                    update_data_reports(gsheet_info=gsheet_info, status=DataReports.status_type_done,
-                                        count_complete=count_complete, count_incomlete=count_incomplete)
-                else:
-                    df_to_upload = df1[(df1.status == 'incomplete')]
-                    update_data_reports(gsheet_info=gsheet_info, status=DataReports.status_type_processing,
-                                        count_complete=count_complete, count_incomlete=count_incomplete)
-                print(df_to_upload)
-                new_sheet_name = f"{sheet_name_} cant upload"
-                creat_new_sheet_and_update_data_from_df(df_to_upload, gsheet_id, new_sheet_name)
+            automate_checking_status(df=df)
+            # Step 3: upload image cant crawl
+            upload_image_cant_crawl(checking_accuracy_result=checking_accuracy_result, sheet_name=self.sheet_name)
 
 
-def get_sheet_info_from_url(url: str):
-    url_list = url.split("/")
-    gsheet_id = url_list[5]
-    gsheet_name = get_gsheet_name(gsheet_id=gsheet_id)
-    list_of_sheet_title = get_list_of_sheet_title(gsheet_id=gsheet_id)
-    return {"gsheet_id": gsheet_id, "gsheet_name": gsheet_name, "list_of_sheet_title": list_of_sheet_title}
-
-
-def get_gsheet_id_from_url(url: str):
-    url_list = url.split("/")
-    gsheet_id = url_list[5]
-    return gsheet_id
-
-
-def update_data_reports(gsheet_info: dict, status: str = None, count_complete: int = 0, count_incomlete: int = 0,
-                        notice: str = None):
-    gsheet_info = gsheet_info.replace("'", "\"")
-    gsheet_name = json.loads(gsheet_info)['gsheet_name']
-    sheet_name = json.loads(gsheet_info)['sheet_name']
-    gsheet_id = json.loads(gsheet_info)['gsheet_id']
-    gsheet_url = f"https://docs.google.com/spreadsheets/d/{gsheet_id}"
-    print(f"updating data_reports gsheet_name: {gsheet_name}, type: {sheet_name}")
-    reports_df = get_df_from_speadsheet(gsheet_id="1MHDksbs-RKXhZZ-LRgRhVy_ldAxK8lSzyoJK4sA_Uyo", sheet_name="demo")
-    row_index = reports_df.index
-    for i in row_index:
-        reports_gsheet_name = reports_df['gsheet_name'].loc[i]
-        reports_sheet_name = reports_df['type'].loc[i]
-        if gsheet_name == reports_gsheet_name and sheet_name == reports_sheet_name:
-            range_to_update = f"demo!A{i + 2}"
-            break
+class YoutubeWorking:
+    def __init__(self, sheet_name: str, urls: list, page_type: object):
+        original_file_ = merge_file(sheet_name=sheet_name, urls=urls, page_type=page_type)
+        if original_file_.empty:
+            print("original_file is empty")
+            pass
         else:
-            range_to_update = f"demo!A{row_index.stop + 2}"
-    list_result = [
-        [gsheet_name, gsheet_url, sheet_name, f"{datetime.now()}", status, count_complete, count_incomlete, notice]]
-    update_value(list_result=list_result, range_to_update=range_to_update,
-                 gsheet_id="1MHDksbs-RKXhZZ-LRgRhVy_ldAxK8lSzyoJK4sA_Uyo")
+            self.original_file = original_file_
+            self.sheet_name = sheet_name
+            self.page_type = page_type
 
+    def youtube_filter(self):
+        if self.sheet_name == SheetNames.MP3_SHEET_NAME:
+            df = self.original_file
+            filter_df = df[((df['memo'] == 'not ok') | (df['memo'] == 'added'))  # filter df by conditions
+                           & (df['url_to_add'].notnull())
+                           & (df['url_to_add'] != '')
+                           ].drop_duplicates(subset=['track_id', 'url_to_add', 'type', 'gsheet_info'],
+                                             keep='first').reset_index()
+            return filter_df
 
-def automate_check_status(gsheet_name: str, sheet_name: str, actionid: str):
-    count = 0
-    while True and count < 300:
-        df1 = get_df_from_query(
-            get_crawlingtask_status(gsheet_name=gsheet_name, sheet_name=sheet_name, actionid=actionid))
-        result = df1[
-                     (df1.status != 'complete')
-                     & (df1.status != 'incomplete')
-                     ].status.tolist() == []
-        if result == 1:
-            # print('\n', 'Checking crawlingtask status \n', df1, '\n')
-            print(
-                Fore.LIGHTYELLOW_EX + f"File: {gsheet_name}, sheet_name: {sheet_name} has been crawled complete already" + Style.RESET_ALL)
-            break
-        else:
-            count += 1
-            time.sleep(5)
-            print(count, "-----", result)
-
-
-def process_mp3_mp4(sheet_info: dict, urls: list):
-    '''
-    Memo = not ok and url_to_add = 'none'
-        => if not existed in related_table: set valid = -10
-        => if existed in related_table:
-            - set trackid = blank and formatid = blank
-            - update trackcountlogs
-    Memo = not ok and url_to_add not null => crawl mode replace
-    Memo = added => crawl mode skip
-    '''
-
-    mp3_mp4_df = pd.DataFrame()
-    for url in urls:
-        gsheet_id = get_gsheet_id_from_url(url=url)
-        sheet_name = sheet_info['sheet_name']
-        original_df = get_df_from_speadsheet(gsheet_id, sheet_name)
-        youtube_url = original_df[sheet_info['column_name']]
-        filter_df = youtube_url[
-            (youtube_url['Memo'] == 'not ok') | (youtube_url['Memo'] == 'added')].reset_index().drop_duplicates(
-            subset=['track_id'],
-            keep='first')  # remove duplicate df by column (reset_index before drop_duplicate: because of drop_duplicate default reset index)
-        info = {"url": f"{url}", "gsheet_id": f"{gsheet_id}",
-                "gsheet_name": f"{get_gsheet_name(gsheet_id=gsheet_id)}",
-                "sheet_name": f"{sheet_name}"}
-        filter_df['gsheet_info'] = f"{info}"
-        mp3_mp4_df = mp3_mp4_df.append(filter_df, ignore_index=True)
-    return mp3_mp4_df
+    def crawl_youtube_datalake(self):
+        if self.sheet_name == SheetNames.MP3_SHEET_NAME:
+            df = self.youtube_filter()
+            print(df.head(5))
+    #     df['query'] = df.apply(lambda x: crawl_image(object_type=get_key_value_from_gsheet_info(gsheet_info=x['gsheet_info'], key='object_type'), url=x['url_to_add'], objectid=x['uuid'],
+    #                                                  when_exists=when_exists,
+    #                                                  pic=f"{get_key_value_from_gsheet_info(gsheet_info=x['gsheet_info'], key='gsheet_name')}_{get_key_value_from_gsheet_info(gsheet_info=x['gsheet_info'], key='sheet_name')}"),
+    #                            axis=1)
+    #     df['query'].to_csv(query_path, header=False, index=None, sep='\t', mode='w', quoting=csv.QUOTE_NONE,
+    #                        escapechar=' ')
+    #
+    # def checking_image_crawler_status(self):
+    #     print("checking accuracy")
+    #     df = self.image_filter().copy()
+    #     gsheet_infos = list(set(df.gsheet_info.tolist()))
+    #     # step 1.1: checking accuracy
+    #     checking_accuracy_result = checking_image_accuracy(df=df)
+    #     accuracy_checking = list(set(checking_accuracy_result['check'].tolist()))
+    #
+    #     if accuracy_checking != [True]:
+    #         print(checking_accuracy_result[['uuid', 'check', 'status', 'crawlingtask_id']])
+    #     # Step 1.2: update data_reports if checking accuracy fail
+    #         for gsheet_info in gsheet_infos:
+    #             update_data_reports(gsheet_info=gsheet_info, status=DataReports.status_type_processing,
+    #                                 notice="check accuracy fail")
+    #     # Step 2: auto checking status
+    #     else:
+    #         print("checking accuracy correctly, now checking status")
+    #         automate_checking_status(checking_accuracy_result=checking_accuracy_result)
+    #     # Step 3: upload image cant crawl
+    #         upload_image_cant_crawl(checking_accuracy_result=checking_accuracy_result, sheet_name=self.sheet_name)
 
 
 def crawl_mp3_mp4(df: object, sheet_info: dict):
+    '''
+    Memo = not ok and url_to_add = 'none'
+    => if not existed in related_table: set valid = -10
+    => if existed in related_table:
+        - set trackid = blank and formatid = blank
+        - update trackcountlogs
+    Memo = not ok and url_to_add not null => crawl mode replace
+    Memo = added => crawl mode skip
+    '''
     row_index = df.index
     old_youtube_url_column_name = sheet_info['column_name'][2]
     datasource_format_id = sheet_info['fomatid']
@@ -494,21 +558,26 @@ if __name__ == "__main__":
     with open(query_path, "w") as f:
         f.truncate()
     urls = [
-        "https://docs.google.com/spreadsheets/d/1Ui62USL6FiN0Z6q88_jArnV18NeuaarakFfaQ1imm_c/edit#gid=1400083434",
-        "https://docs.google.com/spreadsheets/d/1tRfdBnlDZ2MgBBmKr333Rz4qZpHWkgssym9S9WoybrE/edit#gid=1055124011"
+        "https://docs.google.com/spreadsheets/d/1bzxWrpGAXi2czsEWRJuWlUO1ITNUoBK2wfBXSs24Nyk/edit#gid=1978495750",
+        "https://docs.google.com/spreadsheets/d/1ciYEVsgH-kmuutirH07n9rOG2CZPxr-M6tT0H3mTfEY/edit#gid=1541562889"
     ]
     sheet_name_ = SheetNames.ARTIST_IMAGE
     page_type_ = PageType.TopSingle
 
     # observe:
     image_working = ImageWorking(sheet_name=sheet_name_, urls=urls, page_type=page_type_)
-    # k = image_working.image_filter()
-    # creat_new_sheet_and_update_data_from_df(df=k, gsheet_id="1Ui62USL6FiN0Z6q88_jArnV18NeuaarakFfaQ1imm_c", new_sheet_name="joy xinh")
-    # print(k)
+    k = image_working.image_filter()
     # crawl:
     # image_working.crawl_image_datalake()
     # checking
     image_working.checking_image_crawler_status()
-    # checking_image_crawler_status(df=df, sheet_name_=sheet_name)
+    #
+    # observe:
+    # youtube_working = YoutubeWorking(sheet_name=sheet_name_, urls=urls, page_type=page_type_)
+
+    # youtube_working.youtube_filter()
+
+    # crawl:
+    # youtube_working.crawl_youtube_datalake()
 
     print("\n --- total time to process %s seconds ---" % (time.time() - start_time))
