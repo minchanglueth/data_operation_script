@@ -1,5 +1,7 @@
 from google_spreadsheet_api.function import get_df_from_speadsheet, get_list_of_sheet_title, update_value, \
     creat_new_sheet_and_update_data_from_df, get_gsheet_name
+from core.models.crawlingtask_action_master import V4CrawlingTaskActionMaster
+from core.models.data_source_format_master import DataSourceFormatMaster
 from core.crud.sql.datasource import get_datasourceids_from_youtube_url_and_trackid, related_datasourceid
 from core.crud.sql import artist, album, datasource
 from core.crud.get_df_from_query import get_df_from_query
@@ -16,7 +18,7 @@ import json
 from Data_lake_process.crawlingtask import crawl_youtube, crawl_image
 from Data_lake_process.class_definition import WhenExist, PageType, SheetNames, merge_file, Page, DataReports, \
     get_key_value_from_gsheet_info, add_key_value_from_gsheet_info, get_gsheet_id_from_url
-from core.models.crawlingtask_action_master import V4CrawlingTaskActionMaster
+
 import csv
 
 
@@ -64,7 +66,7 @@ def update_data_reports(gsheet_info: object, status: str = None, count_complete:
                  gsheet_id="1MHDksbs-RKXhZZ-LRgRhVy_ldAxK8lSzyoJK4sA_Uyo")
 
 
-def checking_image_accuracy(df: object):
+def checking_accuracy(df: object, actionid: str):
     df['check'] = ''
     df['status'] = ''
     df['crawlingtask_id'] = ''
@@ -75,9 +77,9 @@ def checking_image_accuracy(df: object):
         gsheet_info = df.gsheet_info.loc[i]
         gsheet_name = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key='gsheet_name')
         sheet_name = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key='sheet_name')
-        actionid = V4CrawlingTaskActionMaster.ARTIST_ALBUM_IMAGE
         PIC_taskdetail = f"{gsheet_name}_{sheet_name}"
         db_crawlingtask = get_crawlingtask_info(objectid=objectid, PIC=PIC_taskdetail, actionid=actionid)
+
         if db_crawlingtask:
             status = db_crawlingtask.status
             crawlingtask_id = db_crawlingtask.id
@@ -97,11 +99,11 @@ def checking_image_accuracy(df: object):
     return df
 
 
-def automate_checking_status(df: object):
+def automate_checking_status(df: object, actionid: str):
     gsheet_infos = list(set(df.gsheet_info.tolist()))
     count = 0
     while True and count < 300:
-        checking_accuracy_result = checking_image_accuracy(df=df)
+        checking_accuracy_result = checking_accuracy(df=df, actionid=actionid)
         result = checking_accuracy_result[
                      (checking_accuracy_result['status'] != 'complete')
                      & (checking_accuracy_result['status'] != 'incomplete')
@@ -158,6 +160,55 @@ def upload_image_cant_crawl(checking_accuracy_result: object, sheet_name: str):
         creat_new_sheet_and_update_data_from_df(df_to_upload, get_gsheet_id_from_url(url), new_sheet_name)
 
 
+def crawl_youtube_mp3_mp4(df: object, datasource_format_id: str):
+    row_index = df.index
+    with open(query_path, "a+") as f:
+        for i in row_index:
+            memo = df['memo'].loc[i]
+            new_youtube_url = df['url_to_add'].loc[i]
+            track_id = df['track_id'].loc[i]
+            old_youtube_url = df['mp3_link'].loc[i]
+            gsheet_name = get_key_value_from_gsheet_info(gsheet_info=df['gsheet_info'].loc[i], key='gsheet_name')
+            sheet_name = get_key_value_from_gsheet_info(gsheet_info=df['gsheet_info'].loc[i], key='sheet_name')
+            gsheet_id = get_key_value_from_gsheet_info(gsheet_info=df['gsheet_info'].loc[i], key='gsheet_id')
+            priority = get_key_value_from_gsheet_info(gsheet_info=df['gsheet_info'].loc[i], key='page_priority')
+
+            query = ""
+            if memo == "not ok" and new_youtube_url == "none":
+                datasourceids = get_datasourceids_from_youtube_url_and_trackid(youtube_url=old_youtube_url,
+                                                                               trackid=track_id,
+                                                                               formatid=datasource_format_id).all()
+                datasourceids_flatten_list = tuple(set(list(chain.from_iterable(datasourceids))))  # flatten list
+                if datasourceids_flatten_list:
+                    for datasourceid in datasourceids_flatten_list:
+                        related_id_datasource = related_datasourceid(datasourceid)
+                        if related_id_datasource == [(None, None, None)]:
+                            query = query + f"Update datasources set valid = -10 where id = {datasourceid};\n"
+                        else:
+                            query = query + f"UPDATE datasources SET trackid = '', FormatID = ''  where id = '{datasourceid}';\n"
+                            query = query + f"UPDATE datasources SET updatedAt = NOW() WHERE trackid = '{track_id}';\n"
+
+                else:
+                    query = query + f"-- not existed datasourceid searched by youtube_url: {old_youtube_url}, trackid:  {track_id}, format_id: {datasource_format_id} in gssheet_name: {gsheet_name}, gsheet_id: {gsheet_id}, sheet_name: {sheet_name} ;\n"
+
+            elif memo == "not ok" and new_youtube_url != "none":
+                query = query + crawl_youtube(track_id=track_id,
+                                              youtube_url=new_youtube_url,
+                                              format_id=datasource_format_id,
+                                              when_exist=WhenExist.REPLACE,
+                                              priority=priority,
+                                              pic=f"{gsheet_name}_{sheet_name}"
+                                              )
+            elif memo == "added":
+                query = query + crawl_youtube(track_id=track_id,
+                                              youtube_url=new_youtube_url,
+                                              format_id=datasource_format_id,
+                                              when_exist=WhenExist.SKIP,
+                                              priority=priority,
+                                              pic=f"{gsheet_name}_{sheet_name}")
+            f.write(query)
+
+
 def query_pandas_to_csv(df: object, column: str):
     row_index = df.index
     with open(query_path, "w") as f:
@@ -207,7 +258,8 @@ class ImageWorking:
                 object_type=get_key_value_from_gsheet_info(gsheet_info=x['gsheet_info'], key='object_type'),
                 url=x['url_to_add'], objectid=x['uuid'],
                 when_exists=when_exists,
-                pic=f"{get_key_value_from_gsheet_info(gsheet_info=x['gsheet_info'], key='gsheet_name')}_{get_key_value_from_gsheet_info(gsheet_info=x['gsheet_info'], key='sheet_name')}"),
+                pic=f"{get_key_value_from_gsheet_info(gsheet_info=x['gsheet_info'], key='gsheet_name')}_{get_key_value_from_gsheet_info(gsheet_info=x['gsheet_info'], key='sheet_name')}",
+                priority=get_key_value_from_gsheet_info(gsheet_info=df['gsheet_info'], key='page_priority')),
                                    axis=1)
             query_pandas_to_csv(df=df, column='query')
 
@@ -216,8 +268,7 @@ class ImageWorking:
         df = self.image_filter().copy()
         gsheet_infos = list(set(df.gsheet_info.tolist()))
         # step 1.1: checking accuracy
-        checking_accuracy_result = checking_image_accuracy(df=df)
-        print(checking_accuracy_result)
+        checking_accuracy_result = checking_accuracy(df=df, actionid=V4CrawlingTaskActionMaster.ARTIST_ALBUM_IMAGE)
         accuracy_checking = list(set(checking_accuracy_result['check'].tolist()))
 
         if accuracy_checking != [True]:
@@ -229,7 +280,7 @@ class ImageWorking:
         # Step 2: auto checking status
         else:
             print("checking accuracy correctly, now checking status")
-            automate_checking_status(df=df)
+            automate_checking_status(df=df, actionid=V4CrawlingTaskActionMaster.ARTIST_ALBUM_IMAGE)
             # Step 3: upload image cant crawl
             upload_image_cant_crawl(checking_accuracy_result=checking_accuracy_result, sheet_name=self.sheet_name)
 
@@ -255,23 +306,24 @@ class YoutubeWorking:
                                              keep='first').reset_index()
             return filter_df
 
-    def crawl_youtube_datalake(self):
+    def crawl_mp3_mp4_youtube_datalake(self):
+        df = self.youtube_filter()
         if self.sheet_name == SheetNames.MP3_SHEET_NAME:
-            df = self.youtube_filter()
-            print(df.head(5))
-    #     df['query'] = df.apply(lambda x: crawl_image(object_type=get_key_value_from_gsheet_info(gsheet_info=x['gsheet_info'], key='object_type'), url=x['url_to_add'], objectid=x['uuid'],
-    #                                                  when_exists=when_exists,
-    #                                                  pic=f"{get_key_value_from_gsheet_info(gsheet_info=x['gsheet_info'], key='gsheet_name')}_{get_key_value_from_gsheet_info(gsheet_info=x['gsheet_info'], key='sheet_name')}"),
-    #                            axis=1)
-    #     df['query'].to_csv(query_path, header=False, index=None, sep='\t', mode='w', quoting=csv.QUOTE_NONE,
-    #                        escapechar=' ')
-    #
-    # def checking_image_crawler_status(self):
-    #     print("checking accuracy")
-    #     df = self.image_filter().copy()
-    #     gsheet_infos = list(set(df.gsheet_info.tolist()))
-    #     # step 1.1: checking accuracy
-    #     checking_accuracy_result = checking_image_accuracy(df=df)
+            datasource_format_id = DataSourceFormatMaster.FORMAT_ID_MP3_FULL
+        elif self.sheet_name == SheetNames.MP4_SHEET_NAME:
+            datasource_format_id = DataSourceFormatMaster.FORMAT_ID_MP4_FULL
+        else:
+            pass
+        crawl_youtube_mp3_mp4(df=df, datasource_format_id=datasource_format_id)
+
+    def checking_youtube_crawler_status(self):
+        print("checking accuracy")
+        df = self.youtube_filter().copy()
+        gsheet_infos = list(set(df.gsheet_info.tolist()))
+        # step 1.1: checking accuracy
+        checking_accuracy_result = checking_accuracy(df=df)
+
+
     #     accuracy_checking = list(set(checking_accuracy_result['check'].tolist()))
     #
     #     if accuracy_checking != [True]:
@@ -561,23 +613,29 @@ if __name__ == "__main__":
         "https://docs.google.com/spreadsheets/d/1bzxWrpGAXi2czsEWRJuWlUO1ITNUoBK2wfBXSs24Nyk/edit#gid=1978495750",
         "https://docs.google.com/spreadsheets/d/1ciYEVsgH-kmuutirH07n9rOG2CZPxr-M6tT0H3mTfEY/edit#gid=1541562889"
     ]
-    sheet_name_ = SheetNames.ARTIST_IMAGE
+    sheet_name_ = SheetNames.MP3_SHEET_NAME
     page_type_ = PageType.TopSingle
 
     # observe:
-    image_working = ImageWorking(sheet_name=sheet_name_, urls=urls, page_type=page_type_)
-    k = image_working.image_filter()
+    # image_working = ImageWorking(sheet_name=sheet_name_, urls=urls, page_type=page_type_)
+    # k = image_working.image_filter()
+    # print(k)
     # crawl:
     # image_working.crawl_image_datalake()
     # checking
-    image_working.checking_image_crawler_status()
-    #
-    # observe:
-    # youtube_working = YoutubeWorking(sheet_name=sheet_name_, urls=urls, page_type=page_type_)
+    # image_working.checking_image_crawler_status()
 
-    # youtube_working.youtube_filter()
+
+
+    # observe:
+    youtube_working = YoutubeWorking(sheet_name=sheet_name_, urls=urls, page_type=page_type_)
+    youtube_working.youtube_filter()
 
     # crawl:
-    # youtube_working.crawl_youtube_datalake()
+    youtube_working.crawl_mp3_mp4_youtube_datalake()
+
+    # checking
+    # youtube_working.checking_image_crawler_status()
+
 
     print("\n --- total time to process %s seconds ---" % (time.time() - start_time))

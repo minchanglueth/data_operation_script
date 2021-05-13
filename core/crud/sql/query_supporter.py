@@ -111,10 +111,16 @@ def get_crawlingtask_youtube_info(objectid: str, PIC: str, actionid: str):
 
 
 def get_crawlingtask_info(objectid: str, PIC: str, actionid: str):
+
+    if actionid == V4CrawlingTaskActionMaster.ARTIST_ALBUM_IMAGE:
+        url = "url"
+    else:
+        url = "youtube_url"
+
     get_crawlingtask_info = (db_session.query(
         Crawlingtask.id,
         Crawlingtask.objectid,
-        func.json_extract(Crawlingtask.taskdetail, "$.url").label(
+        func.json_extract(Crawlingtask.taskdetail, f"$.{url}").label(
             "url"),
         func.json_extract(Crawlingtask.taskdetail, "$.when_exists").label(
             "when_exists"),
