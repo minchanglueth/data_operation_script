@@ -72,13 +72,17 @@ def checking_accuracy(df: object, actionid: str):
     df['crawlingtask_id'] = ''
     row_index = df.index
     for i in row_index:
-        objectid = df.uuid.loc[i]
+        if actionid == V4CrawlingTaskActionMaster.ARTIST_ALBUM_IMAGE:
+            objectid = df['uuid'].loc[i]
+        elif actionid == V4CrawlingTaskActionMaster.DOWNLOAD_VIDEO_YOUTUBE:
+            objectid = df['track_id'].loc[i]
         url = df.url_to_add.loc[i]
         gsheet_info = df.gsheet_info.loc[i]
         gsheet_name = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key='gsheet_name')
         sheet_name = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key='sheet_name')
         PIC_taskdetail = f"{gsheet_name}_{sheet_name}"
-        db_crawlingtask = get_crawlingtask_info(objectid=objectid, PIC=PIC_taskdetail, actionid=actionid)
+        # db_crawlingtask = get_crawlingtask_info(objectid=objectid, PIC=PIC_taskdetail, actionid=actionid)
+        db_crawlingtask = get_crawlingtask_info(objectid=objectid, PIC="top100albums_0305_2021", actionid=actionid)
 
         if db_crawlingtask:
             status = db_crawlingtask.status
@@ -321,21 +325,18 @@ class YoutubeWorking:
         df = self.youtube_filter().copy()
         gsheet_infos = list(set(df.gsheet_info.tolist()))
         # step 1.1: checking accuracy
-        checking_accuracy_result = checking_accuracy(df=df)
-
-
-    #     accuracy_checking = list(set(checking_accuracy_result['check'].tolist()))
-    #
-    #     if accuracy_checking != [True]:
-    #         print(checking_accuracy_result[['uuid', 'check', 'status', 'crawlingtask_id']])
-    #     # Step 1.2: update data_reports if checking accuracy fail
-    #         for gsheet_info in gsheet_infos:
-    #             update_data_reports(gsheet_info=gsheet_info, status=DataReports.status_type_processing,
-    #                                 notice="check accuracy fail")
-    #     # Step 2: auto checking status
-    #     else:
-    #         print("checking accuracy correctly, now checking status")
-    #         automate_checking_status(checking_accuracy_result=checking_accuracy_result)
+        checking_accuracy_result = checking_accuracy(df=df, actionid=V4CrawlingTaskActionMaster.DOWNLOAD_VIDEO_YOUTUBE)
+        accuracy_checking = list(set(checking_accuracy_result['check'].tolist()))
+        if accuracy_checking != [True]:
+            print(checking_accuracy_result[['uuid', 'check', 'status', 'crawlingtask_id']])
+        # Step 1.2: update data_reports if checking accuracy fail
+            for gsheet_info in gsheet_infos:
+                update_data_reports(gsheet_info=gsheet_info, status=DataReports.status_type_processing,
+                                    notice="check accuracy fail")
+        # Step 2: auto checking status
+        else:
+            print("checking accuracy correctly, now checking status")
+            automate_checking_status(df=df, actionid=V4CrawlingTaskActionMaster.DOWNLOAD_VIDEO_YOUTUBE)
     #     # Step 3: upload image cant crawl
     #         upload_image_cant_crawl(checking_accuracy_result=checking_accuracy_result, sheet_name=self.sheet_name)
 
@@ -610,7 +611,7 @@ if __name__ == "__main__":
     with open(query_path, "w") as f:
         f.truncate()
     urls = [
-        "https://docs.google.com/spreadsheets/d/1bzxWrpGAXi2czsEWRJuWlUO1ITNUoBK2wfBXSs24Nyk/edit#gid=1978495750",
+        # "https://docs.google.com/spreadsheets/d/1bzxWrpGAXi2czsEWRJuWlUO1ITNUoBK2wfBXSs24Nyk/edit#gid=1978495750",
         "https://docs.google.com/spreadsheets/d/1ciYEVsgH-kmuutirH07n9rOG2CZPxr-M6tT0H3mTfEY/edit#gid=1541562889"
     ]
     sheet_name_ = SheetNames.MP3_SHEET_NAME
@@ -632,10 +633,10 @@ if __name__ == "__main__":
     youtube_working.youtube_filter()
 
     # crawl:
-    youtube_working.crawl_mp3_mp4_youtube_datalake()
+    # youtube_working.crawl_mp3_mp4_youtube_datalake()
 
     # checking
-    # youtube_working.checking_image_crawler_status()
+    youtube_working.checking_youtube_crawler_status()
 
 
     print("\n --- total time to process %s seconds ---" % (time.time() - start_time))

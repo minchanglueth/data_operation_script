@@ -130,7 +130,10 @@ def get_crawlingtask_info(objectid: str, PIC: str, actionid: str):
         .select_from(Crawlingtask)
         .filter(Crawlingtask.objectid == objectid,
                 Crawlingtask.actionid == actionid,
-                func.json_extract(Crawlingtask.taskdetail, "$.PIC") == PIC,
+                # func.json_extract(Crawlingtask.taskdetail, "$.PIC") == PIC,
+                func.json_extract(Crawlingtask.taskdetail, "$.Justin") == PIC,
+                # to delete
+                func.json_extract(Crawlingtask.taskdetail, "$.data_source_format_id") == "1A67A5F1E0D84FB9B48234AE65086375",
                 )
         .order_by(
         Crawlingtask.created_at.desc())
@@ -171,7 +174,7 @@ if __name__ == "__main__":
     #                                                 PIC="Artist Page 20.01.2021_MP_4",
     #                                                 actionid="F91244676ACD47BD9A9048CF2BA3FFC1")
     # F405C0395ADD45F298383B782DA81066---Top 100 Album 03.05.2021_image---OA9CPKSUT6PBGI1ZHPLQUPQCGVYQ71S9
-    objectid = "F405C0395ADD45F298383B782DA81066"
+    objectid = "3344FF5492244FDFA86649D5D71A76FC"
     PIC = "Top 100 Album 03.05.2021_image"
     acctinid = "OA9CPKSUT6PBGI1ZHPLQUPQCGVYQ71S9"
 
