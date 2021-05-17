@@ -84,6 +84,36 @@ def youtube_check_box(page_name: str, df: object, sheet_name: str):
          )
          )
         ]
+    elif page_name == "NewClassic" and sheet_name == SheetNames.MP4_SHEET_NAME:
+        youtube_check_box = df[~
+        ((
+                 (df['track_id'] != '')
+                 & (df['memo'] == 'added')
+                 & (df['len'] == 43)
+                 & (df['checking_mp4'] == 'TRUE')
+                 & (df['is_released'] == 'TRUE')
+                 & (df['verified'] == 'null')
+         ) |
+         (
+                 (df['track_id'] != '')
+                 & (df['memo'] == '')
+                 & (df['url_to_add'] == '')
+                 & ~(
+                        (df['checking_mp4'] == 'TRUE')
+                     & (df['is_released'] == 'TRUE')
+                     & (df['is_released'] == 'null')
+                     )
+         ) |
+         (
+                 (df['track_id'] != '')
+                 & (df['memo'] == 'not found')
+                 & (df['len'] == 0)
+                 & (df['checking_mp4'] == 'TRUE')
+                 & (df['is_released'] == 'TRUE')
+                 & (df['verified'] == 'null')
+         )
+         )
+        ]
 
     if youtube_check_box.empty:
         print(Fore.LIGHTYELLOW_EX + f"Pass check box" + Style.RESET_ALL)
@@ -460,21 +490,21 @@ class YoutubeWorking:
         return youtube_check_box
 
     def youtube_filter(self):
-        if self.check_box():
-            df = self.original_file
-            if self.sheet_name == SheetNames.MP3_SHEET_NAME:
-                filter_df = df[((df['memo'] == 'not ok') | (df['memo'] == 'added'))  # filter df by conditions
-                               & (df['url_to_add'].notnull())
-                               & (df['url_to_add'] != '')
-                               ].drop_duplicates(subset=['track_id', 'url_to_add', 'type', 'gsheet_info'],
-                                                 keep='first').reset_index()
-            elif self.sheet_name == SheetNames.MP4_SHEET_NAME:
-                filter_df = df[((df['memo'] == 'not ok') | (df['memo'] == 'added'))  # filter df by conditions
-                               & (df['url_to_add'].notnull())
-                               & (df['url_to_add'] != '')
-                               ].drop_duplicates(subset=['track_id', 'url_to_add', 'gsheet_info'],
-                                                 keep='first').reset_index()
-                return filter_df
+        # if self.check_box():
+        df = self.original_file
+        if self.sheet_name == SheetNames.MP3_SHEET_NAME:
+            filter_df = df[((df['memo'] == 'not ok') | (df['memo'] == 'added'))  # filter df by conditions
+                           & (df['url_to_add'].notnull())
+                           & (df['url_to_add'] != '')
+                           ].drop_duplicates(subset=['track_id', 'url_to_add', 'type', 'gsheet_info'],
+                                             keep='first').reset_index()
+        elif self.sheet_name == SheetNames.MP4_SHEET_NAME:
+            filter_df = df[((df['memo'] == 'not ok') | (df['memo'] == 'added'))  # filter df by conditions
+                           & (df['url_to_add'].notnull())
+                           & (df['url_to_add'] != '')
+                           ].drop_duplicates(subset=['track_id', 'url_to_add', 'gsheet_info'],
+                                             keep='first').reset_index()
+        return filter_df
 
     def crawl_mp3_mp4_youtube_datalake(self):
         df = self.youtube_filter()
@@ -691,18 +721,12 @@ if __name__ == "__main__":
     with open(query_path, "w") as f:
         f.truncate()
     urls = [
-        "https://docs.google.com/spreadsheets/d/17oTEIcl8BFiUcD75Qq0JtI7MO1VqMax3Re7nQQ_SIgI/edit#gid=0",
+        "https://docs.google.com/spreadsheets/d/1VUAvyI_wRmcFuGWdyDMmMeG-y2oVreBPUIM-H-0-6kY/edit#gid=2131626694",
         # "https://docs.google.com/spreadsheets/d/1ciYEVsgH-kmuutirH07n9rOG2CZPxr-M6tT0H3mTfEY/edit#gid=1541562889"
     ]
 
-    sheet_name_ = SheetNames.MP4_SHEET_NAME
+    sheet_name_ = SheetNames.MP3_SHEET_NAME
     page_type_ = PageType.TopSingle
-
-    # joy_xinh = YoutubeWorking(sheet_name=sheet_name_, urls=urls, page_type=page_type_)
-    # joy_xinh.check_box()
-    # k = joy_xinh.original_file
-
-    # print(k.head(10))
 
     control_flow = ControlFlow(sheet_name=sheet_name_, urls=urls, page_type=page_type_)
     # check_box:
