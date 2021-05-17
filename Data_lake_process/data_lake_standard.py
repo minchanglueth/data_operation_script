@@ -242,7 +242,7 @@ def crawl_youtube_mp4(df: object):
             memo = df['memo'].loc[i]
             new_youtube_url = df['url_to_add'].loc[i]
             track_id = df['track_id'].loc[i]
-            old_youtube_url = df['mp3_link'].loc[i]
+            old_youtube_url = df['mp4_link'].loc[i]
             gsheet_name = get_key_value_from_gsheet_info(gsheet_info=df['gsheet_info'].loc[i], key='gsheet_name')
             sheet_name_ = get_key_value_from_gsheet_info(gsheet_info=df['gsheet_info'].loc[i], key='sheet_name')
             gsheet_id = get_key_value_from_gsheet_info(gsheet_info=df['gsheet_info'].loc[i], key='gsheet_id')
@@ -461,12 +461,18 @@ class YoutubeWorking:
 
     def youtube_filter(self):
         if self.check_box():
+            df = self.original_file
             if self.sheet_name == SheetNames.MP3_SHEET_NAME:
-                df = self.original_file
                 filter_df = df[((df['memo'] == 'not ok') | (df['memo'] == 'added'))  # filter df by conditions
                                & (df['url_to_add'].notnull())
                                & (df['url_to_add'] != '')
                                ].drop_duplicates(subset=['track_id', 'url_to_add', 'type', 'gsheet_info'],
+                                                 keep='first').reset_index()
+            elif self.sheet_name == SheetNames.MP4_SHEET_NAME:
+                filter_df = df[((df['memo'] == 'not ok') | (df['memo'] == 'added'))  # filter df by conditions
+                               & (df['url_to_add'].notnull())
+                               & (df['url_to_add'] != '')
+                               ].drop_duplicates(subset=['track_id', 'url_to_add', 'gsheet_info'],
                                                  keep='first').reset_index()
                 return filter_df
 
@@ -703,11 +709,11 @@ if __name__ == "__main__":
     # joy_xinh = control_flow.check_box()
 
     # observe:
-    k = control_flow.observe()
-    print(k)
+    # k = control_flow.observe()
+    # print(k)
 
     # crawl:
-    # control_flow.crawl()
+    control_flow.crawl()
 
     # # checking
     # control_flow.checking()
