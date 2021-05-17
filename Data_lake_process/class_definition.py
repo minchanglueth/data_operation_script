@@ -59,11 +59,11 @@ class SheetNames:
 class PageType:
     class NewClassic:
         name = "NewClassic"
-        priority = 999
+        priority = 998
 
     class TopSingle:
         name = "TopSingle"
-        priority = 19
+        priority = 999
 
 
 class Page(object):
@@ -80,10 +80,12 @@ class Page(object):
             sheet_names = get_list_of_sheet_title(gsheet_id=gsheet_id)
             if "MP_3" in sheet_names:
                 self.MP3_SHEET_NAME = {"sheet_name": "MP_3", "fomatid": DataSourceFormatMaster.FORMAT_ID_MP3_FULL,
-                                       "column_name": ["track_id", "memo", "mp3_link", "url_to_add", "type"]}
+                                       "column_name": ["track_id", "memo", "mp3_link", "url_to_add", "type",
+                                                       "checking_mp3", "already_existed"]}
             if "MP_4" in sheet_names:
                 self.MP4_SHEET_NAME = {"sheet_name": "MP_4", "fomatid": DataSourceFormatMaster.FORMAT_ID_MP4_FULL,
-                                       "column_name": ["track_id", "memo", "mp4_link", "url_to_add"]}
+                                       "column_name": ["track_id", "memo", "mp4_link", "url_to_add", "checking_mp4",
+                                                       "already_existed"]}
             if "Version_done" in sheet_names:
                 self.VERSION_SHEET_NAME = {"sheet_name": "Version_done",
                                            "fomatid": [DataSourceFormatMaster.FORMAT_ID_MP4_REMIX,
@@ -91,7 +93,8 @@ class Page(object):
                                            "column_name": ["track_id", "remix_url", "remix_artist", "live_url",
                                                            "live_venue", "live_year"]}
             if f"{SheetNames.ARTIST_IMAGE} cant upload" in list_of_sheet_title:
-                if get_df_from_speadsheet(gsheet_id, f"{SheetNames.ARTIST_IMAGE} cant upload").values.tolist() == [['Upload thành công 100% nhé các em ^ - ^']]:
+                if get_df_from_speadsheet(gsheet_id, f"{SheetNames.ARTIST_IMAGE} cant upload").values.tolist() == [
+                    ['Upload thành công 100% nhé các em ^ - ^']]:
                     pass
                 else:
                     sheet_name = f"{SheetNames.ARTIST_IMAGE} cant upload"
@@ -137,46 +140,40 @@ class Page(object):
                                       "live_year"]}
         '''
         sheet_name = sheet_info.get('sheet_name')
-        column_name = sheet_info.get('column_name')
+        column_names = sheet_info.get('column_name')
+        df = get_df_from_speadsheet(gsheet_id=self.gsheet_id, sheet_name=sheet_name)
+
+        lower_names = [name.lower() for name in df.columns]
+        df.columns = lower_names
+
         if sheet_name in get_list_of_sheet_title(gsheet_id=self.gsheet_id):
-            df = get_df_from_speadsheet(gsheet_id=self.gsheet_id, sheet_name=sheet_name)
             # reformat_column_name
-            df.columns = df.columns.str.replace('Track_id', 'track_id')
-            df.columns = df.columns.str.replace('Track id', 'track_id')
+            df.columns = df.columns.str.replace('track_id', 'track_id')
             df.columns = df.columns.str.replace('track id', 'track_id')
-            df.columns = df.columns.str.replace('TrackId', 'track_id')
+            df.columns = df.columns.str.replace('trackid', 'track_id')
 
-            df.columns = df.columns.str.replace('Memo', 'memo')
             df.columns = df.columns.str.replace('s12', 'memo')
-            df.columns = df.columns.str.replace('A12', 'memo')
+            df.columns = df.columns.str.replace('a12', 'memo')
 
-            df.columns = df.columns.str.replace('Type', 'type')
-
-            df.columns = df.columns.str.replace('Mp3_link', 'mp3_link')
-            df.columns = df.columns.str.replace('MP3_link', 'mp3_link')
-            df.columns = df.columns.str.replace('MP3link', 'mp3_link')
-            df.columns = df.columns.str.replace('MP4_link', 'mp4_link')
-            df.columns = df.columns.str.replace('MP4link', 'mp4_link')
-            df.columns = df.columns.str.replace('Mp4_link', 'mp4_link')
+            df.columns = df.columns.str.replace('mp3_link', 'mp3_link')
+            df.columns = df.columns.str.replace('mp3link', 'mp3_link')
+            df.columns = df.columns.str.replace('mp4_link', 'mp4_link')
+            df.columns = df.columns.str.replace('mp4link', 'mp4_link')
 
             df.columns = df.columns.str.replace('url to add', 'url_to_add')
-            df.columns = df.columns.str.replace('Url to add', 'url_to_add')
             df.columns = df.columns.str.replace('artist_url_to_add', 'url_to_add')
 
-            df.columns = df.columns.str.replace('Remix_url', 'remix_url')
-            df.columns = df.columns.str.replace('Remix_artist', 'remix_artist')
-            df.columns = df.columns.str.replace('Live_url', 'live_url')
-            df.columns = df.columns.str.replace('Live_venue', 'live_venue')
-            df.columns = df.columns.str.replace('Live_year', 'live_year')
-
-            df.columns = df.columns.str.replace('Uuid', 'uuid')
-            df.columns = df.columns.str.replace('Artist_UUID', 'uuid')
+            df.columns = df.columns.str.replace('artist_uuid', 'uuid')
             df.columns = df.columns.str.replace('objectid', 'uuid')
 
-            df.columns = df.columns.str.replace('Content_to_add', 'content_to_add')
             df.columns = df.columns.str.replace('content tomadd', 'content_to_add')
 
-            df = df[column_name]
+            df_columns = df.columns
+            column_name_reformat = []
+            for column_name in column_names:
+                if column_name in df_columns:
+                    column_name_reformat.append(column_name)
+            df = df[column_name_reformat]
             return df
         else:
             print(f"sheet_name: {sheet_name} not have")
@@ -217,14 +214,16 @@ if __name__ == "__main__":
     start_time = time.time()
     pd.set_option("display.max_rows", None, "display.max_columns", 50, 'display.width', 1000)
     urls = [
-        "https://docs.google.com/spreadsheets/d/1Ui62USL6FiN0Z6q88_jArnV18NeuaarakFfaQ1imm_c/edit#gid=1400083434",
-        "https://docs.google.com/spreadsheets/d/1tRfdBnlDZ2MgBBmKr333Rz4qZpHWkgssym9S9WoybrE/edit#gid=1055124011"
+        "https://docs.google.com/spreadsheets/d/17oTEIcl8BFiUcD75Qq0JtI7MO1VqMax3Re7nQQ_SIgI/edit#gid=0",
+        # "https://docs.google.com/spreadsheets/d/1tRfdBnlDZ2MgBBmKr333Rz4qZpHWkgssym9S9WoybrE/edit#gid=1055124011"
     ]
-    sheet_name = SheetNames.ARTIST_IMAGE
-    page_type = PageType.TopSingle
-    k = merge_file(sheet_name=sheet_name, urls=urls, page_type=page_type)
-    print(k)
+    url = "https://docs.google.com/spreadsheets/d/17oTEIcl8BFiUcD75Qq0JtI7MO1VqMax3Re7nQQ_SIgI/edit#gid=0"
+    sheet_name = SheetNames.MP3_SHEET_NAME
+    # page_type = PageType.TopSingle
+    joy = Page(url=url)
+    sheet_info = getattr(joy.sheet_name_type, sheet_name)
+    k = joy.process_file(sheet_info=sheet_info)
 
-
+    # print(k)
 
     print("\n --- total time to process %s seconds ---" % (time.time() - start_time))
