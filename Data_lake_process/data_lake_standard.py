@@ -599,44 +599,71 @@ def process_S_11(urls: list, sheet_info: dict):
     return S_11_df
 
 
+# def control_flow(sheet_name: str, urls: list, page_tye: object):
+#     if sheet_name ==SheetNames.MP3_SHEET_NAME:
+#         image_working = ImageWorking(sheet_name=sheet_name_, urls=urls, page_type=page_type_)
+
+class ControlFlow:
+    def __init__(self, sheet_name: str, urls: list, page_type: object):
+        self.page_type = page_type
+        self.urls = urls
+        self.sheet_name = sheet_name
+
+    def observe(self):
+        if self.sheet_name in (SheetNames.ARTIST_IMAGE, SheetNames.ALBUM_IMAGE):
+            image_working = ImageWorking(sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type)
+            image_filter = image_working.image_filter()
+            return image_filter
+        elif self.sheet_name in (SheetNames.MP3_SHEET_NAME, SheetNames.MP4_SHEET_NAME):
+            youtube_working = YoutubeWorking(sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type)
+            youtube_filter = youtube_working.youtube_filter()
+            return youtube_filter
+
+    def crawl(self):
+        if self.sheet_name in (SheetNames.ARTIST_IMAGE, SheetNames.ALBUM_IMAGE):
+            image_working = ImageWorking(sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type)
+            image_working.crawl_image_datalake()
+
+        elif self.sheet_name in (SheetNames.MP3_SHEET_NAME, SheetNames.MP4_SHEET_NAME):
+            youtube_working = YoutubeWorking(sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type)
+            youtube_working.crawl_mp3_mp4_youtube_datalake()
+
+
+
 if __name__ == "__main__":
     start_time = time.time()
-
-    # k = {'url': 'https://docs.google.com/spreadsheets/d/1tRfdBnlDZ2MgBBmKr333Rz4qZpHWkgssym9S9WoybrE',
-    #  'gsheet_id': '1tRfdBnlDZ2MgBBmKr333Rz4qZpHWkgssym9S9WoybrE', 'gsheet_name': 'Top 100 Albums 26.04.2021',
-    #  'sheet_name': 'image', 'page_type': 'top_single', 'page_priority': 19}
-    # joy = get_key_value_from_gsheet_info(k, 'sheet_name')
 
     pd.set_option("display.max_rows", None, "display.max_columns", 30, 'display.width', 500)
     with open(query_path, "w") as f:
         f.truncate()
     urls = [
-        # "https://docs.google.com/spreadsheets/d/1bzxWrpGAXi2czsEWRJuWlUO1ITNUoBK2wfBXSs24Nyk/edit#gid=1978495750",
+        "https://docs.google.com/spreadsheets/d/1bzxWrpGAXi2czsEWRJuWlUO1ITNUoBK2wfBXSs24Nyk/edit#gid=1978495750",
         "https://docs.google.com/spreadsheets/d/1ciYEVsgH-kmuutirH07n9rOG2CZPxr-M6tT0H3mTfEY/edit#gid=1541562889"
     ]
+
     sheet_name_ = SheetNames.MP3_SHEET_NAME
     page_type_ = PageType.TopSingle
 
     # observe:
-    # image_working = ImageWorking(sheet_name=sheet_name_, urls=urls, page_type=page_type_)
-    # k = image_working.image_filter()
-    # print(k)
+    control_flow = ControlFlow(sheet_name=sheet_name_, urls=urls, page_type=page_type_)
+    k = control_flow.observe()
+    print(k)
     # crawl:
-    # image_working.crawl_image_datalake()
+    control_flow.crawl()
+
     # checking
     # image_working.checking_image_crawler_status()
 
 
 
     # observe:
-    youtube_working = YoutubeWorking(sheet_name=sheet_name_, urls=urls, page_type=page_type_)
-    youtube_working.youtube_filter()
+    # youtube_working = YoutubeWorking(sheet_name=sheet_name_, urls=urls, page_type=page_type_).youtube_filter()
+
 
     # crawl:
     # youtube_working.crawl_mp3_mp4_youtube_datalake()
 
     # checking
-    youtube_working.checking_youtube_crawler_status()
-
+    # youtube_working.checking_youtube_crawler_status()
 
     print("\n --- total time to process %s seconds ---" % (time.time() - start_time))

@@ -219,7 +219,6 @@ if __name__ == "__main__":
     urls = [
         "https://docs.google.com/spreadsheets/d/1Ui62USL6FiN0Z6q88_jArnV18NeuaarakFfaQ1imm_c/edit#gid=1400083434",
         "https://docs.google.com/spreadsheets/d/1tRfdBnlDZ2MgBBmKr333Rz4qZpHWkgssym9S9WoybrE/edit#gid=1055124011"
-
     ]
     sheet_name = SheetNames.ARTIST_IMAGE
     page_type = PageType.TopSingle
