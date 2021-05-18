@@ -2,7 +2,7 @@ from google_spreadsheet_api.function import get_df_from_speadsheet, get_list_of_
     creat_new_sheet_and_update_data_from_df, get_gsheet_name
 from core.models.crawlingtask_action_master import V4CrawlingTaskActionMaster
 from core.models.data_source_format_master import DataSourceFormatMaster
-from core.crud.sql.datasource import get_datasourceids_from_youtube_url_and_trackid, related_datasourceid
+
 from core.crud.sql import artist, album, datasource
 from core.crud.get_df_from_query import get_df_from_query
 from core.crud.sql.query_supporter import get_crawlingtask_youtube_info, get_crawlingtask_info, \
@@ -12,142 +12,12 @@ import numpy as np
 import time
 from datetime import datetime
 from core import query_path
-from itertools import chain
 from colorama import Fore, Style
 import json
-from Data_lake_process.crawlingtask import crawl_youtube, crawl_image
+from Data_lake_process.crawlingtask import crawl_image, crawl_youtube_mp3, crawl_youtube_mp4
 from Data_lake_process.class_definition import WhenExist, PageType, SheetNames, merge_file, Page, DataReports, \
     get_key_value_from_gsheet_info, add_key_value_from_gsheet_info, get_gsheet_id_from_url
-
-import csv
-
-
-class mp3_type:
-    C = 'c'
-    D = 'd'
-    Z = 'z'
-
-
-def youtube_check_box(page_name: str, df: object, sheet_name: str):
-    df['len'] = df['url_to_add'].apply(lambda x: len(x))
-
-    if page_name in  ("TopSingle", "TopAlbum") and sheet_name == SheetNames.MP3_SHEET_NAME:
-        youtube_check_box = df[~
-        ((
-                 (df['track_id'] != '')
-                 & (df['memo'] == 'added')
-                 & (df['len'] == 43)
-                 & (df['type'].isin(["c", "d", "z"]))
-                 & (df['checking_mp3'] == 'TRUE')
-                 & (df['already_existed'] == 'null')
-         ) |
-         (
-                 (df['track_id'] != '')
-                 & (df['memo'] == '')
-                 & (df['url_to_add'] == '')
-                 & (df['type'] == '')
-                 & ~((df['checking_mp3'] == 'TRUE')
-                     & (df['already_existed'] == 'null'))
-         ) |
-         (
-                 (df['track_id'] != '')
-                 & (df['memo'] == 'not found')
-                 & (df['len'] == 0)
-                 & (df['checking_mp3'] == 'TRUE')
-                 & (df['already_existed'] == 'null')
-         )
-         )
-        ]
-    elif page_name == "NewClassic" and sheet_name == SheetNames.MP3_SHEET_NAME:
-        youtube_check_box = df[~
-        ((
-                 (df['track_id'] != '')
-                 & (df['memo'] == 'added')
-                 & (df['len'] == 43)
-                 & (df['type'].isin(["c", "d", "z"]))
-                 & (df['checking_mp3'] == 'TRUE')
-                 # & (df['is_released'] == 'null')
-         ) |
-         (
-                 (df['track_id'] != '')
-                 & (df['memo'] == '')
-                 & (df['url_to_add'] == '')
-                 & (df['type'] == '')
-                 & ~((df['checking_mp3'] == 'TRUE')
-                     & (df['already_existed'] == 'null'))
-         ) |
-         (
-                 (df['track_id'] != '')
-                 & (df['memo'] == 'not found')
-                 & (df['len'] == 0)
-                 & (df['checking_mp3'] == 'TRUE')
-                 & (df['already_existed'] == 'null')
-         )
-         )
-        ]
-    elif page_name == "TopSingle" and sheet_name == SheetNames.MP4_SHEET_NAME:
-        youtube_check_box = df[~
-        ((
-                 (df['track_id'] != '')
-                 & (df['memo'] == 'added')
-                 & (df['len'] == 43)
-                 & (df['checking_mp4'] == 'TRUE')
-                 # & (df['already_existed'] == 'null')
-         ) |
-         (
-                 (df['track_id'] != '')
-                 & (df['memo'] == '')
-                 & (df['url_to_add'] == '')
-                 & ~((df['checking_mp4'] == 'TRUE')
-                     # & (df['already_existed'] == 'null')
-                     )
-         ) |
-         (
-                 (df['track_id'] != '')
-                 & (df['memo'] == 'not found')
-                 & (df['len'] == 0)
-                 & (df['checking_mp4'] == 'TRUE')
-                 # & (df['already_existed'] == 'null')
-         )
-         )
-        ]
-    elif page_name == "NewClassic" and sheet_name == SheetNames.MP4_SHEET_NAME:
-        youtube_check_box = df[~
-        ((
-                 (df['track_id'] != '')
-                 & (df['memo'] == 'added')
-                 & (df['len'] == 43)
-                 & (df['checking_mp4'] == 'TRUE')
-                 & (df['is_released'] == 'TRUE')
-                 & (df['verified'] == 'null')
-         ) |
-         (
-                 (df['track_id'] != '')
-                 & (df['memo'] == '')
-                 & (df['url_to_add'] == '')
-                 & ~(
-                        (df['checking_mp4'] == 'TRUE')
-                     & (df['is_released'] == 'TRUE')
-                     & (df['is_released'] == 'null')
-                     )
-         ) |
-         (
-                 (df['track_id'] != '')
-                 & (df['memo'] == 'not found')
-                 & (df['len'] == 0)
-                 & (df['checking_mp4'] == 'TRUE')
-                 & (df['is_released'] == 'TRUE')
-                 & (df['verified'] == 'null')
-         )
-         )
-        ]
-
-    if youtube_check_box.empty:
-        print(Fore.LIGHTYELLOW_EX + f"Pass check box" + Style.RESET_ALL)
-        return True
-    else:
-        print(youtube_check_box)
-        return False
+from Data_lake_process.new_check_box_standard import youtube_check_box
 
 
 def automate_check_status(gsheet_name: str, sheet_name: str, actionid: str):
@@ -321,138 +191,6 @@ def upload_youtube_cant_crawl(checking_accuracy_result: object, sheet_name: str)
         creat_new_sheet_and_update_data_from_df(df_to_upload, get_gsheet_id_from_url(url), new_sheet_name)
 
 
-def crawl_youtube_mp4(df: object):
-    row_index = df.index
-    with open(query_path, "a+") as f:
-        for i in row_index:
-            memo = df['memo'].loc[i]
-            new_youtube_url = df['url_to_add'].loc[i]
-            track_id = df['track_id'].loc[i]
-            old_youtube_url = df['mp4_link'].loc[i]
-            gsheet_name = get_key_value_from_gsheet_info(gsheet_info=df['gsheet_info'].loc[i], key='gsheet_name')
-            sheet_name_ = get_key_value_from_gsheet_info(gsheet_info=df['gsheet_info'].loc[i], key='sheet_name')
-            gsheet_id = get_key_value_from_gsheet_info(gsheet_info=df['gsheet_info'].loc[i], key='gsheet_id')
-            priority = get_key_value_from_gsheet_info(gsheet_info=df['gsheet_info'].loc[i], key='page_priority')
-
-            query = ""
-            if memo == "not ok" and new_youtube_url == "none":
-                datasourceids = get_datasourceids_from_youtube_url_and_trackid(youtube_url=old_youtube_url,
-                                                                               trackid=track_id,
-                                                                               formatid=DataSourceFormatMaster.FORMAT_ID_MP4_FULL).all()
-                datasourceids_flatten_list = tuple(set(list(chain.from_iterable(datasourceids))))  # flatten list
-                if datasourceids_flatten_list:
-                    for datasourceid in datasourceids_flatten_list:
-                        related_id_datasource = related_datasourceid(datasourceid)
-                        if related_id_datasource == [(None, None, None)]:
-                            query = query + f"Update datasources set valid = -10 where id = {datasourceid};\n"
-                        else:
-                            query = query + f"UPDATE datasources SET trackid = '', FormatID = ''  where id = '{datasourceid}';\n"
-                            query = query + f"UPDATE datasources SET updatedAt = NOW() WHERE trackid = '{track_id}';\n"
-
-                else:
-                    query = query + f"-- not existed datasourceid searched by youtube_url: {old_youtube_url}, trackid:  {track_id}, format_id: {DataSourceFormatMaster.FORMAT_ID_MP4_FULL} in gssheet_name: {gsheet_name}, gsheet_id: {gsheet_id}, sheet_name: {sheet_name_} ;\n"
-
-            elif memo == "not ok" and new_youtube_url != "none":
-                query = query + crawl_youtube(track_id=track_id,
-                                              youtube_url=new_youtube_url,
-                                              format_id=DataSourceFormatMaster.FORMAT_ID_MP4_FULL,
-                                              when_exist=WhenExist.REPLACE,
-                                              priority=priority,
-                                              pic=f"{gsheet_name}_{sheet_name_}"
-                                              )
-            elif memo == "added":
-                query = query + crawl_youtube(track_id=track_id,
-                                              youtube_url=new_youtube_url,
-                                              format_id=DataSourceFormatMaster.FORMAT_ID_MP4_FULL,
-                                              when_exist=WhenExist.SKIP,
-                                              priority=priority,
-                                              pic=f"{gsheet_name}_{sheet_name_}")
-            f.write(query)
-
-
-def crawl_youtube_mp3(df: object):
-    print(df.head(10))
-    row_index = df.index
-    with open(query_path, "a+") as f:
-        for i in row_index:
-            memo = df['memo'].loc[i]
-            new_youtube_url = df['url_to_add'].loc[i]
-            track_id = df['track_id'].loc[i]
-            old_youtube_url = df['mp3_link'].loc[i]
-            gsheet_name = get_key_value_from_gsheet_info(gsheet_info=df['gsheet_info'].loc[i], key='gsheet_name')
-            sheet_name_ = get_key_value_from_gsheet_info(gsheet_info=df['gsheet_info'].loc[i], key='sheet_name')
-            gsheet_id = get_key_value_from_gsheet_info(gsheet_info=df['gsheet_info'].loc[i], key='gsheet_id')
-            priority = get_key_value_from_gsheet_info(gsheet_info=df['gsheet_info'].loc[i], key='page_priority')
-            type = df['type'].loc[i]
-            query = ""
-            if memo == "not ok" and new_youtube_url == "none":
-                datasourceids = get_datasourceids_from_youtube_url_and_trackid(youtube_url=old_youtube_url,
-                                                                               trackid=track_id,
-                                                                               formatid=DataSourceFormatMaster.FORMAT_ID_MP3_FULL).all()
-                datasourceids_flatten_list = tuple(set(list(chain.from_iterable(datasourceids))))  # flatten list
-                if datasourceids_flatten_list:
-                    for datasourceid in datasourceids_flatten_list:
-                        related_id_datasource = related_datasourceid(datasourceid)
-                        if related_id_datasource == [(None, None, None)]:
-                            query = query + f"Update datasources set valid = -10 where id = {datasourceid};\n"
-                        else:
-                            query = query + f"UPDATE datasources SET trackid = '', FormatID = ''  where id = '{datasourceid}';\n"
-                            query = query + f"UPDATE datasources SET updatedAt = NOW() WHERE trackid = '{track_id}';\n"
-
-                else:
-                    query = query + f"-- not existed datasourceid searched by youtube_url: {old_youtube_url}, trackid:  {track_id}, format_id: {DataSourceFormatMaster.FORMAT_ID_MP3_FULL} in gssheet_name: {gsheet_name}, gsheet_id: {gsheet_id}, sheet_name: {sheet_name_} ;\n"
-
-            elif memo == "not ok" and new_youtube_url != "none":
-                query = query + crawl_youtube(track_id=track_id,
-                                              youtube_url=new_youtube_url,
-                                              format_id=DataSourceFormatMaster.FORMAT_ID_MP3_FULL,
-                                              when_exist=WhenExist.REPLACE,
-                                              priority=priority,
-                                              pic=f"{gsheet_name}_{sheet_name_}"
-                                              )
-                if type in (mp3_type.C, mp3_type.Z):
-                    query = query + crawl_youtube(track_id=track_id,
-                                                  youtube_url=new_youtube_url,
-                                                  format_id=DataSourceFormatMaster.FORMAT_ID_MP4_STATIC,
-                                                  when_exist=WhenExist.SKIP,
-                                                  priority=priority,
-                                                  pic=f"{gsheet_name}_{sheet_name_}"
-                                                  )
-                elif type == mp3_type.D:
-                    query = query + crawl_youtube(track_id=track_id,
-                                                  youtube_url=new_youtube_url,
-                                                  format_id=DataSourceFormatMaster.FORMAT_ID_MP4_LYRIC,
-                                                  when_exist=WhenExist.SKIP,
-                                                  priority=priority,
-                                                  pic=f"{gsheet_name}_{sheet_name_}"
-                                                  )
-
-            elif memo == "added":
-                query = query + crawl_youtube(track_id=track_id,
-                                              youtube_url=new_youtube_url,
-                                              format_id=DataSourceFormatMaster.FORMAT_ID_MP3_FULL,
-                                              when_exist=WhenExist.SKIP,
-                                              priority=priority,
-                                              pic=f"{gsheet_name}_{sheet_name_}")
-                if type in (mp3_type.C, mp3_type.Z):
-                    query = query + crawl_youtube(track_id=track_id,
-                                                  youtube_url=new_youtube_url,
-                                                  format_id=DataSourceFormatMaster.FORMAT_ID_MP4_STATIC,
-                                                  when_exist=WhenExist.SKIP,
-                                                  priority=priority,
-                                                  pic=f"{gsheet_name}_{sheet_name_}"
-                                                  )
-                elif type == mp3_type.D:
-                    query = query + crawl_youtube(track_id=track_id,
-                                                  youtube_url=new_youtube_url,
-                                                  format_id=DataSourceFormatMaster.FORMAT_ID_MP4_LYRIC,
-                                                  when_exist=WhenExist.SKIP,
-                                                  priority=priority,
-                                                  pic=f"{gsheet_name}_{sheet_name_}"
-                                                  )
-            f.write(query)
-
-
 def query_pandas_to_csv(df: object, column: str):
     row_index = df.index
     with open(query_path, "w") as f:
@@ -498,12 +236,20 @@ class ImageWorking:
         if df.empty:
             print(Fore.LIGHTYELLOW_EX + f"Image file is empty" + Style.RESET_ALL)
         else:
-            df['query'] = df.apply(lambda x: crawl_image(
-                object_type=get_key_value_from_gsheet_info(gsheet_info=x['gsheet_info'], key='object_type'),
-                url=x['url_to_add'], objectid=x['uuid'],
-                when_exists=when_exists,
-                pic=f"{get_key_value_from_gsheet_info(gsheet_info=x['gsheet_info'], key='gsheet_name')}_{get_key_value_from_gsheet_info(gsheet_info=x['gsheet_info'], key='sheet_name')}",
-                priority=get_key_value_from_gsheet_info(gsheet_info=df['gsheet_info'], key='page_priority')),
+            # row_index = df.index
+            # for i in row_index:
+            #     gsheet_info = df['gsheet_info'].loc[i]
+            #     k = get_key_value_from_gsheet_info(gsheet_info= gsheet_info, key='object_type')
+
+            df['query'] = df.apply(lambda x:
+                                   crawl_image(
+                                                object_type=get_key_value_from_gsheet_info(gsheet_info=x['gsheet_info'], key='object_type'),
+                                                url=x['url_to_add'],
+                                                objectid=x['uuid'],
+                                                when_exists=when_exists,
+                                                pic=f"{get_key_value_from_gsheet_info(gsheet_info=x['gsheet_info'], key='gsheet_name')}_{get_key_value_from_gsheet_info(gsheet_info=x['gsheet_info'], key='sheet_name')}",
+                                                priority=get_key_value_from_gsheet_info(gsheet_info=x['gsheet_info'], key='page_priority')
+                                   ),
                                    axis=1)
             query_pandas_to_csv(df=df, column='query')
 
@@ -542,7 +288,6 @@ class YoutubeWorking:
 
     def check_box(self):
         df = self.original_file
-        print(df.head(10))
         youtube_check_box(page_name=getattr(self.page_type, "name"), df=df, sheet_name=self.sheet_name)
         return youtube_check_box
 
@@ -589,7 +334,7 @@ class YoutubeWorking:
         else:
             print("checking accuracy correctly, now checking status")
             automate_checking_status(df=df, actionid=V4CrawlingTaskActionMaster.DOWNLOAD_VIDEO_YOUTUBE)
-    #     # Step 3: upload image cant crawl
+            #     # Step 3: upload image cant crawl
             upload_youtube_cant_crawl(checking_accuracy_result=checking_accuracy_result, sheet_name=self.sheet_name)
 
 
@@ -779,6 +524,7 @@ if __name__ == "__main__":
     urls = [
         "https://docs.google.com/spreadsheets/d/1ObRuqHnlqJmG4tSNGL4pPAOG68Vc-UJ21xPiiSqrLnM/edit#gid=1243216497",
         "https://docs.google.com/spreadsheets/d/1h7zUrDTuUOVtrkJJ6E80yULde7Albz_ls_lvW8XIoV8/edit#gid=1509447487"
+        # "https://docs.google.com/spreadsheets/d/1VUAvyI_wRmcFuGWdyDMmMeG-y2oVreBPUIM-H-0-6kY/edit#gid=2131626694"
     ]
 
     sheet_name_ = SheetNames.ARTIST_IMAGE
@@ -786,14 +532,14 @@ if __name__ == "__main__":
 
     control_flow = ControlFlow(sheet_name=sheet_name_, urls=urls, page_type=page_type_)
     # check_box:
-    # joy_xinh = control_flow.check_box()
+    # control_flow.check_box()
 
     # observe:
-    k = control_flow.observe()
-    print(k)
+    # k = control_flow.observe()
+    # print(k)
 
     # crawl:
-    # control_flow.crawl()
+    control_flow.crawl()
 
     # # checking
     # control_flow.checking()
