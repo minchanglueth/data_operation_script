@@ -130,10 +130,9 @@ def get_crawlingtask_info(objectid: str, PIC: str, actionid: str):
         .select_from(Crawlingtask)
         .filter(Crawlingtask.objectid == objectid,
                 Crawlingtask.actionid == actionid,
-                # func.json_extract(Crawlingtask.taskdetail, "$.PIC") == PIC,
-                func.json_extract(Crawlingtask.taskdetail, "$.Justin") == PIC,
+                func.json_extract(Crawlingtask.taskdetail, "$.PIC") == PIC,
                 # to delete
-                func.json_extract(Crawlingtask.taskdetail, "$.data_source_format_id") == "1A67A5F1E0D84FB9B48234AE65086375",
+                # func.json_extract(Crawlingtask.taskdetail, "$.data_source_format_id") == "1A67A5F1E0D84FB9B48234AE65086375",
                 )
         .order_by(
         Crawlingtask.created_at.desc())

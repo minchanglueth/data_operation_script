@@ -31,7 +31,7 @@ class mp3_type:
 def youtube_check_box(page_name: str, df: object, sheet_name: str):
     df['len'] = df['url_to_add'].apply(lambda x: len(x))
 
-    if page_name == "TopSingle" and sheet_name == SheetNames.MP3_SHEET_NAME:
+    if page_name in  ("TopSingle", "TopAlbum") and sheet_name == SheetNames.MP3_SHEET_NAME:
         youtube_check_box = df[~
         ((
                  (df['track_id'] != '')
@@ -40,6 +40,33 @@ def youtube_check_box(page_name: str, df: object, sheet_name: str):
                  & (df['type'].isin(["c", "d", "z"]))
                  & (df['checking_mp3'] == 'TRUE')
                  & (df['already_existed'] == 'null')
+         ) |
+         (
+                 (df['track_id'] != '')
+                 & (df['memo'] == '')
+                 & (df['url_to_add'] == '')
+                 & (df['type'] == '')
+                 & ~((df['checking_mp3'] == 'TRUE')
+                     & (df['already_existed'] == 'null'))
+         ) |
+         (
+                 (df['track_id'] != '')
+                 & (df['memo'] == 'not found')
+                 & (df['len'] == 0)
+                 & (df['checking_mp3'] == 'TRUE')
+                 & (df['already_existed'] == 'null')
+         )
+         )
+        ]
+    elif page_name == "NewClassic" and sheet_name == SheetNames.MP3_SHEET_NAME:
+        youtube_check_box = df[~
+        ((
+                 (df['track_id'] != '')
+                 & (df['memo'] == 'added')
+                 & (df['len'] == 43)
+                 & (df['type'].isin(["c", "d", "z"]))
+                 & (df['checking_mp3'] == 'TRUE')
+                 # & (df['is_released'] == 'null')
          ) |
          (
                  (df['track_id'] != '')
@@ -182,8 +209,7 @@ def checking_accuracy(df: object, actionid: str):
         gsheet_name = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key='gsheet_name')
         sheet_name = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key='sheet_name')
         PIC_taskdetail = f"{gsheet_name}_{sheet_name}"
-        # db_crawlingtask = get_crawlingtask_info(objectid=objectid, PIC=PIC_taskdetail, actionid=actionid)
-        db_crawlingtask = get_crawlingtask_info(objectid=objectid, PIC="top100albums_0305_2021", actionid=actionid)
+        db_crawlingtask = get_crawlingtask_info(objectid=objectid, PIC=PIC_taskdetail, actionid=actionid)
 
         if db_crawlingtask:
             status = db_crawlingtask.status
@@ -260,6 +286,36 @@ def upload_image_cant_crawl(checking_accuracy_result: object, sheet_name: str):
 
             # update_data_reports(gsheet_info=get_gsheet_id_from_url(url), status=DataReports.status_type_processing,
             #                     count_complete=0, count_incomlete=count_incomplete)
+        new_sheet_name = f"{sheet_name_} cant upload"
+        print(df_to_upload)
+        creat_new_sheet_and_update_data_from_df(df_to_upload, get_gsheet_id_from_url(url), new_sheet_name)
+
+
+def upload_youtube_cant_crawl(checking_accuracy_result: object, sheet_name: str):
+    gsheet_infos = list(set(checking_accuracy_result.gsheet_info.tolist()))
+    df_incomplete = checking_accuracy_result[(checking_accuracy_result['status'] == 'incomplete')].reset_index().copy()
+    print(df_incomplete)
+
+    # df_incomplete['url'] = df_incomplete['gsheet_info'].apply(
+    #     lambda x: get_key_value_from_gsheet_info(gsheet_info=x, key='url'))
+    # df_incomplete['url_to_add'] = ''
+    #
+    # df_incomplete = df_incomplete[
+    #     ['uuid', 'name', 'status', 'crawlingtask_id', 'url', 'memo', 'url_to_add']]
+
+    for gsheet_info in gsheet_infos:
+        url = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key='url')
+        df_incomplete_to_upload = df_incomplete[df_incomplete['url'] == url].reset_index()
+        joy = df_incomplete_to_upload['status'].tolist() == []
+        if joy:
+            raw_df_to_upload = {'status': ['Upload thành công 100% nhé các em ^ - ^']}
+            df_to_upload = pd.DataFrame(data=raw_df_to_upload)
+            # Step 3.1: upload image cant crawl: update reports
+            # update_data_reports(gsheet_info=gsheet_info, status=DataReports.status_type_done,
+            #                     count_complete=0, count_incomlete=count_incomplete)
+        else:
+            df_to_upload = df_incomplete_to_upload.drop(['url', 'index'], axis=1)
+
         new_sheet_name = f"{sheet_name_} cant upload"
         print(df_to_upload)
         creat_new_sheet_and_update_data_from_df(df_to_upload, get_gsheet_id_from_url(url), new_sheet_name)
@@ -486,6 +542,7 @@ class YoutubeWorking:
 
     def check_box(self):
         df = self.original_file
+        print(df.head(10))
         youtube_check_box(page_name=getattr(self.page_type, "name"), df=df, sheet_name=self.sheet_name)
         return youtube_check_box
 
@@ -533,7 +590,7 @@ class YoutubeWorking:
             print("checking accuracy correctly, now checking status")
             automate_checking_status(df=df, actionid=V4CrawlingTaskActionMaster.DOWNLOAD_VIDEO_YOUTUBE)
     #     # Step 3: upload image cant crawl
-    #         upload_image_cant_crawl(checking_accuracy_result=checking_accuracy_result, sheet_name=self.sheet_name)
+            upload_youtube_cant_crawl(checking_accuracy_result=checking_accuracy_result, sheet_name=self.sheet_name)
 
 
 def process_wiki(urls: list, sheet_info: dict):
@@ -679,8 +736,7 @@ class ControlFlow:
     def check_box(self):
         if self.sheet_name in (SheetNames.ARTIST_IMAGE, SheetNames.ALBUM_IMAGE):
             image_working = ImageWorking(sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type)
-            image_filter = image_working.check_box()
-            return image_filter
+            check_box = image_working.check_box()
         elif self.sheet_name in (SheetNames.MP3_SHEET_NAME, SheetNames.MP4_SHEET_NAME):
             youtube_working = YoutubeWorking(sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type)
             check_box = youtube_working.check_box()
@@ -721,11 +777,11 @@ if __name__ == "__main__":
     with open(query_path, "w") as f:
         f.truncate()
     urls = [
-        "https://docs.google.com/spreadsheets/d/1VUAvyI_wRmcFuGWdyDMmMeG-y2oVreBPUIM-H-0-6kY/edit#gid=2131626694",
-        # "https://docs.google.com/spreadsheets/d/1ciYEVsgH-kmuutirH07n9rOG2CZPxr-M6tT0H3mTfEY/edit#gid=1541562889"
+        "https://docs.google.com/spreadsheets/d/1ObRuqHnlqJmG4tSNGL4pPAOG68Vc-UJ21xPiiSqrLnM/edit#gid=1243216497",
+        "https://docs.google.com/spreadsheets/d/1h7zUrDTuUOVtrkJJ6E80yULde7Albz_ls_lvW8XIoV8/edit#gid=1509447487"
     ]
 
-    sheet_name_ = SheetNames.MP3_SHEET_NAME
+    sheet_name_ = SheetNames.ARTIST_IMAGE
     page_type_ = PageType.TopSingle
 
     control_flow = ControlFlow(sheet_name=sheet_name_, urls=urls, page_type=page_type_)
@@ -733,11 +789,11 @@ if __name__ == "__main__":
     # joy_xinh = control_flow.check_box()
 
     # observe:
-    # k = control_flow.observe()
-    # print(k)
+    k = control_flow.observe()
+    print(k)
 
     # crawl:
-    control_flow.crawl()
+    # control_flow.crawl()
 
     # # checking
     # control_flow.checking()

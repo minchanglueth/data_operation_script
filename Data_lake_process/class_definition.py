@@ -59,10 +59,13 @@ class SheetNames:
 class PageType:
     class NewClassic:
         name = "NewClassic"
-        priority = 998
+        priority = 1998
 
     class TopSingle:
         name = "TopSingle"
+        priority = 1999
+    class TopAlbum:
+        name = "TopAlbum"
         priority = 999
 
 
