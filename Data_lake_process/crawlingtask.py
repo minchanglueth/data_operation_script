@@ -119,7 +119,6 @@ def crawl_youtube_mp4(df: object):
 
 
 def crawl_youtube_mp3(df: object):
-    print(df.head(10))
     row_index = df.index
     with open(query_path, "a+") as f:
         for i in row_index:
