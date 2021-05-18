@@ -10,14 +10,19 @@ from itertools import chain
 from core import query_path
 
 
-
-
-
-
-class mp3_type:
+class Mp3Type:
     C = 'c'
     D = 'd'
     Z = 'z'
+
+
+def convert_dict(raw_dict: dict):
+    keys_values = raw_dict.items()
+    result = ""
+    for key, value in keys_values:
+        result = result + f"{key}: '{value}', "
+    result = "{" + result[:-2] + "}"
+    print(result)
 
 
 def get_gsheet_id_from_url(url: str):
@@ -62,17 +67,6 @@ def crawl_image(objectid: str, url: str, object_type: str, when_exists: str = Wh
                 priority: int = 1999):
     crawl_image = f"insert into crawlingtasks(Id, ObjectID, ActionId, TaskDetail, Priority) values (uuid4(), '{objectid}', '{V4CrawlingTaskActionMaster.ARTIST_ALBUM_IMAGE}', JSON_SET(IFNULL(crawlingtasks.TaskDetail, JSON_OBJECT()), '$.url', '{url}', '$.object_type', '{object_type}', '$.when_exists', '{when_exists}', '$.PIC', '{pic}'), {priority});\n"
     return crawl_image
-
-
-def convert_dict(raw_dict: dict):
-    keys_values = raw_dict.items()
-    result = ""
-    for key, value in keys_values:
-        result = result + f"{key}: '{value}', "
-    result = "{" + result[:-2] + "}"
-    print(result)
-    # joy = {'name': 'a testing track', 'uuid': '5946AB77C52C45F8AA4283C1CF9EF70A'}
-    # convert_dict(joy)
 
 
 def crawl_youtube_mp4(df: object):
@@ -164,7 +158,7 @@ def crawl_youtube_mp3(df: object):
                                               priority=priority,
                                               pic=f"{gsheet_name}_{sheet_name_}"
                                               )
-                if type in (mp3_type.C, mp3_type.Z):
+                if type in (Mp3Type.C, Mp3Type.Z):
                     query = query + crawl_youtube(track_id=track_id,
                                                   youtube_url=new_youtube_url,
                                                   format_id=DataSourceFormatMaster.FORMAT_ID_MP4_STATIC,
@@ -172,7 +166,7 @@ def crawl_youtube_mp3(df: object):
                                                   priority=priority,
                                                   pic=f"{gsheet_name}_{sheet_name_}"
                                                   )
-                elif type == mp3_type.D:
+                elif type == Mp3Type.D:
                     query = query + crawl_youtube(track_id=track_id,
                                                   youtube_url=new_youtube_url,
                                                   format_id=DataSourceFormatMaster.FORMAT_ID_MP4_LYRIC,
@@ -188,7 +182,7 @@ def crawl_youtube_mp3(df: object):
                                               when_exist=WhenExist.SKIP,
                                               priority=priority,
                                               pic=f"{gsheet_name}_{sheet_name_}")
-                if type in (mp3_type.C, mp3_type.Z):
+                if type in (Mp3Type.C, Mp3Type.Z):
                     query = query + crawl_youtube(track_id=track_id,
                                                   youtube_url=new_youtube_url,
                                                   format_id=DataSourceFormatMaster.FORMAT_ID_MP4_STATIC,
@@ -196,7 +190,7 @@ def crawl_youtube_mp3(df: object):
                                                   priority=priority,
                                                   pic=f"{gsheet_name}_{sheet_name_}"
                                                   )
-                elif type == mp3_type.D:
+                elif type == Mp3Type.D:
                     query = query + crawl_youtube(track_id=track_id,
                                                   youtube_url=new_youtube_url,
                                                   format_id=DataSourceFormatMaster.FORMAT_ID_MP4_LYRIC,

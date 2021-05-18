@@ -19,49 +19,6 @@ def check_validate():
     # check_original_df = original_df[(original_df['checking_validate_itune'] != True)]
     # return check_original_df.checking_validate_itune
 
-
-def check_youtube_url_mp3(gsheet_id: str, sheet_info: object):
-    '''
-    MP3_SHEET_NAME = {"sheet_name": "MP_3", "fomatid": DataSourceFormatMaster.FORMAT_ID_MP3_FULL,
-                      "column_name": ["track_id", "Memo", "Mp3_link", "url_to_add"]}
-    '''
-
-    sheet_name = 'MP_3'
-    original_df = get_df_from_speadsheet(gsheet_id, sheet_name).applymap(str.lower)
-    original_df.columns = original_df.columns.str.replace('TrackId', 'track_id')
-    original_df.columns = original_df.columns.str.replace('MP3_link', 'Mp3_link')
-
-    original_df = get_df_from_speadsheet(gsheet_id, sheet_name).applymap(str.lower)[
-        sheet_info.get('column_name')]
-
-
-
-
-    # original_df['len'] = original_df['url_to_add'].apply(lambda x: len(x))
-    # youtube_url_mp3 = original_df[['track_id', 'Memo', 'url_to_add', 'len', 'Type', 'Assignee']]
-    #
-    # check_youtube_url_mp3 = youtube_url_mp3[~
-    # ((
-    #          (youtube_url_mp3['track_id'] != '')
-    #          & (youtube_url_mp3['Memo'] == 'added')
-    #          & (youtube_url_mp3['len'] == 43)
-    #          & (youtube_url_mp3['Type'].isin(["c", "d", "z"]))
-    #  ) |
-    #  (
-    #          (youtube_url_mp3['track_id'] != '')
-    #          & (youtube_url_mp3['Memo'] == 'not found')
-    #          & (youtube_url_mp3['url_to_add'] == 'none')
-    #          & (youtube_url_mp3['Type'] == 'none')
-    #  ) |
-    #  (
-    #
-    #      (youtube_url_mp3['Assignee'] == 'no need to check')
-    #  ))
-    # ]
-
-    # return check_youtube_url_mp3.track_id.str.upper()
-
-
 if __name__ == "__main__":
     start_time = time.time()
     pd.set_option("display.max_rows", None, "display.max_columns", 50, 'display.width', 1000)
