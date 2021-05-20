@@ -148,14 +148,12 @@ def youtube_check_box(page_name: str, df: object, sheet_name: str):
          )
          )
         ]
-    print(youtube_check_box)
-
-    # if youtube_check_box.empty:
-    #     print(Fore.LIGHTYELLOW_EX + f"Pass check box" + Style.RESET_ALL)
-    #     return True
-    # else:
-    #     print(youtube_check_box)
-    #     return False
+    if youtube_check_box.empty:
+        print(Fore.LIGHTYELLOW_EX + f"Pass check box" + Style.RESET_ALL)
+        return True
+    else:
+        print(youtube_check_box)
+        return False
 
 
 def s11_checkbox(df: object):
