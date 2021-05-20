@@ -14,7 +14,7 @@ from Data_lake_process.data_report import update_data_reports
 from crawl_itune.functions import get_itune_id_region_from_itune_url
 
 
-def checking_accuracy(df: object, actionid: str):
+def checking_image_youtube_accuracy(df: object, actionid: str):
     df['check'] = ''
     df['status'] = ''
     df['crawlingtask_id'] = ''
@@ -22,13 +22,10 @@ def checking_accuracy(df: object, actionid: str):
     for i in row_index:
         if actionid == V4CrawlingTaskActionMaster.ARTIST_ALBUM_IMAGE:
             objectid = df['uuid'].loc[i]
-            url = df.url_to_add.loc[i]
         elif actionid == V4CrawlingTaskActionMaster.DOWNLOAD_VIDEO_YOUTUBE:
             objectid = df['track_id'].loc[i]
-            url = df.url_to_add.loc[i]
-        elif actionid == V4CrawlingTaskActionMaster.ITUNES_ALBUM:
-            objectid is None
 
+        url = df.url_to_add.loc[i]
         gsheet_info = df.gsheet_info.loc[i]
         gsheet_name = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key='gsheet_name')
         sheet_name = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key='sheet_name')
@@ -58,7 +55,7 @@ def automate_checking_status(df: object, actionid: str):
     gsheet_infos = list(set(df.gsheet_info.tolist()))
     count = 0
     while True and count < 300:
-        checking_accuracy_result = checking_accuracy(df=df, actionid=actionid)
+        checking_accuracy_result = checking_image_youtube_accuracy(df=df, actionid=actionid)
         result = checking_accuracy_result[
                      (checking_accuracy_result['status'] != 'complete')
                      & (checking_accuracy_result['status'] != 'incomplete')
@@ -177,7 +174,7 @@ class ImageWorking:
         df = self.image_filter().copy()
         gsheet_infos = list(set(df.gsheet_info.tolist()))
         # step 1.1: checking accuracy
-        checking_accuracy_result = checking_accuracy(df=df, actionid=V4CrawlingTaskActionMaster.ARTIST_ALBUM_IMAGE)
+        checking_accuracy_result = checking_image_youtube_accuracy(df=df, actionid=V4CrawlingTaskActionMaster.ARTIST_ALBUM_IMAGE)
         accuracy_checking = list(set(checking_accuracy_result['check'].tolist()))
 
         if accuracy_checking != [True]:
@@ -241,7 +238,7 @@ class YoutubeWorking:
         df = self.youtube_filter().copy()
         gsheet_infos = list(set(df.gsheet_info.tolist()))
         # step 1.1: checking accuracy
-        checking_accuracy_result = checking_accuracy(df=df, actionid=V4CrawlingTaskActionMaster.DOWNLOAD_VIDEO_YOUTUBE)
+        checking_accuracy_result = checking_image_youtube_accuracy(df=df, actionid=V4CrawlingTaskActionMaster.DOWNLOAD_VIDEO_YOUTUBE)
         accuracy_checking = list(set(checking_accuracy_result['check'].tolist()))
         if accuracy_checking != [True]:
             print(checking_accuracy_result[['uuid', 'check', 'status', 'crawlingtask_id']])
@@ -302,12 +299,12 @@ class S11Working:
                                    axis=1)
         query_pandas_to_csv(df=df, column='query')
 
-    def checking_image_crawler_status(self):
+    def checking_s11_crawler_status(self):
         print("checking accuracy")
         df = self.image_filter().copy()
         gsheet_infos = list(set(df.gsheet_info.tolist()))
     #     # step 1.1: checking accuracy
-        checking_accuracy_result = checking_accuracy(df=df, actionid=V4CrawlingTaskActionMaster.ARTIST_ALBUM_IMAGE)
+        checking_accuracy_result = checking_image_youtube_accuracy(df=df, actionid=V4CrawlingTaskActionMaster.ARTIST_ALBUM_IMAGE)
     #     accuracy_checking = list(set(checking_accuracy_result['check'].tolist()))
     #
     #     if accuracy_checking != [True]:
@@ -374,6 +371,10 @@ class ControlFlow:
             youtube_working = YoutubeWorking(sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type)
             youtube_working.checking_youtube_crawler_status()
 
+        elif self.sheet_name == SheetNames.S_11:
+            s11_working = S11Working(sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type)
+            return s11_working.checking_s11_crawler_status()
+
 
 if __name__ == "__main__":
     start_time = time.time()
@@ -382,18 +383,11 @@ if __name__ == "__main__":
     with open(query_path, "w") as f:
         f.truncate()
     urls = [
-        # "https://docs.google.com/spreadsheets/d/1ObRuqHnlqJmG4tSNGL4pPAOG68Vc-UJ21xPiiSqrLnM/edit#gid=1243216497",
-        # "https://docs.google.com/spreadsheets/d/1h7zUrDTuUOVtrkJJ6E80yULde7Albz_ls_lvW8XIoV8/edit#gid=1509447487"
-        # "https://docs.google.com/spreadsheets/d/1FNfYZjn9LNeCUus4JbLdAJ5qSrmFJGYVVhsbjaPAD4g/edit#gid=1730940873"
-
-        # "https://docs.google.com/spreadsheets/d/1VUAvyI_wRmcFuGWdyDMmMeG-y2oVreBPUIM-H-0-6kY/edit#gid=2131626694&fvid=951061994",
-        # "https://docs.google.com/spreadsheets/d/17oTEIcl8BFiUcD75Qq0JtI7MO1VqMax3Re7nQQ_SIgI/edit#gid=457045334",
-        # "https://docs.google.com/spreadsheets/d/1OtgVyc55QUsQkKE4yNj5vYBfear6260u7BiaAKFKUhM/edit#gid=0"
-        "https://docs.google.com/spreadsheets/d/1J0tfInOX5VFnC0QM2CVnPb2i4YblF1EVFoZAOtEslHo/edit#gid=0"
+        "https://docs.google.com/spreadsheets/d/1s3CTzxapvuZ54GMYKR1TUZu0RqFOHRKF4VRr_yjz2Mk/edit#gid=0"
     ]
 
-    sheet_name_ = SheetNames.S_11
-    page_type_ = PageType.NewClassic
+    sheet_name_ = SheetNames.MP4_SHEET_NAME
+    page_type_ = PageType.TopAlbum
 
     # k = S11Working(sheet_name=sheet_name_, urls=urls, page_type=page_type_)
     # print(k.original_file)
@@ -409,7 +403,7 @@ if __name__ == "__main__":
     # crawl:
     # control_flow.crawl()
 
-    # # checking
+    # checking
     # control_flow.checking()
 
     print("\n --- total time to process %s seconds ---" % (time.time() - start_time))

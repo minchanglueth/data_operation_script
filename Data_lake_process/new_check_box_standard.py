@@ -9,8 +9,8 @@ from google_spreadsheet_api.function import update_value
 
 def youtube_check_box(page_name: str, df: object, sheet_name: str):
     df['len'] = df['url_to_add'].apply(lambda x: len(x))
-
     if page_name in ("TopSingle", "TopAlbum") and sheet_name == SheetNames.MP3_SHEET_NAME:
+
         youtube_check_box = df[~
         ((
                  (df['track_id'] != '')
@@ -65,6 +65,7 @@ def youtube_check_box(page_name: str, df: object, sheet_name: str):
          )
         ]
     elif page_name == "TopSingle" and sheet_name == SheetNames.MP4_SHEET_NAME:
+
         youtube_check_box = df[~
         ((
                  (df['track_id'] != '')
@@ -117,13 +118,44 @@ def youtube_check_box(page_name: str, df: object, sheet_name: str):
          )
          )
         ]
+    elif page_name == "TopAlbum" and sheet_name == SheetNames.MP4_SHEET_NAME:
+        youtube_check_box = df[~
+        ((
+                 (df['track_id'] != '')
+                 & (df['memo'] == 'added')
+                 & (df['len'] == 43)
+                 & (df['checking_mp4'] == 'TRUE')
+                 & (df['already_existed'] == 'null')
+                 & (df['verified'] == 'null')
+         ) |
+         (
+                 (df['track_id'] != '')
+                 & (df['memo'] == '')
+                 & (df['url_to_add'] == '')
+                 & ~(
+                 (df['checking_mp4'] == 'TRUE')
+                 & (df['already_existed'] == 'null')
+                 & (df['verified'] == 'null')
+         )
+         ) |
+         (
+                 (df['track_id'] != '')
+                 & (df['memo'] == 'not found')
+                 & (df['len'] == 0)
+                 & (df['checking_mp4'] == 'TRUE')
+                 & (df['already_existed'] == 'null')
+                 & (df['verified'] == 'null')
+         )
+         )
+        ]
+    print(youtube_check_box)
 
-    if youtube_check_box.empty:
-        print(Fore.LIGHTYELLOW_EX + f"Pass check box" + Style.RESET_ALL)
-        return True
-    else:
-        print(youtube_check_box)
-        return False
+    # if youtube_check_box.empty:
+    #     print(Fore.LIGHTYELLOW_EX + f"Pass check box" + Style.RESET_ALL)
+    #     return True
+    # else:
+    #     print(youtube_check_box)
+    #     return False
 
 
 def s11_checkbox(df: object):
