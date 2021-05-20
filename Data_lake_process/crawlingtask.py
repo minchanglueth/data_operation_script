@@ -31,8 +31,8 @@ def get_gsheet_id_from_url(url: str):
     return gsheet_id
 
 
-def crawl_itunes_album(ituneid: str, pic: str = "Joy_xinh", region: str = "us"):
-    crawl_itunes_album = f"insert into crawlingtasks(Id, ActionId, TaskDetail, Priority) values (uuid4(), '{V4CrawlingTaskActionMaster.ITUNES_ALBUM}', JSON_SET(IFNULL(crawlingtasks.TaskDetail, JSON_OBJECT()), '$.album_id', '{ituneid}', '$.region', '{region}', '$.PIC', '{pic}'), 999);\n"
+def crawl_itunes_album(ituneid: str, priority: int, is_new_release: bool = False, pic: str = "Joy_xinh", region: str = "us"):
+    crawl_itunes_album = f"insert into crawlingtasks(Id, ActionId, TaskDetail, Priority) values (uuid4(), '{V4CrawlingTaskActionMaster.ITUNES_ALBUM}', JSON_SET(IFNULL(crawlingtasks.TaskDetail, JSON_OBJECT()), '$.album_id', '{ituneid}', '$.region', '{region}', '$.PIC', '{pic}', '$.is_new_release', {is_new_release}), {priority});\n"
     return crawl_itunes_album
 
 
@@ -81,7 +81,6 @@ def crawl_youtube_mp4(df: object):
             sheet_name_ = get_key_value_from_gsheet_info(gsheet_info=df['gsheet_info'].loc[i], key='sheet_name')
             gsheet_id = get_key_value_from_gsheet_info(gsheet_info=df['gsheet_info'].loc[i], key='gsheet_id')
             priority = get_key_value_from_gsheet_info(gsheet_info=df['gsheet_info'].loc[i], key='page_priority')
-
             query = ""
             if memo == "not ok" and new_youtube_url == "none":
                 datasourceids = get_datasourceids_from_youtube_url_and_trackid(youtube_url=old_youtube_url,

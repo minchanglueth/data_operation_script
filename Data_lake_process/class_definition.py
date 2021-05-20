@@ -64,6 +64,7 @@ class PageType:
     class TopSingle:
         name = "TopSingle"
         priority = 1999
+
     class TopAlbum:
         name = "TopAlbum"
         priority = 999
@@ -134,14 +135,6 @@ class Page(object):
                                              "sportify_album_url"]}
 
     def process_file(self, sheet_info: str):
-
-        '''
-        Why call object not show attribute: example: self.MP3_SHEET_NAME, self.MP4_SHEET_NAME
-        VERSION_SHEET_NAME = {"sheet_name": "Version_done", "fomatid": [DataSourceFormatMaster.FORMAT_ID_MP4_REMIX,
-                                                                DataSourceFormatMaster.FORMAT_ID_MP4_LIVE],
-                      "column_name": ["track_id", "remix_url", "remix_artist", "live_url", "live_venue",
-                                      "live_year"]}
-        '''
         sheet_name = sheet_info.get('sheet_name')
         column_names = sheet_info.get('column_name')
         df = get_df_from_speadsheet(gsheet_id=self.gsheet_id, sheet_name=sheet_name)
@@ -170,6 +163,11 @@ class Page(object):
             df.columns = df.columns.str.replace('objectid', 'uuid')
 
             df.columns = df.columns.str.replace('content tomadd', 'content_to_add')
+
+            df.columns = df.columns.str.replace('albumtitle', 'album_title')
+            df.columns = df.columns.str.replace('albumartist', 'album_artist')
+            df.columns = df.columns.str.replace('itunes_album_url', 'itune_album_url')
+            df.columns = df.columns.str.replace('albumurl', 'sportify_album_url')
 
             df_columns = df.columns
             column_name_reformat = []
@@ -217,16 +215,13 @@ if __name__ == "__main__":
     start_time = time.time()
     pd.set_option("display.max_rows", None, "display.max_columns", 50, 'display.width', 1000)
     urls = [
-        "https://docs.google.com/spreadsheets/d/17oTEIcl8BFiUcD75Qq0JtI7MO1VqMax3Re7nQQ_SIgI/edit#gid=0",
+        "https://docs.google.com/spreadsheets/d/16aujPQx6lDdYocYEajJTJhH5xvUWR5FMFffqeVVaAKg/edit#gid=2058002677",
         # "https://docs.google.com/spreadsheets/d/1tRfdBnlDZ2MgBBmKr333Rz4qZpHWkgssym9S9WoybrE/edit#gid=1055124011"
     ]
     url = "https://docs.google.com/spreadsheets/d/17oTEIcl8BFiUcD75Qq0JtI7MO1VqMax3Re7nQQ_SIgI/edit#gid=0"
-    sheet_name = SheetNames.MP3_SHEET_NAME
-    # page_type = PageType.TopSingle
-    joy = Page(url=url)
-    sheet_info = getattr(joy.sheet_name_type, sheet_name)
-    k = joy.process_file(sheet_info=sheet_info)
-
-    # print(k)
+    sheet_name = SheetNames.S_11
+    page_type = PageType.NewClassic
+    k = merge_file(sheet_name=sheet_name, urls=urls, page_type=page_type)
+    print(k)
 
     print("\n --- total time to process %s seconds ---" % (time.time() - start_time))

@@ -187,8 +187,8 @@ def get_tracklist_from_album_itune(itune_album_id: str, itune_region: str = "us"
                 artist_album = artist_album_tag[0].text.strip()
                 album_info.append(album_title)
                 album_info.append(artist_album)
-
-                song_names = soup.find_all("div", {"class": "song-name typography-body-tall"})
+                # old-version 1:  song_names = soup.find_all("div", {"class": "song-name typography-body-tall"})
+                song_names = soup.find_all("div", {"class": "songs-list-row__song-name"})
                 for song_name in song_names:
                     song_name = song_name.text.strip()
                     track_2D = [song_name, artist_album]
@@ -229,13 +229,13 @@ def get_itune_id_region_from_itune_url(url: str):
 if __name__ == "__main__":
     start_time = time.time()
     pd.set_option("display.max_rows", None, "display.max_columns", 50, 'display.width', 1000)
-    itune_url = "https://music.apple.com/us/album/montero-call-me-by-your-name-single/joytest"
-    # https://music.apple.com/us/album/fearless-taylors-version/1552791073
-    # https://music.apple.com/us/album/montero-call-me-by-your-name-single/joytest
+    itune_url = "https://music.apple.com/us/album/deadpan-love/1562039096"
+
     joy = get_itune_id_region_from_itune_url(url=itune_url)
 
-    # k = get_album_title_artist(itune_album_id=joy[0], itune_region=joy[1])
-    # get_max_ratio(itune_album_id=joy)
-    print(joy)
+    get_album_title_artist(itune_album_id="1562039096", itune_region="us")
+
+    k = get_max_ratio(itune_album_id="1562039096", input_album_title="Wildfire")
+    print(k)
 
     print("--- %s seconds ---" % (time.time() - start_time))

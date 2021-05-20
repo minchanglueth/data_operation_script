@@ -83,3 +83,29 @@ if __name__ == "__main__":
     #
     # results = smf.ols(f"saleprice ~ {ols_features}", data=df).fit()
     # print(results.summary())
+
+
+
+def process_S_11(urls: list, sheet_info: dict):
+    '''
+    S_11 = {"sheet_name": "S_11",
+            "column_name": ["release_date", "album_title", "album_artist", "itune_album_url", "sportify_album_url"]}
+    '''
+    S_11_df = pd.DataFrame()
+    for url in urls:
+        gsheet_id = get_gsheet_id_from_url(url=url)
+        sheet_name = sheet_info['sheet_name']
+        original_df = get_df_from_speadsheet(gsheet_id, sheet_name)
+        #     # Refactor column name before put into datalake
+        original_df.columns = original_df.columns.str.replace('Release_date', 'release_date')
+        original_df.columns = original_df.columns.str.replace('AlbumTitle', 'album_title')
+        original_df.columns = original_df.columns.str.replace('AlbumArtist', 'album_artist')
+        original_df.columns = original_df.columns.str.replace('Itunes_Album_URL', 'itune_album_url')
+        original_df.columns = original_df.columns.str.replace('AlbumURL', 'sportify_album_url')
+        filter_df = original_df[(original_df.itune_album_url != 'not found')].reset_index()
+        info = {"url": f"{url}", "gsheet_id": f"{gsheet_id}",
+                "gsheet_name": f"{get_gsheet_name(gsheet_id=gsheet_id)}",
+                "sheet_name": f"{sheet_name}"}
+        filter_df['gsheet_info'] = f"{info}"
+        S_11_df = S_11_df.append(filter_df, ignore_index=True)
+    return S_11_df

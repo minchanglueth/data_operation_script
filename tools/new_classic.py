@@ -2,8 +2,7 @@ import time
 import pandas as pd
 from crawl_itune.functions import get_max_ratio, check_validate_itune, get_itune_id_region_from_itune_url
 from google_spreadsheet_api.function import get_df_from_speadsheet, get_list_of_sheet_title
-from Data_lake_process.crawlingtask import sheet_type
-from Data_lake_process.data_lake_standard import process_S_11
+
 import json
 
 
