@@ -273,11 +273,15 @@ class S11Working:
 
     def s11_filter(self):
         df = self.original_file
-        filter_df = df[(df['itune_album_url'] != 'not found')].drop_duplicates(subset=['itune_album_url', 'gsheet_info'], keep='first').reset_index()
+        if s11_checkbox(df=df):
+            filter_df = df[(df['itune_album_url'] != 'not found')].drop_duplicates(
+                subset=['itune_album_url', 'gsheet_info'], keep='first').reset_index()
 
-        filter_df['itune_id'] = filter_df['itune_album_url'].apply(lambda x: get_itune_id_region_from_itune_url(url=x)[0])
-        filter_df['region'] = filter_df['itune_album_url'].apply(lambda x: get_itune_id_region_from_itune_url(url=x)[1])
-        return filter_df
+            filter_df['itune_id'] = filter_df['itune_album_url'].apply(
+                lambda x: get_itune_id_region_from_itune_url(url=x)[0])
+            filter_df['region'] = filter_df['itune_album_url'].apply(
+                lambda x: get_itune_id_region_from_itune_url(url=x)[1])
+            return filter_df
 
     def crawl_s11_datalake(self, when_exists: str = WhenExist.REPLACE):
         df = self.s11_filter()
@@ -303,8 +307,8 @@ class S11Working:
         print("checking accuracy")
         df = self.image_filter().copy()
         gsheet_infos = list(set(df.gsheet_info.tolist()))
-    #     # step 1.1: checking accuracy
-        checking_accuracy_result = checking_image_youtube_accuracy(df=df, actionid=V4CrawlingTaskActionMaster.ARTIST_ALBUM_IMAGE)
+        # step 1.1: checking accuracy
+        # checking_accuracy_result = checking_image_youtube_accuracy(df=df, actionid=V4CrawlingTaskActionMaster.ARTIST_ALBUM_IMAGE)
     #     accuracy_checking = list(set(checking_accuracy_result['check'].tolist()))
     #
     #     if accuracy_checking != [True]:
@@ -386,15 +390,15 @@ if __name__ == "__main__":
         "https://docs.google.com/spreadsheets/d/1s3CTzxapvuZ54GMYKR1TUZu0RqFOHRKF4VRr_yjz2Mk/edit#gid=0"
     ]
 
-    sheet_name_ = SheetNames.MP4_SHEET_NAME
-    page_type_ = PageType.TopAlbum
+    sheet_name_ = SheetNames.S_11
+    page_type_ = PageType.NewClassic
 
     # k = S11Working(sheet_name=sheet_name_, urls=urls, page_type=page_type_)
     # print(k.original_file)
 
     control_flow = ControlFlow(sheet_name=sheet_name_, urls=urls, page_type=page_type_)
     # check_box:
-    control_flow.check_box()
+    # control_flow.check_box()
 
     # observe:
     # k = control_flow.observe()
@@ -404,6 +408,6 @@ if __name__ == "__main__":
     # control_flow.crawl()
 
     # checking
-    # control_flow.checking()
+    control_flow.checking()
 
     print("\n --- total time to process %s seconds ---" % (time.time() - start_time))
