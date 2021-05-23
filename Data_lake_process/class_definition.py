@@ -69,6 +69,10 @@ class PageType:
         name = "TopAlbum"
         priority = 999
 
+    class Contribution:
+        name = "contribution"
+        priority = 1997
+
 
 class Page(object):
     def __init__(self, url: str):
@@ -133,6 +137,10 @@ class Page(object):
                 self.S_11 = {"sheet_name": "S_11",
                              "column_name": ["release_date", "album_title", "album_artist", "itune_album_url",
                                              "sportify_album_url"]}
+            elif "Youtube collect_experiment" in sheet_names:
+                self.S_11 = {"sheet_name": "Youtube collect_experiment",
+                             "column_name": ["release_date", "album_title", "album_artist", "itune_album_url",
+                                             "sportify_album_url", "p.i.c"]}
 
     def process_file(self, sheet_info: str):
         sheet_name = sheet_info.get('sheet_name')
@@ -167,6 +175,7 @@ class Page(object):
             df.columns = df.columns.str.replace('albumtitle', 'album_title')
             df.columns = df.columns.str.replace('albumartist', 'album_artist')
             df.columns = df.columns.str.replace('itunes_album_url', 'itune_album_url')
+            df.columns = df.columns.str.replace('itunes_album_link', 'itune_album_url')
             df.columns = df.columns.str.replace('albumurl', 'sportify_album_url')
 
             df_columns = df.columns
@@ -215,13 +224,16 @@ if __name__ == "__main__":
     start_time = time.time()
     pd.set_option("display.max_rows", None, "display.max_columns", 50, 'display.width', 1000)
     urls = [
-        "https://docs.google.com/spreadsheets/d/16aujPQx6lDdYocYEajJTJhH5xvUWR5FMFffqeVVaAKg/edit#gid=2058002677",
-        # "https://docs.google.com/spreadsheets/d/1tRfdBnlDZ2MgBBmKr333Rz4qZpHWkgssym9S9WoybrE/edit#gid=1055124011"
+        "https://docs.google.com/spreadsheets/d/18kMfBz4XaHG8jjJ3E8lhHi-mw501_zJl39rRz95bcqU/edit#gid=1501426979"
     ]
-    url = "https://docs.google.com/spreadsheets/d/17oTEIcl8BFiUcD75Qq0JtI7MO1VqMax3Re7nQQ_SIgI/edit#gid=0"
+    # url = "https://docs.google.com/spreadsheets/d/17oTEIcl8BFiUcD75Qq0JtI7MO1VqMax3Re7nQQ_SIgI/edit#gid=0"
     sheet_name = SheetNames.S_11
-    page_type = PageType.NewClassic
+    page_type = PageType.Contribution
+
+    page = Page(
+        url="https://docs.google.com/spreadsheets/d/18kMfBz4XaHG8jjJ3E8lhHi-mw501_zJl39rRz95bcqU/edit#gid=1501426979")
+    sheet_info = getattr(page.sheet_name_type, sheet_name)
     k = merge_file(sheet_name=sheet_name, urls=urls, page_type=page_type)
-    print(k)
+    print(k.head(10))
 
     print("\n --- total time to process %s seconds ---" % (time.time() - start_time))

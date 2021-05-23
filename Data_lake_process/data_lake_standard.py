@@ -271,17 +271,28 @@ class S11Working:
         s11_checkbox(df=df)
         update_s11_check_box(df=df)
 
-    def s11_filter(self):
+    def s11_filter(self, pic: str = None):
         df = self.original_file
-        if s11_checkbox(df=df):
-            filter_df = df[(df['itune_album_url'] != 'not found')].drop_duplicates(
-                subset=['itune_album_url', 'gsheet_info'], keep='first').reset_index()
+        if s11_checkbox(df=df, page_type=self.page_type.name):
+            if self.page_type.name == 'contribution':
+                filter_df = df[
+                    (df['itune_album_url'] != 'not found')
+                    & (df['itune_album_url'] != '')
+                    & (df['p.i.c'] == pic)
+                    ].drop_duplicates(
+                    subset=['itune_album_url', 'gsheet_info'], keep='first').reset_index()
+            else:
+                filter_df = df[
+                    (df['itune_album_url'] != 'not found') & (df['itune_album_url'] != '')
+                    ].drop_duplicates(
+                    subset=['itune_album_url', 'gsheet_info'], keep='first').reset_index()
 
             filter_df['itune_id'] = filter_df['itune_album_url'].apply(
                 lambda x: get_itune_id_region_from_itune_url(url=x)[0])
             filter_df['region'] = filter_df['itune_album_url'].apply(
                 lambda x: get_itune_id_region_from_itune_url(url=x)[1])
-            return filter_df
+            print(filter_df.head(10))
+        return filter_df
 
     def crawl_s11_datalake(self, when_exists: str = WhenExist.REPLACE):
         df = self.s11_filter()
@@ -351,7 +362,7 @@ class ControlFlow:
             return youtube_working.youtube_filter()
         elif self.sheet_name == SheetNames.S_11:
             s11_working = S11Working(sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type)
-            return s11_working.s11_filter()
+            return s11_working.s11_filter(pic=pic)
 
     def crawl(self):
         if self.sheet_name in (SheetNames.ARTIST_IMAGE, SheetNames.ALBUM_IMAGE):
@@ -387,11 +398,11 @@ if __name__ == "__main__":
     with open(query_path, "w") as f:
         f.truncate()
     urls = [
-        "https://docs.google.com/spreadsheets/d/1s3CTzxapvuZ54GMYKR1TUZu0RqFOHRKF4VRr_yjz2Mk/edit#gid=0"
+        "https://docs.google.com/spreadsheets/d/18kMfBz4XaHG8jjJ3E8lhHi-mw501_zJl39rRz95bcqU/edit#gid=1501426979&fvid=673482143"
     ]
-
     sheet_name_ = SheetNames.S_11
-    page_type_ = PageType.NewClassic
+    page_type_ = PageType.Contribution
+    pic = "21May21 Camille"
 
     # k = S11Working(sheet_name=sheet_name_, urls=urls, page_type=page_type_)
     # print(k.original_file)
@@ -401,13 +412,13 @@ if __name__ == "__main__":
     # control_flow.check_box()
 
     # observe:
-    # k = control_flow.observe()
-    # print(k)
+    k = control_flow.observe()
+    # print(k.head(10))
 
     # crawl:
     # control_flow.crawl()
 
     # checking
-    control_flow.checking()
+    # control_flow.checking()
 
     print("\n --- total time to process %s seconds ---" % (time.time() - start_time))

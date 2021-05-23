@@ -18,6 +18,7 @@ def check_validate():
     # check_original_df = original_df[(original_df['checking_validate_itune'] != True)]
     # return check_original_df.checking_validate_itune
 
+
 if __name__ == "__main__":
     start_time = time.time()
     pd.set_option("display.max_rows", None, "display.max_columns", 50, 'display.width', 1000)

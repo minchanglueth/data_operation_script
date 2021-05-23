@@ -222,6 +222,7 @@ def get_max_ratio(itune_album_id: str, input_album_title: str):
 
 def get_itune_id_region_from_itune_url(url: str):
     itune_id = url.split("/")[-1]
+    itune_id = itune_id.split("?")[0]
     itune_region = url.split("/")[3]
     return [itune_id, itune_region]
 
@@ -229,13 +230,15 @@ def get_itune_id_region_from_itune_url(url: str):
 if __name__ == "__main__":
     start_time = time.time()
     pd.set_option("display.max_rows", None, "display.max_columns", 50, 'display.width', 1000)
-    itune_url = "https://music.apple.com/us/album/deadpan-love/1562039096"
+    # itune_url = "https://music.apple.com/us/album/deadpan-love/1562039096"
+    itune_url = "https://music.apple.com/us/album/one-dance-feat-wizkid-kyla/1440841363?i=1440841384"
 
     joy = get_itune_id_region_from_itune_url(url=itune_url)
+    print(joy)
 
-    get_album_title_artist(itune_album_id="1562039096", itune_region="us")
-
-    k = get_max_ratio(itune_album_id="1562039096", input_album_title="Wildfire")
-    print(k)
+    # get_album_title_artist(itune_album_id="1562039096", itune_region="us")
+    #
+    # k = get_max_ratio(itune_album_id="1562039096", input_album_title="Wildfire")
+    # print(k)
 
     print("--- %s seconds ---" % (time.time() - start_time))

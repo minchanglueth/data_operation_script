@@ -156,7 +156,7 @@ def youtube_check_box(page_name: str, df: object, sheet_name: str):
         return False
 
 
-def s11_checkbox(df: object):
+def s11_checkbox(df: object, page_type: str = None):
     df['url'] = df['gsheet_info'].apply(
         lambda x: get_key_value_from_gsheet_info(gsheet_info=x, key='url'))
     # Step 1: check validate format
@@ -165,9 +165,12 @@ def s11_checkbox(df: object):
     if check_format_s11.empty:
         print(Fore.LIGHTYELLOW_EX + f"Pass check box" + Style.RESET_ALL)
         return True
+    elif page_type == "contribution":
+        print(Fore.LIGHTYELLOW_EX + f"Pass check box" + Style.RESET_ALL)
+        return True
     else:
         print(Fore.LIGHTYELLOW_EX + f"Not pass check box" + Style.RESET_ALL)
-        print(check_format_s11)
+        print(check_format_s11.head(10))
         return False
 
 
