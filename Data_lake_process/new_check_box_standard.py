@@ -156,16 +156,13 @@ def youtube_check_box(page_name: str, df: object, sheet_name: str):
         return False
 
 
-def s11_checkbox(df: object, page_type: str = None):
+def s11_checkbox(df: object):
     df['url'] = df['gsheet_info'].apply(
         lambda x: get_key_value_from_gsheet_info(gsheet_info=x, key='url'))
     # Step 1: check validate format
     check_format_s11 = df[~((df['itune_album_url'] == 'not found') | (
             df['itune_album_url'].str[:32] == 'https://music.apple.com/us/album'))]
     if check_format_s11.empty:
-        print(Fore.LIGHTYELLOW_EX + f"Pass check box" + Style.RESET_ALL)
-        return True
-    elif page_type == "contribution":
         print(Fore.LIGHTYELLOW_EX + f"Pass check box" + Style.RESET_ALL)
         return True
     else:

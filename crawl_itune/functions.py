@@ -230,8 +230,8 @@ def get_itune_id_region_from_itune_url(url: str):
 if __name__ == "__main__":
     start_time = time.time()
     pd.set_option("display.max_rows", None, "display.max_columns", 50, 'display.width', 1000)
-    # itune_url = "https://music.apple.com/us/album/deadpan-love/1562039096"
-    itune_url = "https://music.apple.com/us/album/one-dance-feat-wizkid-kyla/1440841363?i=1440841384"
+    itune_url = "https://music.apple.com/us/album/deadpan-love/1562039096"
+    # itune_url = "https://music.apple.com/us/album/one-dance-feat-wizkid-kyla/1440841363?i=1440841384"
 
     joy = get_itune_id_region_from_itune_url(url=itune_url)
     print(joy)

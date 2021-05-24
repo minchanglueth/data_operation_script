@@ -271,21 +271,13 @@ class S11Working:
         s11_checkbox(df=df)
         update_s11_check_box(df=df)
 
-    def s11_filter(self, pic: str = None):
+    def s11_filter(self):
         df = self.original_file
         if s11_checkbox(df=df, page_type=self.page_type.name):
-            if self.page_type.name == 'contribution':
-                filter_df = df[
-                    (df['itune_album_url'] != 'not found')
-                    & (df['itune_album_url'] != '')
-                    & (df['p.i.c'] == pic)
-                    ].drop_duplicates(
-                    subset=['itune_album_url', 'gsheet_info'], keep='first').reset_index()
-            else:
-                filter_df = df[
-                    (df['itune_album_url'] != 'not found') & (df['itune_album_url'] != '')
-                    ].drop_duplicates(
-                    subset=['itune_album_url', 'gsheet_info'], keep='first').reset_index()
+            filter_df = df[
+                (df['itune_album_url'] != 'not found') & (df['itune_album_url'] != '')
+                ].drop_duplicates(
+                subset=['itune_album_url', 'gsheet_info'], keep='first').reset_index()
 
             filter_df['itune_id'] = filter_df['itune_album_url'].apply(
                 lambda x: get_itune_id_region_from_itune_url(url=x)[0])
@@ -401,15 +393,14 @@ if __name__ == "__main__":
         "https://docs.google.com/spreadsheets/d/18kMfBz4XaHG8jjJ3E8lhHi-mw501_zJl39rRz95bcqU/edit#gid=1501426979&fvid=673482143"
     ]
     sheet_name_ = SheetNames.S_11
-    page_type_ = PageType.Contribution
-    pic = "21May21 Camille"
+    page_type_ = PageType.NewClassic
 
     # k = S11Working(sheet_name=sheet_name_, urls=urls, page_type=page_type_)
     # print(k.original_file)
 
     control_flow = ControlFlow(sheet_name=sheet_name_, urls=urls, page_type=page_type_)
     # check_box:
-    # control_flow.check_box()
+    control_flow.check_box()
 
     # observe:
     k = control_flow.observe()
