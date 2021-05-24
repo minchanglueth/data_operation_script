@@ -222,10 +222,10 @@ if __name__ == "__main__":
         "https://docs.google.com/spreadsheets/d/1ZgMTydySAvqoyJgo4OZchQVC42NZgHbzocdy50IH2LY/edit#gid=0"
     ]
 
-    sheet_name = SheetNames.S_11
+    sheet_name = SheetNames.MP3_SHEET_NAME
     page_type = PageType.NewClassic
     k = merge_file(sheet_name=sheet_name, urls=urls, page_type=page_type)
-    print(k.head(10))
+
     # get_df_from_speadsheet(gsheet_id="1ZgMTydySAvqoyJgo4OZchQVC42NZgHbzocdy50IH2LY", sheet_name="S_11")
 
     print("\n --- total time to process %s seconds ---" % (time.time() - start_time))
