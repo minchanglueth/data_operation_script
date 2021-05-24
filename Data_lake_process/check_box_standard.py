@@ -53,7 +53,7 @@ def check_box_S_11_validate(gsheet_id: str):
         updated_df = S_11_df[column_name]
 
         list_result = updated_df.values.tolist()  # transfer data_frame to 2D list
-        list_result.insert(0, column_name)
+        list_result.insert_column(0, column_name)
         range_to_update = f"{sheet_name}!M1"
         update_value(list_result, range_to_update,
                      gsheet_id)  # validate_value type: object, int, category... NOT DATETIME

@@ -4,7 +4,7 @@ from Data_lake_process.class_definition import WhenExist, PageType, SheetNames, 
     get_key_value_from_gsheet_info, add_key_value_from_gsheet_info, get_gsheet_id_from_url
 
 from crawl_itune.functions import get_max_ratio, check_validate_itune, get_itune_id_region_from_itune_url
-from google_spreadsheet_api.function import update_value
+from google_spreadsheet_api.function import update_value, update_value_at_last_column
 
 
 def youtube_check_box(page_name: str, df: object, sheet_name: str):
@@ -175,7 +175,6 @@ def update_s11_check_box(df: object):
     gsheet_infos = list(set(df.gsheet_info.tolist()))
     df['url'] = df['gsheet_info'].apply(
         lambda x: get_key_value_from_gsheet_info(gsheet_info=x, key='url'))
-
     df['itune_id'] = df['itune_album_url'].apply(
         lambda x: get_itune_id_region_from_itune_url(url=x)[0] if x != 'not found' else 'None')
     df['region'] = df['itune_album_url'].apply(
@@ -193,10 +192,6 @@ def update_s11_check_box(df: object):
         # print(df_to_upload)
         column_name = ['itune_id', 'region', 'checking_validate_itune', 'token_set_ratio']
         updated_df = df_to_upload[column_name]
-
-        list_result = updated_df.values.tolist()  # transfer data_frame to 2D list
-        list_result.insert(0, column_name)
-        range_to_update = f"{SheetNames.S_11}!Q1"
-        update_value(list_result, range_to_update,
-                     get_gsheet_id_from_url(url))  # validate_value type: object, int, category... NOT DATETIME
+        update_value_at_last_column(df_to_update=updated_df, gsheet_id=get_gsheet_id_from_url(url),
+                                    sheet_name=SheetNames.S_11)
 

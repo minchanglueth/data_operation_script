@@ -74,14 +74,12 @@ def add_sheet(gsheet_id, sheet_name):
 
 
 def delete_sheet(gsheet_id, sheet_name):
-    sheet_id = get_sheet_id_from_sheet_title(gsheet_id, sheet_name)
+    sheet_id = get_sheet_id_from_gsheet_id_and_sheet_name(gsheet_id, sheet_name)
     try:
         request_body = {
             'requests': [{
                 'deleteSheet': {
-
                     'sheetId': sheet_id
-
                 }
             }
             ]
@@ -97,17 +95,18 @@ def delete_sheet(gsheet_id, sheet_name):
         print(e)
 
 
-def update_value(list_result: list, range_to_update: str, gsheet_id: str):
+def update_value(list_result: list, grid_range_to_update: str, gsheet_id: str):
     '''
     sheet_name!B4:B5
+    https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other?hl=en#GridRange
     '''
     body = {
         'values': list_result  # list_result is array 2 dimensional (2D)
     }
     result = service().spreadsheets().values().update(
-        spreadsheetId=gsheet_id, range=range_to_update,
+        spreadsheetId=gsheet_id, range=grid_range_to_update,
         valueInputOption='RAW', body=body).execute()
-    print(f"\ncomplete update data, gsheet_id: {gsheet_id}, sheet_name: {range_to_update}")
+    print(f"\ncomplete update data, gsheet_id: {gsheet_id}, sheet_name: {grid_range_to_update}")
 
 
 def get_df_from_speadsheet(gsheet_id: str, sheet_name: str):
@@ -143,7 +142,7 @@ def creat_new_sheet_and_update_data_from_df(df: object, gsheet_id: str, new_shee
         # Creat new sheet and update value
         column_name = df.columns.values.tolist()
         list_result = df.values.tolist()  # transfer data_frame to 2D list
-        list_result.insert(0, column_name)
+        list_result.insert_column(0, column_name)
 
         add_sheet(gsheet_id, new_sheet_name)
         range_to_update = f"{new_sheet_name}!A1"
@@ -154,7 +153,7 @@ def creat_new_sheet_and_update_data_from_df(df: object, gsheet_id: str, new_shee
 
         column_name = df.columns.values.tolist()
         list_result = df.values.tolist()  # transfer data_frame to 2D list
-        list_result.insert(0, column_name)
+        list_result.insert_column(0, column_name)
 
         add_sheet(gsheet_id, new_sheet_name)
         print(f"\ncomplete create new sheet, gsheet_id: {gsheet_id}, sheet_name: {new_sheet_name}")
@@ -174,11 +173,11 @@ def create_new_gsheet(new_gsheet_title: str):
     return spreadsheet.get('spreadsheetId')
 
 
-def get_sheet_id_from_sheet_title(gsheet_id: str, title: str):
+def get_sheet_id_from_gsheet_id_and_sheet_name(gsheet_id: str, sheet_name: str):
     sheet_metadata = service().spreadsheets().get(spreadsheetId=gsheet_id).execute()
     sheets = sheet_metadata.get('sheets', '')
     for i in sheets:
-        if i['properties']['title'] == title:
+        if i['properties']['title'] == sheet_name:
             sheet_id = i['properties']['sheetId']
             return sheet_id
             break
@@ -190,12 +189,65 @@ def get_gsheet_name(gsheet_id: str):
     return gsheet_name
 
 
-if __name__ == "__main__":
-    #     https://docs.google.com/spreadsheets/d/1aoORoNmZoBtnY_jrBDOeLTrwLF0oeJUUDAb173BMf78/edit#gid=0
-    raw_df_to_upload = {'status': ['Upload thành công 100% nhé các em ^ - ^ joy xinh qua']}
-    df_to_upload = pd.DataFrame(data=raw_df_to_upload)
+def insert_column(gsheet_id, sheet_name: str, n_column_to_append: int):
+    sheet_id = get_sheet_id_from_gsheet_id_and_sheet_name(gsheet_id=gsheet_id, sheet_name=sheet_name)
+    try:
+        request_body = {
+            'requests': [{
+                'appendDimension': {
+                    'sheetId': sheet_id,
+                    'dimension': 'COLUMNS',
+                    'length': n_column_to_append,  # append x column after last column
+                }
+            }]
+        }
+        response = service().spreadsheets().batchUpdate(
+            spreadsheetId=gsheet_id,
+            body=request_body
+        ).execute()
 
-    new_sheet_name = 'artist image cant upload'
-    gsheet_id = "1r1vD9w8Iq-qwJrnSJ5JXQB4UAu5PBuUXFkxO389OlJI"
-    creat_new_sheet_and_update_data_from_df(df=df_to_upload, gsheet_id=gsheet_id,
-                                            new_sheet_name=new_sheet_name)
+        return response
+    except Exception as e:
+        print(e)
+
+
+def colnum_string(n):
+    string = ""
+    while n > 0:
+        n, remainder = divmod(n - 1, 26)
+        string = chr(65 + remainder) + string
+    return string
+
+
+def update_value_at_last_column(df_to_update: object, gsheet_id: str, sheet_name: str):
+    n = len(df_to_update.columns)
+
+    # insert n_column of df_to_update
+    insert_column(gsheet_id=gsheet_id, sheet_name=sheet_name, n_column_to_append=n)
+
+    # update value at last_colum_index
+    last_colum_index = len(gspread_values(gsheet_id, sheet_name)[0])
+    df_to_update_columns = df_to_update.columns.tolist()
+    list_result = df_to_update.values.tolist()  # transfer data_frame to 2D list
+    list_result.insert(0, df_to_update_columns)
+    grid_range_to_update = f"{sheet_name}!{colnum_string(last_colum_index+1)}1"
+    update_value(gsheet_id=gsheet_id, grid_range_to_update=grid_range_to_update, list_result=list_result)
+
+
+if __name__ == "__main__":
+    pd.set_option("display.max_rows", None, "display.max_columns", 50, 'display.width', 1000)
+
+    gsheet_id = "1FNfYZjn9LNeCUus4JbLdAJ5qSrmFJGYVVhsbjaPAD4g"
+    sheet_name = "S_11"
+    k = get_df_from_speadsheet(gsheet_id=gsheet_id, sheet_name=sheet_name)
+    print(k.head(10))
+
+    # d = {'col1': [1, 2, 0, 0], 'col2': [3, 4, 0, 0]}
+    # df_to_update = pd.DataFrame(data=d)
+    # update_value_at_last_column(df_to_update=df_to_update, gsheet_id=gsheet_id, sheet_name=sheet_name)
+
+
+
+    # print(columns)
+
+

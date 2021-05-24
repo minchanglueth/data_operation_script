@@ -137,10 +137,6 @@ class Page(object):
                 self.S_11 = {"sheet_name": "S_11",
                              "column_name": ["release_date", "album_title", "album_artist", "itune_album_url",
                                              "sportify_album_url"]}
-            elif "Youtube collect_experiment" in sheet_names:
-                self.S_11 = {"sheet_name": "Youtube collect_experiment",
-                             "column_name": ["release_date", "album_title", "album_artist", "itune_album_url",
-                                             "sportify_album_url", "p.i.c"]}
 
     def process_file(self, sheet_info: str):
         sheet_name = sheet_info.get('sheet_name')
@@ -206,7 +202,6 @@ def merge_file(sheet_name: str, urls: list, page_type: object = None):
     url_reformats = list(
         set(map(lambda x: "https://docs.google.com/spreadsheets/d/" + get_gsheet_id_from_url(x), urls)))
     priority = page_type.priority
-
     df = pd.DataFrame()
     for url in url_reformats:
         try:
@@ -224,16 +219,13 @@ if __name__ == "__main__":
     start_time = time.time()
     pd.set_option("display.max_rows", None, "display.max_columns", 50, 'display.width', 1000)
     urls = [
-        "https://docs.google.com/spreadsheets/d/18kMfBz4XaHG8jjJ3E8lhHi-mw501_zJl39rRz95bcqU/edit#gid=1501426979"
+        "https://docs.google.com/spreadsheets/d/1ZgMTydySAvqoyJgo4OZchQVC42NZgHbzocdy50IH2LY/edit#gid=0"
     ]
-    # url = "https://docs.google.com/spreadsheets/d/17oTEIcl8BFiUcD75Qq0JtI7MO1VqMax3Re7nQQ_SIgI/edit#gid=0"
-    sheet_name = SheetNames.S_11
-    page_type = PageType.Contribution
 
-    page = Page(
-        url="https://docs.google.com/spreadsheets/d/18kMfBz4XaHG8jjJ3E8lhHi-mw501_zJl39rRz95bcqU/edit#gid=1501426979")
-    sheet_info = getattr(page.sheet_name_type, sheet_name)
+    sheet_name = SheetNames.S_11
+    page_type = PageType.NewClassic
     k = merge_file(sheet_name=sheet_name, urls=urls, page_type=page_type)
     print(k.head(10))
+    # get_df_from_speadsheet(gsheet_id="1ZgMTydySAvqoyJgo4OZchQVC42NZgHbzocdy50IH2LY", sheet_name="S_11")
 
     print("\n --- total time to process %s seconds ---" % (time.time() - start_time))

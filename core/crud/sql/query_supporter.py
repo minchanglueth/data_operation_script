@@ -166,6 +166,18 @@ def get_crawlingtask_status(gsheet_name: str, sheet_name: str, actionid: str):
     return crawl_artist_image_status
 
 
+def get_all_datasource_valid() -> List[DataSource]:
+    db_datasource = db_session.query(DataSource).filter(
+                                        DataSource.valid == 1,
+                                        DataSource.id == '000012EE5EA4422AB5AEA06E063C3DE0'
+                                        ).order_by(DataSource.created_at.desc()).one()
+    # db_datasource.format_id = "joy xinh"
+    # db_session.commit()
+
+    return db_datasource
+
+
+
 if __name__ == "__main__":
     start_time = time.time()
     # #     Artist Page 30.12.2020_MP_3---204F065101834F11BC74251C64967ECF---F91244676ACD47BD9A9048CF2BA3FFC1
@@ -173,13 +185,14 @@ if __name__ == "__main__":
     #                                                 PIC="Artist Page 20.01.2021_MP_4",
     #                                                 actionid="F91244676ACD47BD9A9048CF2BA3FFC1")
     # F405C0395ADD45F298383B782DA81066---Top 100 Album 03.05.2021_image---OA9CPKSUT6PBGI1ZHPLQUPQCGVYQ71S9
-    objectid = "3344FF5492244FDFA86649D5D71A76FC"
-    PIC = "Top 100 Album 03.05.2021_image"
-    acctinid = "OA9CPKSUT6PBGI1ZHPLQUPQCGVYQ71S9"
+    # objectid = "3344FF5492244FDFA86649D5D71A76FC"
+    # PIC = "Top 100 Album 03.05.2021_image"
+    # acctinid = "OA9CPKSUT6PBGI1ZHPLQUPQCGVYQ71S9"
 
-    db_crawlingtask = get_crawlingtask_info(objectid=objectid, PIC=PIC, actionid=acctinid)
-    k = get_compiled_raw_mysql(db_crawlingtask)
-    print(k)
+    db_datasource = get_all_datasource_valid()
+    print(db_datasource.id)
+
+
 
 #     print(k)
 #     print("--- %s seconds ---" % (time.time() - start_time))

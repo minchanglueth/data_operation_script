@@ -21,6 +21,10 @@ def post_message(chanel: str, text: str):
 if __name__ == "__main__":
     post_message(chanel="test", text="hello world 4")
 
+# url = "https://docs.google.com/spreadsheets/d/1FNfYZjn9LNeCUus4JbLdAJ5qSrmFJGYVVhsbjaPAD4g/edit#gid=0"
+
+
+
 
 
 

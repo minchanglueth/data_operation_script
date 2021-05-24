@@ -469,7 +469,7 @@ def update_similarity(urls: list, sheet_name: str, start_row: int, stop_row: int
                 'similarity')
             f.append([k])
         joy1 = f"{sheet_name}!N{i + 2}"
-        update_value(list_result=f, range_to_update=joy1, gsheet_id=gsheet_id)
+        update_value(list_result=f, grid_range_to_update=joy1, gsheet_id=gsheet_id)
 
 
 if __name__ == "__main__":

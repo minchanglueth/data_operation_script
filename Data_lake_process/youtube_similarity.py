@@ -80,6 +80,6 @@ if __name__ == "__main__":
             k = similarity(track_title=track_title, youtube_url=SourceURI, formatid=FormatID, duration=DurationMs).get('similarity')
             f.append([k])
         joy1 = f"{sheet_name}!N{i+2}"
-        update_value(list_result=f, range_to_update=joy1, gsheet_id=gsheet_id)
+        update_value(list_result=f, grid_range_to_update=joy1, gsheet_id=gsheet_id)
 
     print("--- %s seconds ---" % (time.time() - start_time))

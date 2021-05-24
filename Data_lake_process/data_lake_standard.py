@@ -283,7 +283,6 @@ class S11Working:
                 lambda x: get_itune_id_region_from_itune_url(url=x)[0])
             filter_df['region'] = filter_df['itune_album_url'].apply(
                 lambda x: get_itune_id_region_from_itune_url(url=x)[1])
-            print(filter_df.head(10))
         return filter_df
 
     def crawl_s11_datalake(self, when_exists: str = WhenExist.REPLACE):
@@ -390,7 +389,7 @@ if __name__ == "__main__":
     with open(query_path, "w") as f:
         f.truncate()
     urls = [
-        "https://docs.google.com/spreadsheets/d/18kMfBz4XaHG8jjJ3E8lhHi-mw501_zJl39rRz95bcqU/edit#gid=1501426979&fvid=673482143"
+        "https://docs.google.com/spreadsheets/d/1ZgMTydySAvqoyJgo4OZchQVC42NZgHbzocdy50IH2LY/edit#gid=0"
     ]
     sheet_name_ = SheetNames.S_11
     page_type_ = PageType.NewClassic
@@ -403,7 +402,7 @@ if __name__ == "__main__":
     control_flow.check_box()
 
     # observe:
-    k = control_flow.observe()
+    # k = control_flow.observe()
     # print(k.head(10))
 
     # crawl:
