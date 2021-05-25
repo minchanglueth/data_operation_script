@@ -176,7 +176,7 @@ def get_s11_crawlingtask_info(pic: str):
     crawlingtasks_E5 = aliased(Crawlingtask, name='crawlingtasks_E5')
 
     s11_crawlingtask_info = (db_session.query(
-        func.json_extract(crawlingtasks_06.taskdetail, f"$.album_id").label("album_id"),
+        func.json_extract(crawlingtasks_06.taskdetail, f"$.album_id").label("itune_album_id"),
         crawlingtasks_06.id.label("06_id"),
         crawlingtasks_06.status.label("06_status"),
         crawlingtasks_E5.id.label("E5_id"),
@@ -184,8 +184,8 @@ def get_s11_crawlingtask_info(pic: str):
     )
                                  .select_from(crawlingtasks_06)
                                  .outerjoin(crawlingtasks_E5,
-                                            crawlingtasks_E5.id == func.json_extract(crawlingtasks_06.ext, "$.itunes_track_task_id"), #performance query problem
-                                            # text("crawlingtasks_E5.id = crawlingtasks_06.ext ->> '$.itunes_track_task_id'")
+                                            # crawlingtasks_E5.id == func.json_extract(crawlingtasks_06.ext, "$.itunes_track_task_id"), #performance query problem
+                                            text("crawlingtasks_E5.id = crawlingtasks_06.ext ->> '$.itunes_track_task_id'")
                                             )).filter(
         crawlingtasks_06.actionid == "9C8473C36E57472281A1C7936108FC06",
         func.json_extract(crawlingtasks_06.taskdetail, "$.PIC") == pic,
@@ -197,15 +197,15 @@ def get_s11_crawlingtask_info(pic: str):
 if __name__ == "__main__":
     start_time = time.time()
     pd.set_option("display.max_rows", None, "display.max_columns", 30, 'display.width', 500)
-    db_crawlingtasks = get_s11_crawlingtask_info(pic="NewClassic 24.05.2021_S_11")
-    k = get_compiled_raw_mysql(db_crawlingtasks)
-    print(k)
+    # db_crawlingtasks = get_s11_crawlingtask_info(pic="NewClassic 24.05.2021_S_11")
+    # k = get_compiled_raw_mysql(db_crawlingtasks)
+    # print(k)
     # # print(k)
     # # for db_crawlingtask in db_crawlingtasks:
     # #     print(db_crawlingtask.album_id)
-    # df = get_df_from_query(query=get_s11_crawlingtask_info(pic="NewClassic 24.05.2021_S_11"))
-    # print(df)
-
+    df = get_df_from_query(query=get_s11_crawlingtask_info(pic="NewClassic 25.05.2021_S_11")).astype(str)
+    print(df.dtypes)
+    print(df)
     print("\n --- total time to process %s seconds ---" % (time.time() - start_time))
 
 

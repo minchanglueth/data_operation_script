@@ -14,6 +14,7 @@ from Data_lake_process.checking_accuracy_and_crawler_status import checking_imag
 from crawl_itune.functions import get_itune_id_region_from_itune_url
 from core.crud.get_df_from_query import get_df_from_query
 from core.crud.sql.query_supporter import get_crawlingtask_info, get_s11_crawlingtask_info
+from google_spreadsheet_api.function import update_value, update_value_at_last_column
 
 
 def upload_image_cant_crawl(checking_accuracy_result: object, sheet_name: str):
@@ -242,16 +243,49 @@ class S11Working:
         query_pandas_to_csv(df=df, column='query')
 
     def checking_s11_crawler_status(self):
-        print("checking accuracy")
-        df = self.s11_filter().copy()
-        gsheet_infos = list(set(df.gsheet_info.tolist()))
+        original_df = self.original_file.copy()
+        original_df['itune_id'] = original_df['itune_album_url'].apply(
+            lambda x: get_itune_id_region_from_itune_url(url=x)[0] if x not in (
+            'None', '', 'not found', 'non', 'nan') else 'None')
+
+        original_df['url'] = original_df['gsheet_info'].apply(
+            lambda x: get_key_value_from_gsheet_info(gsheet_info=x, key='url'))
+
+        gsheet_infos = list(set(original_df.gsheet_info.tolist()))
         for gsheet_info in gsheet_infos:
             gsheet_name = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key='gsheet_name')
             sheet_name = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key='sheet_name')
+            url = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key='url')
+            original_df_split = original_df[original_df['url'] == url].reset_index()
             PIC_taskdetail = f"{gsheet_name}_{sheet_name}"
-            k = get_df_from_query(get_s11_crawlingtask_info(pic=PIC_taskdetail))
-            print(k)
-            # print(PIC_taskdetail)
+
+            count = 0
+            while True and count < 300:
+                checking_accuracy_result = get_df_from_query(get_s11_crawlingtask_info(pic=PIC_taskdetail))
+                checking_accuracy_result['itune_album_id'] = checking_accuracy_result['itune_album_id'].apply(
+                    lambda x: x.strip('"'))
+                result = checking_accuracy_result[
+                    ((checking_accuracy_result['06_status'] != 'complete')
+                     & (checking_accuracy_result['06_status'] != 'incomplete')) |
+                    ((checking_accuracy_result['E5_status'] != 'complete')
+                     & (checking_accuracy_result['E5_status'] != 'incomplete'))
+                    ]
+                checking = result.empty
+                if checking == 1:
+                    print(
+                        Fore.LIGHTYELLOW_EX + f"File: {gsheet_name}, sheet_name: {sheet_name} has been crawled complete already" + Style.RESET_ALL)
+                    data_merge = pd.merge(original_df_split, checking_accuracy_result, how='left', left_on='itune_id',
+                                          right_on='itune_album_id', validate='1:m').fillna(value='None')
+                    data_updated = data_merge[checking_accuracy_result.columns]
+                    update_value_at_last_column(df_to_update=data_updated, gsheet_id=get_gsheet_id_from_url(url=url),
+                                                sheet_name=sheet_name)
+                    break
+                else:
+                    count += 1
+                    print(
+                        Fore.LIGHTYELLOW_EX + f"File: {gsheet_name}, sheet_name: {sheet_name} hasn't been crawled complete" + Style.RESET_ALL)
+                    time.sleep(10)
+                    print(count, "-----", result)
 
         # step 1.1: checking accuracy
 
@@ -334,7 +368,8 @@ if __name__ == "__main__":
     with open(query_path, "w") as f:
         f.truncate()
     urls = [
-        "https://docs.google.com/spreadsheets/d/14J67QV_u353oYmNk85EIWJ0HU4NnCFThvSBcer992FQ/edit#gid=0"
+        # "https://docs.google.com/spreadsheets/d/14J67QV_u353oYmNk85EIWJ0HU4NnCFThvSBcer992FQ/edit#gid=0",
+        "https://docs.google.com/spreadsheets/d/1ZgMTydySAvqoyJgo4OZchQVC42NZgHbzocdy50IH2LY/edit#gid=657665900&fvid=887631666"
     ]
     sheet_name_ = SheetNames.S_11
     page_type_ = PageType.NewClassic
@@ -347,14 +382,14 @@ if __name__ == "__main__":
     # control_flow.check_box()
 
     # observe:
-    k = control_flow.observe()
-    print(k)
+    # k = control_flow.observe()
+    # print(k)
 
 
     # crawl:
-    control_flow.crawl()
+    # control_flow.crawl()
 
     # checking
-    # control_flow.checking()
+    control_flow.checking()
 
     print("\n --- total time to process %s seconds ---" % (time.time() - start_time))
