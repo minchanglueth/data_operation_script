@@ -10,7 +10,7 @@ from Data_lake_process.class_definition import WhenExist, PageType, SheetNames, 
     get_key_value_from_gsheet_info, add_key_value_from_gsheet_info, get_gsheet_id_from_url
 from Data_lake_process.new_check_box_standard import youtube_check_box, s11_checkbox, update_s11_check_box
 from Data_lake_process.data_report import update_data_reports
-from Data_lake_process.checking_accuracy_and_crawler_status import checking_image_youtube_accuracy, automate_checking_status
+from Data_lake_process.checking_accuracy_and_crawler_status import checking_image_youtube_accuracy, automate_checking_status, checking_s11_crawler_status
 from crawl_itune.functions import get_itune_id_region_from_itune_url
 from core.crud.get_df_from_query import get_df_from_query
 from core.crud.sql.query_supporter import get_crawlingtask_info, get_s11_crawlingtask_info
@@ -243,49 +243,9 @@ class S11Working:
         query_pandas_to_csv(df=df, column='query')
 
     def checking_s11_crawler_status(self):
-        original_df = self.original_file.copy()
-        original_df['itune_id'] = original_df['itune_album_url'].apply(
-            lambda x: get_itune_id_region_from_itune_url(url=x)[0] if x not in (
-            'None', '', 'not found', 'non', 'nan') else 'None')
+        checking_s11_crawler_status(df=self.original_file)
 
-        original_df['url'] = original_df['gsheet_info'].apply(
-            lambda x: get_key_value_from_gsheet_info(gsheet_info=x, key='url'))
 
-        gsheet_infos = list(set(original_df.gsheet_info.tolist()))
-        for gsheet_info in gsheet_infos:
-            gsheet_name = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key='gsheet_name')
-            sheet_name = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key='sheet_name')
-            url = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key='url')
-            original_df_split = original_df[original_df['url'] == url].reset_index()
-            PIC_taskdetail = f"{gsheet_name}_{sheet_name}"
-
-            count = 0
-            while True and count < 300:
-                checking_accuracy_result = get_df_from_query(get_s11_crawlingtask_info(pic=PIC_taskdetail))
-                checking_accuracy_result['itune_album_id'] = checking_accuracy_result['itune_album_id'].apply(
-                    lambda x: x.strip('"'))
-                result = checking_accuracy_result[
-                    ((checking_accuracy_result['06_status'] != 'complete')
-                     & (checking_accuracy_result['06_status'] != 'incomplete')) |
-                    ((checking_accuracy_result['E5_status'] != 'complete')
-                     & (checking_accuracy_result['E5_status'] != 'incomplete'))
-                    ]
-                checking = result.empty
-                if checking == 1:
-                    print(
-                        Fore.LIGHTYELLOW_EX + f"File: {gsheet_name}, sheet_name: {sheet_name} has been crawled complete already" + Style.RESET_ALL)
-                    data_merge = pd.merge(original_df_split, checking_accuracy_result, how='left', left_on='itune_id',
-                                          right_on='itune_album_id', validate='1:m').fillna(value='None')
-                    data_updated = data_merge[checking_accuracy_result.columns]
-                    update_value_at_last_column(df_to_update=data_updated, gsheet_id=get_gsheet_id_from_url(url=url),
-                                                sheet_name=sheet_name)
-                    break
-                else:
-                    count += 1
-                    print(
-                        Fore.LIGHTYELLOW_EX + f"File: {gsheet_name}, sheet_name: {sheet_name} hasn't been crawled complete" + Style.RESET_ALL)
-                    time.sleep(10)
-                    print(count, "-----", result)
 
         # step 1.1: checking accuracy
 
