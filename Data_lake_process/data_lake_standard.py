@@ -1,7 +1,6 @@
 from google_spreadsheet_api.function import get_df_from_speadsheet, creat_new_sheet_and_update_data_from_df, get_gsheet_name
 from core.models.crawlingtask_action_master import V4CrawlingTaskActionMaster
 from core.crud.sql import artist, album
-from core.crud.sql.query_supporter import  get_crawlingtask_info
 import pandas as pd
 import time
 from core import query_path
@@ -11,66 +10,10 @@ from Data_lake_process.class_definition import WhenExist, PageType, SheetNames, 
     get_key_value_from_gsheet_info, add_key_value_from_gsheet_info, get_gsheet_id_from_url
 from Data_lake_process.new_check_box_standard import youtube_check_box, s11_checkbox, update_s11_check_box
 from Data_lake_process.data_report import update_data_reports
+from Data_lake_process.checking_accuracy_and_crawler_status import checking_image_youtube_accuracy, automate_checking_status
 from crawl_itune.functions import get_itune_id_region_from_itune_url
-
-
-def checking_image_youtube_accuracy(df: object, actionid: str):
-    df['check'] = ''
-    df['status'] = ''
-    df['crawlingtask_id'] = ''
-    row_index = df.index
-    for i in row_index:
-        if actionid == V4CrawlingTaskActionMaster.ARTIST_ALBUM_IMAGE:
-            objectid = df['uuid'].loc[i]
-        elif actionid == V4CrawlingTaskActionMaster.DOWNLOAD_VIDEO_YOUTUBE:
-            objectid = df['track_id'].loc[i]
-
-        url = df.url_to_add.loc[i]
-        gsheet_info = df.gsheet_info.loc[i]
-        gsheet_name = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key='gsheet_name')
-        sheet_name = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key='sheet_name')
-        PIC_taskdetail = f"{gsheet_name}_{sheet_name}"
-        db_crawlingtask = get_crawlingtask_info(objectid=objectid, PIC=PIC_taskdetail, actionid=actionid)
-
-        if db_crawlingtask:
-            status = db_crawlingtask.status
-            crawlingtask_id = db_crawlingtask.id
-            if url in db_crawlingtask.url:
-                check_accuracy = True
-            else:
-                check_accuracy = f"crawlingtask_id: {db_crawlingtask.id}: uuid and url not match"
-                print(check_accuracy)
-        else:
-            check_accuracy = f"file: {PIC_taskdetail}, uuid: {objectid} is missing"
-            print(check_accuracy)
-            status = 'missing'
-            crawlingtask_id = 'missing'
-        df.loc[i, 'check'] = check_accuracy
-        df.loc[i, 'status'] = status
-        df.loc[i, 'crawlingtask_id'] = crawlingtask_id
-    return df
-
-
-def automate_checking_status(df: object, actionid: str):
-    gsheet_infos = list(set(df.gsheet_info.tolist()))
-    count = 0
-    while True and count < 300:
-        checking_accuracy_result = checking_image_youtube_accuracy(df=df, actionid=actionid)
-        result = checking_accuracy_result[
-                     (checking_accuracy_result['status'] != 'complete')
-                     & (checking_accuracy_result['status'] != 'incomplete')
-                     ].status.tolist() == []
-        if result == 1:
-            for gsheet_info in gsheet_infos:
-                gsheet_name = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key='gsheet_name')
-                sheet_name = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key='sheet_name')
-                print(
-                    Fore.LIGHTYELLOW_EX + f"File: {gsheet_name}, sheet_name: {sheet_name} has been crawled complete already" + Style.RESET_ALL)
-            break
-        else:
-            count += 1
-            time.sleep(2)
-            print(count, "-----", result)
+from core.crud.get_df_from_query import get_df_from_query
+from core.crud.sql.query_supporter import get_crawlingtask_info, get_s11_crawlingtask_info
 
 
 def upload_image_cant_crawl(checking_accuracy_result: object, sheet_name: str):
@@ -99,14 +42,8 @@ def upload_image_cant_crawl(checking_accuracy_result: object, sheet_name: str):
         if joy:
             raw_df_to_upload = {'status': ['Upload thành công 100% nhé các em ^ - ^']}
             df_to_upload = pd.DataFrame(data=raw_df_to_upload)
-            # Step 3.1: upload image cant crawl: update reports
-            # update_data_reports(gsheet_info=gsheet_info, status=DataReports.status_type_done,
-            #                     count_complete=0, count_incomlete=count_incomplete)
         else:
             df_to_upload = df_incomplete_to_upload.drop(['url', 'index'], axis=1)
-
-            # update_data_reports(gsheet_info=get_gsheet_id_from_url(url), status=DataReports.status_type_processing,
-            #                     count_complete=0, count_incomlete=count_incomplete)
         new_sheet_name = f"{sheet_name_} cant upload"
         print(df_to_upload)
         creat_new_sheet_and_update_data_from_df(df_to_upload, get_gsheet_id_from_url(url), new_sheet_name)
@@ -273,7 +210,7 @@ class S11Working:
 
     def s11_filter(self):
         df = self.original_file
-        if s11_checkbox(df=df, page_type=self.page_type.name):
+        if s11_checkbox(df=df):
             filter_df = df[
                 (df['itune_album_url'] != 'not found') & (df['itune_album_url'] != '')
                 ].drop_duplicates(
@@ -291,7 +228,6 @@ class S11Working:
             is_new_release = True
         else:
             is_new_release = False
-
         if df.empty:
             print(Fore.LIGHTYELLOW_EX + f"s11 file is empty" + Style.RESET_ALL)
         else:
@@ -307,10 +243,19 @@ class S11Working:
 
     def checking_s11_crawler_status(self):
         print("checking accuracy")
-        df = self.image_filter().copy()
+        df = self.s11_filter().copy()
         gsheet_infos = list(set(df.gsheet_info.tolist()))
+        for gsheet_info in gsheet_infos:
+            gsheet_name = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key='gsheet_name')
+            sheet_name = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key='sheet_name')
+            PIC_taskdetail = f"{gsheet_name}_{sheet_name}"
+            k = get_df_from_query(get_s11_crawlingtask_info(pic=PIC_taskdetail))
+            print(k)
+            # print(PIC_taskdetail)
+
         # step 1.1: checking accuracy
-        # checking_accuracy_result = checking_image_youtube_accuracy(df=df, actionid=V4CrawlingTaskActionMaster.ARTIST_ALBUM_IMAGE)
+
+
     #     accuracy_checking = list(set(checking_accuracy_result['check'].tolist()))
     #
     #     if accuracy_checking != [True]:
@@ -353,7 +298,7 @@ class ControlFlow:
             return youtube_working.youtube_filter()
         elif self.sheet_name == SheetNames.S_11:
             s11_working = S11Working(sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type)
-            return s11_working.s11_filter(pic=pic)
+            return s11_working.s11_filter()
 
     def crawl(self):
         if self.sheet_name in (SheetNames.ARTIST_IMAGE, SheetNames.ALBUM_IMAGE):
@@ -389,9 +334,9 @@ if __name__ == "__main__":
     with open(query_path, "w") as f:
         f.truncate()
     urls = [
-        "https://docs.google.com/spreadsheets/d/1ZgMTydySAvqoyJgo4OZchQVC42NZgHbzocdy50IH2LY/edit#gid=0"
+        "https://docs.google.com/spreadsheets/d/14J67QV_u353oYmNk85EIWJ0HU4NnCFThvSBcer992FQ/edit#gid=0"
     ]
-    sheet_name_ = SheetNames.MP3_SHEET_NAME
+    sheet_name_ = SheetNames.S_11
     page_type_ = PageType.NewClassic
 
     # k = S11Working(sheet_name=sheet_name_, urls=urls, page_type=page_type_)
@@ -399,14 +344,15 @@ if __name__ == "__main__":
 
     control_flow = ControlFlow(sheet_name=sheet_name_, urls=urls, page_type=page_type_)
     # check_box:
-    control_flow.check_box()
+    # control_flow.check_box()
 
     # observe:
-    # k = control_flow.observe()
-    # print(k.head(10))
+    k = control_flow.observe()
+    print(k)
+
 
     # crawl:
-    # control_flow.crawl()
+    control_flow.crawl()
 
     # checking
     # control_flow.checking()

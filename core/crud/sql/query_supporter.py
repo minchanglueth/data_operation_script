@@ -13,11 +13,15 @@ from sqlalchemy import func, union, distinct, desc, and_, or_, tuple_, extract
 from sqlalchemy import text
 from core.mysql_database_connection.sqlalchemy_create_engine import SQLALCHEMY_DATABASE_URI
 from typing import Optional, Tuple, Dict, List
+from sqlalchemy.orm import aliased
+from core.crud.get_df_from_query import get_df_from_query
+
 
 from datetime import date
 import time
 
 from core.crud.sqlalchemy import get_compiled_raw_mysql
+import pandas as pd
 
 engine = create_engine(SQLALCHEMY_DATABASE_URI)
 db_session = scoped_session(sessionmaker(autocommit=False, autoflush=False, bind=engine))
@@ -166,31 +170,46 @@ def get_crawlingtask_status(gsheet_name: str, sheet_name: str, actionid: str):
     return crawl_artist_image_status
 
 
-def get_all_datasource_valid() -> List[DataSource]:
-    db_datasource = db_session.query(DataSource).filter(
-                                        DataSource.valid == 1,
-                                        DataSource.id == '000012EE5EA4422AB5AEA06E063C3DE0'
-                                        ).order_by(DataSource.created_at.desc()).one()
-    # db_datasource.format_id = "joy xinh"
-    # db_session.commit()
+def get_s11_crawlingtask_info(pic: str):
+    # JOIN same table with aliases on SQLAlchemy
+    crawlingtasks_06 = aliased(Crawlingtask, name='crawlingtasks_06')
+    crawlingtasks_E5 = aliased(Crawlingtask, name='crawlingtasks_E5')
 
-    return db_datasource
-
+    s11_crawlingtask_info = (db_session.query(
+        func.json_extract(crawlingtasks_06.taskdetail, f"$.album_id").label("album_id"),
+        crawlingtasks_06.id.label("06_id"),
+        crawlingtasks_06.status.label("06_status"),
+        crawlingtasks_E5.id.label("E5_id"),
+        crawlingtasks_E5.status.label("E5_status")
+    )
+                                 .select_from(crawlingtasks_06)
+                                 .outerjoin(crawlingtasks_E5,
+                                            crawlingtasks_E5.id == func.json_extract(crawlingtasks_06.ext, "$.itunes_track_task_id"), #performance query problem
+                                            # text("crawlingtasks_E5.id = crawlingtasks_06.ext ->> '$.itunes_track_task_id'")
+                                            )).filter(
+        crawlingtasks_06.actionid == "9C8473C36E57472281A1C7936108FC06",
+        func.json_extract(crawlingtasks_06.taskdetail, "$.PIC") == pic,
+    ).order_by(
+        crawlingtasks_06.created_at.desc())
+    return s11_crawlingtask_info
 
 
 if __name__ == "__main__":
     start_time = time.time()
-    # #     Artist Page 30.12.2020_MP_3---204F065101834F11BC74251C64967ECF---F91244676ACD47BD9A9048CF2BA3FFC1
-    # db_crawlingtask = get_crawlingtask_youtube_info(objectid="08C35303A6B24BCAAFC181CE5486C238",
-    #                                                 PIC="Artist Page 20.01.2021_MP_4",
-    #                                                 actionid="F91244676ACD47BD9A9048CF2BA3FFC1")
-    # F405C0395ADD45F298383B782DA81066---Top 100 Album 03.05.2021_image---OA9CPKSUT6PBGI1ZHPLQUPQCGVYQ71S9
-    # objectid = "3344FF5492244FDFA86649D5D71A76FC"
-    # PIC = "Top 100 Album 03.05.2021_image"
-    # acctinid = "OA9CPKSUT6PBGI1ZHPLQUPQCGVYQ71S9"
+    pd.set_option("display.max_rows", None, "display.max_columns", 30, 'display.width', 500)
+    db_crawlingtasks = get_s11_crawlingtask_info(pic="NewClassic 24.05.2021_S_11")
+    k = get_compiled_raw_mysql(db_crawlingtasks)
+    print(k)
+    # # print(k)
+    # # for db_crawlingtask in db_crawlingtasks:
+    # #     print(db_crawlingtask.album_id)
+    # df = get_df_from_query(query=get_s11_crawlingtask_info(pic="NewClassic 24.05.2021_S_11"))
+    # print(df)
 
-    db_datasource = get_all_datasource_valid()
-    print(db_datasource.id)
+    print("\n --- total time to process %s seconds ---" % (time.time() - start_time))
+
+
+
 
 
 
