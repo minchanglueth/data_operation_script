@@ -396,17 +396,17 @@ if __name__ == "__main__":
         # "https://docs.google.com/spreadsheets/d/1U91uRDczj-0ku0dGVCGbm6FL0_QmsDB6lBAPMfr6yCs/edit#gid=0"
 
     ]
-    sheet_name_ = SheetNames.C_11
-    page_type_ = PageType.Contribution
+    sheet_name_ = SheetNames.S_11
+    page_type_ = PageType.NewClassic
     pic = '21May21 Camille'
 
     # k = S11Working(sheet_name=sheet_name_, urls=urls, page_type=page_type_)
     # print(k.original_file)
 
-    # control_flow = ControlFlow(sheet_name=sheet_name_, urls=urls, page_type=page_type_)
+    control_flow = ControlFlow(sheet_name=sheet_name_, urls=urls, page_type=page_type_)
     # ControlFlow_C11
-    control_flow = ControlFlow(sheet_name=sheet_name_, urls=urls, page_type=page_type_, pic=pic)
-
+    # control_flow = ControlFlow(sheet_name=sheet_name_, urls=urls, page_type=page_type_, pic=pic)
+    #
     # check_box:
     # control_flow.check_box()
     # observe:
