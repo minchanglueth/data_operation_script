@@ -8,11 +8,10 @@ from google_spreadsheet_api.create_new_sheet_and_update_data_from_df import crea
 import numpy as np
 
 
-def similarity(track_title: str, youtube_url: str, formatid: str, duration):
+def similarity(track_title: str, youtube_url: str, formatid: str, duration: str = None):
     special_characters = \
         get_df_from_speadsheet(gsheet_id='1W1TlNDXqZTMAaAFofrorqaEo6bfX7GjwnhWMXcq70xA', sheet_name='Similarity')[
             'Keywords'].tolist()
-
     track_title = track_title.lower()
     get_youtube_info = get_youtube_title_and_youtube_uploader_from_youtube_url(youtube_url)
     get_youtube_title = get_youtube_info['youtube_title'].lower()

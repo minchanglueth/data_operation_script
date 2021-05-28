@@ -386,26 +386,18 @@ if __name__ == "__main__":
     with open(query_path, "w") as f:
         f.truncate()
     urls = [
-        # "https://docs.google.com/spreadsheets/d/14J67QV_u353oYmNk85EIWJ0HU4NnCFThvSBcer992FQ/edit#gid=0",
-        # "https://docs.google.com/spreadsheets/d/1ZgMTydySAvqoyJgo4OZchQVC42NZgHbzocdy50IH2LY/edit#gid=657665900&fvid=887631666"
-        # "https://docs.google.com/spreadsheets/d/1Vip-DJquEIgW8KoOgMspvO7kblGSuammOj5uOmi6YDk/edit#gid=0"
-        # "https://docs.google.com/spreadsheets/d/18kMfBz4XaHG8jjJ3E8lhHi-mw501_zJl39rRz95bcqU/edit#gid=1501426979"
-        # "https://docs.google.com/spreadsheets/d/1Vip-DJquEIgW8KoOgMspvO7kblGSuammOj5uOmi6YDk/edit#gid=2042730270"
-        # "https://docs.google.com/spreadsheets/d/1Vip-DJquEIgW8KoOgMspvO7kblGSuammOj5uOmi6YDk/edit#gid=1760376528",
         "https://docs.google.com/spreadsheets/d/18kMfBz4XaHG8jjJ3E8lhHi-mw501_zJl39rRz95bcqU/edit#gid=1501426979&fvid=1697167036"
-        # "https://docs.google.com/spreadsheets/d/1U91uRDczj-0ku0dGVCGbm6FL0_QmsDB6lBAPMfr6yCs/edit#gid=0"
-
     ]
-    sheet_name_ = SheetNames.S_11
-    page_type_ = PageType.NewClassic
+    sheet_name_ = SheetNames.C_11
+    page_type_ = PageType.Contribution
     pic = '21May21 Camille'
 
     # k = S11Working(sheet_name=sheet_name_, urls=urls, page_type=page_type_)
     # print(k.original_file)
 
-    control_flow = ControlFlow(sheet_name=sheet_name_, urls=urls, page_type=page_type_)
+    # control_flow = ControlFlow(sheet_name=sheet_name_, urls=urls, page_type=page_type_)
     # ControlFlow_C11
-    # control_flow = ControlFlow(sheet_name=sheet_name_, urls=urls, page_type=page_type_, pic=pic)
+    control_flow = ControlFlow(sheet_name=sheet_name_, urls=urls, page_type=page_type_, pic=pic)
     #
     # check_box:
     # control_flow.check_box()
@@ -420,5 +412,7 @@ if __name__ == "__main__":
 
     # checking
     control_flow.checking()
+
+
 
     print("\n --- total time to process %s seconds ---" % (time.time() - start_time))

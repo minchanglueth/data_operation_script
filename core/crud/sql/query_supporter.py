@@ -197,30 +197,38 @@ def get_s11_crawlingtask_info(pic: str):
 
 def get_track_title_track_artist_by_ituneid_and_seq(itune_album_id: str, seq: str):
     get_track_title_track_artist_by_ituneid_and_seq = (db_session.query(
-        # ItunesRelease.album_uuid,
-        # ItunesRelease.album_title,
-
+        Track.title,
+        Track.artist,
+        Track.id,
+        Track.duration_ms
     )
-                                             .select_from(Album)
-                                             .join(Album_Track, Album.uuid == Album_Track.album_uuid,)
-                                             .join(Track, and_(Album_Track.track_id == Track.id,
-                                                                Track.valid == 1))
-                                             .filter(Album.valid == 1)
-                                             )
-    return get_datasource_by_artistname_formatid
+                                                       .select_from(Album)
+                                                       .join(Album_Track, Album.uuid == Album_Track.album_uuid, )
+                                                       .join(Track, and_(Album_Track.track_id == Track.id,
+                                                                         Track.valid == 1))
+                                                       .filter(
+                                                                Album.valid == 1,
+                                                                Album.external_id == itune_album_id,
+                                                                Album_Track.track_number == seq
+                                                                )
+                                                       ).limit(1).first()
+    return get_track_title_track_artist_by_ituneid_and_seq
+
 
 if __name__ == "__main__":
     start_time = time.time()
     pd.set_option("display.max_rows", None, "display.max_columns", 30, 'display.width', 500)
-    # db_crawlingtasks = get_s11_crawlingtask_info(pic="NewClassic 24.05.2021_S_11")
+    itune_url = 'https://music.apple.com/us/album/deadpan-love/1562039096'
+    db_crawlingtasks = get_track_title_track_artist_by_ituneid_and_seq(itune_album_id="1562039096", seq=3)
+    print(db_crawlingtasks.id)
+
+
+
     # k = get_compiled_raw_mysql(db_crawlingtasks)
     # print(k)
-    # # print(k)
-    # # for db_crawlingtask in db_crawlingtasks:
-    # #     print(db_crawlingtask.album_id)
-    df = get_df_from_query(query=get_s11_crawlingtask_info(pic="NewClassic 25.05.2021_S_11")).astype(str)
-    print(df.dtypes)
-    print(df)
+    # joy_xinh = get_df_from_query(db_crawlingtasks)
+    # print(joy_xinh)
+
     print("\n --- total time to process %s seconds ---" % (time.time() - start_time))
 
 
