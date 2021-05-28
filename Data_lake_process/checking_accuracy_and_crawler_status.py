@@ -74,8 +74,7 @@ def checking_s11_crawler_status(df: object):
     original_df = df.copy()
     original_df['itune_id'] = original_df['itune_album_url'].apply(
         lambda x: get_itune_id_region_from_itune_url(url=x)[0] if x not in (
-            'None', '', 'not found', 'non', 'nan') else 'None')
-
+            'None', '', 'not found', 'non', 'nan', 'Itunes_Album_Link') else 'None')
     original_df['url'] = original_df['gsheet_info'].apply(
         lambda x: get_key_value_from_gsheet_info(gsheet_info=x, key='url'))
 
@@ -83,15 +82,15 @@ def checking_s11_crawler_status(df: object):
     for gsheet_info in gsheet_infos:
         gsheet_name = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key='gsheet_name')
         sheet_name = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key='sheet_name')
+        PIC_taskdetail = f"{gsheet_name}_{sheet_name}"
         url = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key='url')
         original_df_split = original_df[original_df['url'] == url].reset_index()
-        PIC_taskdetail = f"{gsheet_name}_{sheet_name}"
-
         count = 0
         while True and count < 300:
             checking_accuracy_result = get_df_from_query(get_s11_crawlingtask_info(pic=PIC_taskdetail))
             checking_accuracy_result['itune_album_id'] = checking_accuracy_result['itune_album_id'].apply(
                 lambda x: x.strip('"'))
+
             result = checking_accuracy_result[
                 ((checking_accuracy_result['06_status'] != 'complete')
                  & (checking_accuracy_result['06_status'] != 'incomplete')) |
@@ -103,20 +102,23 @@ def checking_s11_crawler_status(df: object):
                 print(
                     Fore.LIGHTYELLOW_EX + f"File: {gsheet_name}, sheet_name: {sheet_name} has been crawled complete already" + Style.RESET_ALL)
                 data_merge = pd.merge(original_df_split, checking_accuracy_result, how='left', left_on='itune_id',
-                                      right_on='itune_album_id', validate='1:m').fillna(value='None')
+                                      right_on='itune_album_id', validate='m:1').fillna(value='None')
+                print(data_merge)
                 # update data to gsheet
+
                 data_updated = data_merge[checking_accuracy_result.columns]
                 update_value_at_last_column(df_to_update=data_updated, gsheet_id=get_gsheet_id_from_url(url=url),
                                             sheet_name=sheet_name)
+
                 # update data report:
                 data_report = data_merge[~
                 ((
-                         (data_merge['itune_album_url'] == 'not found')
+                         (data_merge['itune_album_url'].isin(['not found', '']))
                          & (data_merge['06_status'] == 'None')
                          & (data_merge['E5_status'] == 'None')
                  ) |
                  (
-                         (data_merge['itune_album_url'] != 'not found')
+                         (~data_merge['itune_album_url'].isin(['not found', '']))
                          & (data_merge['06_status'] == 'complete')
                          & (data_merge['E5_status'] == 'complete')
                  ))
@@ -138,6 +140,88 @@ def checking_s11_crawler_status(df: object):
                     Fore.LIGHTYELLOW_EX + f"File: {gsheet_name}, sheet_name: {sheet_name} hasn't been crawled complete" + Style.RESET_ALL)
                 time.sleep(10)
                 print(count, "-----", result)
+
+def checking_c11_get_trackid():
+
+
+
+def checking_c11_crawler_status(df: object, pic: str = None):
+    original_df = df.copy()
+    original_df['itune_id'] = original_df['itune_album_url'].apply(
+        lambda x: get_itune_id_region_from_itune_url(url=x)[0] if x not in (
+            'None', '', 'not found', 'non', 'nan', 'Itunes_Album_Link') else 'None')
+    original_df['url'] = original_df['gsheet_info'].apply(
+        lambda x: get_key_value_from_gsheet_info(gsheet_info=x, key='url'))
+    gsheet_infos = list(set(original_df.gsheet_info.tolist()))
+    for gsheet_info in gsheet_infos:
+        gsheet_name = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key='gsheet_name')
+        sheet_name = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key='sheet_name')
+        PIC_taskdetail = f"{gsheet_name}_{sheet_name}"
+        url = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key='url')
+        original_df_split = original_df[original_df['url'] == url].reset_index()
+        original_df_split = original_df_split[original_df_split['p.i.c'] == pic]
+        count = 0
+        while True and count < 300:
+            checking_accuracy_result = get_df_from_query(get_s11_crawlingtask_info(pic=PIC_taskdetail))
+            checking_accuracy_result['itune_album_id'] = checking_accuracy_result['itune_album_id'].apply(
+                lambda x: x.strip('"'))
+
+            result = checking_accuracy_result[
+                ((checking_accuracy_result['06_status'] != 'complete')
+                 & (checking_accuracy_result['06_status'] != 'incomplete')) |
+                ((checking_accuracy_result['E5_status'] != 'complete')
+                 & (checking_accuracy_result['E5_status'] != 'incomplete'))
+                ]
+            checking = result.empty
+            if checking == 1:
+                print(
+                    Fore.LIGHTYELLOW_EX + f"File: {gsheet_name}, sheet_name: {sheet_name} has been crawled complete already" + Style.RESET_ALL)
+                data_merge = pd.merge(original_df_split, checking_accuracy_result, how='left', left_on='itune_id',
+                                      right_on='itune_album_id', validate='m:1').fillna(value='None')
+                print(data_merge)
+                # update data to gsheet
+
+                data_updated = data_merge[checking_accuracy_result.columns]
+                start_row = data_merge['index'].loc[0] + 2
+                grid_range_to_update = f"{sheet_name}!AL{start_row}"
+                list_result = data_updated.values.tolist()  # transfer data_frame to 2D list
+                update_value(list_result=list_result, grid_range_to_update=grid_range_to_update,
+                             gsheet_id=get_gsheet_id_from_url(url=url))
+
+                # update data report:
+                data_report = data_merge[~
+                ((
+                         (data_merge['itune_album_url'].isin(['not found', '']))
+                         & (data_merge['06_status'] == 'None')
+                         & (data_merge['E5_status'] == 'None')
+                 ) |
+                 (
+                         (~data_merge['itune_album_url'].isin(['not found', '']))
+                         & (data_merge['06_status'] == 'complete')
+                         & (data_merge['E5_status'] == 'complete')
+                 ))
+                ]
+                if data_report.empty:
+                    print(
+                        Fore.LIGHTYELLOW_EX + f"Accuracy: ok\nStatus: ok" + Style.RESET_ALL)
+                else:
+                    print(
+                        Fore.LIGHTYELLOW_EX + f"Accuracy: not ok\nStatus: not ok" + Style.RESET_ALL)
+                    columns_data_report = ['itune_id'] + list(checking_accuracy_result.columns)
+                    data_report = data_report[columns_data_report]
+                    print(data_report)
+
+                break
+            else:
+                count += 1
+                print(
+                    Fore.LIGHTYELLOW_EX + f"File: {gsheet_name}, sheet_name: {sheet_name} hasn't been crawled complete" + Style.RESET_ALL)
+                time.sleep(10)
+                print(count, "-----", result)
+
+
+def checking_youtube_crawler_status(df: object):
+    print("joy xinh")
 
 
 if __name__ == "__main__":

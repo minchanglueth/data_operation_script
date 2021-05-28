@@ -54,6 +54,7 @@ class SheetNames:
     ALBUM_WIKI = "ALBUM_WIKI"
     TRACK_WIKI = "TRACK_WIKI"
     S_11 = "S_11"
+    C_11 = "C_11"
 
 
 class PageType:
@@ -137,6 +138,9 @@ class Page(object):
                 self.S_11 = {"sheet_name": "S_11",
                              "column_name": ["release_date", "album_title", "album_artist", "itune_album_url",
                                              "sportify_album_url"]}
+            if "Youtube collect_experiment" in sheet_names:
+                self.C_11 = {"sheet_name": "Youtube collect_experiment",
+                             "column_name": ["p.i.c", "itune_album_url", "track_title/track_num", "contribution_link", "content type"]}
 
     def process_file(self, sheet_info: str):
         sheet_name = sheet_info.get('sheet_name')
@@ -219,12 +223,13 @@ if __name__ == "__main__":
     start_time = time.time()
     pd.set_option("display.max_rows", None, "display.max_columns", 50, 'display.width', 1000)
     urls = [
-        "https://docs.google.com/spreadsheets/d/1ZgMTydySAvqoyJgo4OZchQVC42NZgHbzocdy50IH2LY/edit#gid=0"
+        "https://docs.google.com/spreadsheets/d/18kMfBz4XaHG8jjJ3E8lhHi-mw501_zJl39rRz95bcqU/edit#gid=1501426979"
     ]
 
-    sheet_name = SheetNames.MP3_SHEET_NAME
-    page_type = PageType.NewClassic
+    sheet_name = SheetNames.C_11
+    page_type = PageType.Contribution
     k = merge_file(sheet_name=sheet_name, urls=urls, page_type=page_type)
+    print(k.head(10))
 
     # get_df_from_speadsheet(gsheet_id="1ZgMTydySAvqoyJgo4OZchQVC42NZgHbzocdy50IH2LY", sheet_name="S_11")
 

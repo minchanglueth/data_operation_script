@@ -161,8 +161,9 @@ def s11_checkbox(df: object):
     df['url'] = df['gsheet_info'].apply(
         lambda x: get_key_value_from_gsheet_info(gsheet_info=x, key='url'))
     # Step 1: check validate format
-    check_format_s11 = df[~((df['itune_album_url'] == 'not found') | (
-            df['itune_album_url'].str[:32] == 'https://music.apple.com/us/album'))]
+    check_format_s11 = df[~((df['itune_album_url'] == 'not found')
+                            |(df['itune_album_url'].str[:32] == 'https://music.apple.com/us/album'))]
+
     if check_format_s11.empty:
         print(Fore.LIGHTYELLOW_EX + f"Pass check box" + Style.RESET_ALL)
         return True
@@ -196,3 +197,50 @@ def update_s11_check_box(df: object):
         update_value_at_last_column(df_to_update=updated_df, gsheet_id=get_gsheet_id_from_url(url),
                                     sheet_name=SheetNames.S_11)
 
+
+def c11_checkbox(original_df: object, pic: str = None):
+    df = original_df[original_df['p.i.c'] == pic].reset_index()
+    df['itune_id'] = df['itune_album_url'].apply(
+        lambda x: get_itune_id_region_from_itune_url(url=x)[0] if x not in (
+            'None', '', 'not found', 'non', 'nan', 'Itunes_Album_Link') else 'None')
+    df['url'] = df['gsheet_info'].apply(
+        lambda x: get_key_value_from_gsheet_info(gsheet_info=x, key='url'))
+    check_format_s11 = df[~((
+                                    (~df['content type'].str.contains('REJECT'))
+                                    & (df['itune_album_url'].str[:32] == 'https://music.apple.com/us/album')
+                            ) |
+                            (
+                                    (df['itune_album_url'] == '')
+                                    & (df['content type'].str.contains('REJECT'))
+                            ))]
+    if check_format_s11.empty:
+        print(Fore.LIGHTYELLOW_EX + f"Pass check box" + Style.RESET_ALL)
+        return True
+    else:
+        print(Fore.LIGHTYELLOW_EX + f"Not pass check box" + Style.RESET_ALL)
+        print(check_format_s11.head(10))
+        return False
+
+
+def update_c11_check_box(original_df: object, pic: str):
+    df = original_df[original_df['p.i.c'] == pic].reset_index()
+    df['url'] = df['gsheet_info'].apply(
+        lambda x: get_key_value_from_gsheet_info(gsheet_info=x, key='url'))
+    df['itune_id'] = df['itune_album_url'].apply(
+        lambda x: get_itune_id_region_from_itune_url(url=x)[0] if x != '' else 'None')
+    df['region'] = df['itune_album_url'].apply(
+        lambda x: get_itune_id_region_from_itune_url(url=x)[1] if x != '' else 'None')
+    df['checking_validate_itune'] = df['itune_id'].apply(
+        lambda x: check_validate_itune(x) if x != 'None' else 'None')
+
+    # Update data
+    gsheet_infos = list(set(df.gsheet_info.tolist()))
+    for gsheet_info in gsheet_infos:
+        sheet_name = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key='sheet_name')
+        url = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key='url')
+        data_updated = df[['itune_id', 'region', 'checking_validate_itune']]
+        start_row = df['index'].loc[0] + 2
+        grid_range_to_update = f"{sheet_name}!AI{start_row}"
+        list_result = data_updated.values.tolist()  # transfer data_frame to 2D list
+        update_value(list_result=list_result, grid_range_to_update=grid_range_to_update,
+                     gsheet_id=get_gsheet_id_from_url(url=url))

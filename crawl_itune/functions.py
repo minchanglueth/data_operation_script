@@ -15,61 +15,12 @@ def get_itunes_api_result(url: str) -> List[dict]:
             if response:
                 response_map = response.json()
                 results = response_map.get("results")
-                time.sleep(2)
-                return results
-            time.sleep(2)
-    except Exception:
-        logging.debug(f"Got error when calling url [{url}]")
-    return []
-
-
-def get_track_info_by_seq(url: str, seq: int):
-    results = get_itunes_api_result(url)
-    track_info = {}
-    seq = -1
-    for result in results:
-        seq = seq + 1
-        result.update({"seq": seq})
-        if result.get("kind") == "song" and result.get("seq") == seq:
-            result.update({"Check track existed": True})
-            track_info = result
-
-    if not track_info:
-        track_info = {"Check track existed": False}  # a jay ko day cho nay`
-    print(track_info)
-    return track_info
-
-
-def get_itunes_api_result(url: str) -> List[dict]:
-    try:
-        for _ in range(0, 2):
-            response = requests.get(url)
-            if response:
-                response_map = response.json()
-                results = response_map.get("results")
                 sleep_time = random.uniform(0.5, 1)
                 time.sleep(sleep_time)
                 return results
     except Exception:
         logging.debug(f"Got error when calling url [{url}]")
     return []
-
-
-def get_track_info_by_seq(url: str, seq: int):
-    results = get_itunes_api_result(url)
-    track_info = {}
-    seq = -1
-    for result in results:
-        seq = seq + 1
-        result.update({"seq": seq})
-        if result.get("kind") == "song" and result.get("seq") == seq:
-            result.update({"Check track existed": True})
-            track_info = result
-
-    if not track_info:
-        track_info = {"Check track existed": False}  # a jay ko day cho nay`
-    print(track_info)
-    return track_info
 
 
 def check_validate_itune(itune_album_id: str, itune_region: str = "us"):
@@ -231,14 +182,11 @@ if __name__ == "__main__":
     start_time = time.time()
     pd.set_option("display.max_rows", None, "display.max_columns", 50, 'display.width', 1000)
     itune_url = "https://music.apple.com/us/album/deadpan-love/1562039096"
-    # itune_url = "https://music.apple.com/us/album/one-dance-feat-wizkid-kyla/1440841363?i=1440841384"
+    ituneid= get_itune_id_region_from_itune_url(url=itune_url)[0]
+    region = get_itune_id_region_from_itune_url(url=itune_url)[1]
+    # check_validate_itune(itune_album_id=get_itune_id_region_from_itune_url(url=itune_url)[0],
+    #                      itune_region=get_itune_id_region_from_itune_url(url=itune_url)[1])
 
-    joy = get_itune_id_region_from_itune_url(url=itune_url)
-    print(joy)
-
-    # get_album_title_artist(itune_album_id="1562039096", itune_region="us")
-    #
-    # k = get_max_ratio(itune_album_id="1562039096", input_album_title="Wildfire")
-    # print(k)
-
+    k = get_tracklist_from_album_itune(itune_album_id=ituneid, itune_region=region)
+    print(k)
     print("--- %s seconds ---" % (time.time() - start_time))

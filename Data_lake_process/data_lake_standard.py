@@ -8,13 +8,16 @@ from colorama import Fore, Style
 from Data_lake_process.crawlingtask import crawl_image, crawl_youtube_mp3, crawl_youtube_mp4, crawl_itunes_album
 from Data_lake_process.class_definition import WhenExist, PageType, SheetNames, merge_file, DataReports, \
     get_key_value_from_gsheet_info, add_key_value_from_gsheet_info, get_gsheet_id_from_url
-from Data_lake_process.new_check_box_standard import youtube_check_box, s11_checkbox, update_s11_check_box
+from Data_lake_process.new_check_box_standard import youtube_check_box, s11_checkbox, update_s11_check_box, c11_checkbox, update_c11_check_box
 from Data_lake_process.data_report import update_data_reports
-from Data_lake_process.checking_accuracy_and_crawler_status import checking_image_youtube_accuracy, automate_checking_status, checking_s11_crawler_status
+from Data_lake_process.checking_accuracy_and_crawler_status import checking_image_youtube_accuracy, \
+    automate_checking_status, checking_s11_crawler_status, checking_c11_crawler_status,  checking_youtube_crawler_status as joy_xinh
 from crawl_itune.functions import get_itune_id_region_from_itune_url
 from core.crud.get_df_from_query import get_df_from_query
 from core.crud.sql.query_supporter import get_crawlingtask_info, get_s11_crawlingtask_info
 from google_spreadsheet_api.function import update_value, update_value_at_last_column
+
+from tools.hand_on_lab import generate_data_dict
 
 
 def upload_image_cant_crawl(checking_accuracy_result: object, sheet_name: str):
@@ -174,20 +177,22 @@ class YoutubeWorking:
     def checking_youtube_crawler_status(self):
         print("checking accuracy")
         df = self.youtube_filter().copy()
-        gsheet_infos = list(set(df.gsheet_info.tolist()))
-        # step 1.1: checking accuracy
-        checking_accuracy_result = checking_image_youtube_accuracy(df=df, actionid=V4CrawlingTaskActionMaster.DOWNLOAD_VIDEO_YOUTUBE)
-        accuracy_checking = list(set(checking_accuracy_result['check'].tolist()))
-        if accuracy_checking != [True]:
-            print(checking_accuracy_result[['uuid', 'check', 'status', 'crawlingtask_id']])
-            # Step 1.2: update data_reports if checking accuracy fail
-            for gsheet_info in gsheet_infos:
-                update_data_reports(gsheet_info=gsheet_info, status=DataReports.status_type_processing,
-                                    notice="check accuracy fail")
-        # Step 2: auto checking status
-        else:
-            print("checking accuracy correctly, now checking status")
-            automate_checking_status(df=df, actionid=V4CrawlingTaskActionMaster.DOWNLOAD_VIDEO_YOUTUBE)
+        joy_xinh(df=df)
+        # gsheet_infos = list(set(df.gsheet_info.tolist()))
+        # step 1.1: checking accuracy base type
+
+        # checking_accuracy_result = checking_image_youtube_accuracy(df=df, actionid=V4CrawlingTaskActionMaster.DOWNLOAD_VIDEO_YOUTUBE)
+        # accuracy_checking = list(set(checking_accuracy_result['check'].tolist()))
+        # if accuracy_checking != [True]:
+        #     print(checking_accuracy_result[['uuid', 'check', 'status', 'crawlingtask_id']])
+        #     # Step 1.2: update data_reports if checking accuracy fail
+        #     for gsheet_info in gsheet_infos:
+        #         update_data_reports(gsheet_info=gsheet_info, status=DataReports.status_type_processing,
+        #                             notice="check accuracy fail")
+        # # Step 2: auto checking status
+        # else:
+        #     print("checking accuracy correctly, now checking status")
+        #     automate_checking_status(df=df, actionid=V4CrawlingTaskActionMaster.DOWNLOAD_VIDEO_YOUTUBE)
 
             # #     # Step 3: upload image cant crawl
             # print(checking_accuracy_result)
@@ -211,6 +216,7 @@ class S11Working:
 
     def s11_filter(self):
         df = self.original_file
+        s11_checkbox(df=df)
         if s11_checkbox(df=df):
             filter_df = df[
                 (df['itune_album_url'] != 'not found') & (df['itune_album_url'] != '')
@@ -221,9 +227,11 @@ class S11Working:
                 lambda x: get_itune_id_region_from_itune_url(url=x)[0])
             filter_df['region'] = filter_df['itune_album_url'].apply(
                 lambda x: get_itune_id_region_from_itune_url(url=x)[1])
-        return filter_df
+            return filter_df
+        else:
+            pass
 
-    def crawl_s11_datalake(self, when_exists: str = WhenExist.REPLACE):
+    def crawl_s11_datalake(self):
         df = self.s11_filter()
         if getattr(self.page_type, "name") == "NewClassic":
             is_new_release = True
@@ -246,31 +254,67 @@ class S11Working:
         checking_s11_crawler_status(df=self.original_file)
 
 
+class C11Working:
+    def __init__(self, sheet_name: str, urls: list, page_type: object, pic: str):
+        original_file_ = merge_file(sheet_name=sheet_name, urls=urls, page_type=page_type)
+        if original_file_.empty:
+            print("original_file is empty")
+            pass
+        else:
+            self.original_file = original_file_
+            self.sheet_name = sheet_name
+            self.page_type = page_type
+            self.pic = pic
 
-        # step 1.1: checking accuracy
+    def check_box(self):
+        df = self.original_file
+        # c11_checkbox(original_df=df, pic=self.pic)
+        update_c11_check_box(original_df=df, pic= self.pic)
 
+    def c11_filter(self):
+        df = self.original_file
+        if c11_checkbox(original_df=df, pic=self.pic):
+            filter_df = df[
+                (df['p.i.c'] == self.pic)
+                & (df['itune_album_url'] != '')
+                & (~df['content type'].str.contains('REJECT'))
+                ].reset_index()
+            filter_df['itune_id'] = filter_df['itune_album_url'].apply(
+                lambda x: get_itune_id_region_from_itune_url(url=x)[0])
+            filter_df['region'] = filter_df['itune_album_url'].apply(
+                lambda x: get_itune_id_region_from_itune_url(url=x)[1])
+            filter_df = filter_df.drop_duplicates(subset=['itune_id', 'gsheet_info'], keep='first').reset_index()
+        return filter_df
 
-    #     accuracy_checking = list(set(checking_accuracy_result['check'].tolist()))
-    #
-    #     if accuracy_checking != [True]:
-    #         print(checking_accuracy_result[['uuid', 'check', 'status', 'crawlingtask_id']])
-    #         # Step 1.2: update data_reports if checking accuracy fail
-    #         for gsheet_info in gsheet_infos:
-    #             update_data_reports(gsheet_info=gsheet_info, status=DataReports.status_type_processing,
-    #                                 notice="check accuracy fail")
-    #     # Step 2: auto checking status
-    #     else:
-    #         print("checking accuracy correctly, now checking status")
-    #         automate_checking_status(df=df, actionid=V4CrawlingTaskActionMaster.ARTIST_ALBUM_IMAGE)
-    #         # Step 3: upload image cant crawl
-    #         upload_image_cant_crawl(checking_accuracy_result=checking_accuracy_result, sheet_name=self.sheet_name)
+    def crawl_c11_datalake(self):
+        df = self.c11_filter()
+        if getattr(self.page_type, "name") == "NewClassic":
+            is_new_release = True
+        else:
+            is_new_release = False
+        if df.empty:
+            print(Fore.LIGHTYELLOW_EX + f"s11 file is empty" + Style.RESET_ALL)
+        else:
+            df['query'] = df.apply(lambda x:
+                                   crawl_itunes_album(ituneid=x['itune_id'],
+                                                      priority=get_key_value_from_gsheet_info(gsheet_info=x['gsheet_info'], key='page_priority'),
+                                                      is_new_release=is_new_release,
+                                                      pic=f"{get_key_value_from_gsheet_info(gsheet_info=x['gsheet_info'], key='gsheet_name')}_{get_key_value_from_gsheet_info(gsheet_info=x['gsheet_info'], key='sheet_name')}",
+                                                      region=x['region']
+                                                      ),
+                                   axis=1)
+        query_pandas_to_csv(df=df, column='query')
+
+    def checking_c11_crawler_status(self):
+        checking_c11_crawler_status(df=self.original_file, pic=self.pic)
 
 
 class ControlFlow:
-    def __init__(self, sheet_name: str, urls: list, page_type: object):
+    def __init__(self, sheet_name: str, urls: list, page_type: object, pic: str = None):
         self.page_type = page_type
         self.urls = urls
         self.sheet_name = sheet_name
+        self.pic = pic
 
     def check_box(self):
         if self.sheet_name in (SheetNames.ARTIST_IMAGE, SheetNames.ALBUM_IMAGE):
@@ -282,6 +326,9 @@ class ControlFlow:
         elif self.sheet_name == SheetNames.S_11:
             s11_working = S11Working(sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type)
             check_box = s11_working.check_box()
+        elif self.sheet_name == SheetNames.C_11:
+            c11_working = C11Working(sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type, pic=self.pic)
+            check_box = c11_working.check_box()
 
     def observe(self):
         if self.sheet_name in (SheetNames.ARTIST_IMAGE, SheetNames.ALBUM_IMAGE):
@@ -293,6 +340,9 @@ class ControlFlow:
         elif self.sheet_name == SheetNames.S_11:
             s11_working = S11Working(sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type)
             return s11_working.s11_filter()
+        elif self.sheet_name == SheetNames.C_11:
+            c11_working = C11Working(sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type, pic=self.pic)
+            return c11_working.c11_filter()
 
     def crawl(self):
         if self.sheet_name in (SheetNames.ARTIST_IMAGE, SheetNames.ALBUM_IMAGE):
@@ -307,6 +357,10 @@ class ControlFlow:
             s11_working = S11Working(sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type)
             return s11_working.crawl_s11_datalake()
 
+        elif self.sheet_name == SheetNames.C_11:
+            c11_working = C11Working(sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type, pic=self.pic)
+            return c11_working.crawl_c11_datalake()
+
     def checking(self):
         if self.sheet_name in (SheetNames.ARTIST_IMAGE, SheetNames.ALBUM_IMAGE):
             image_working = ImageWorking(sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type)
@@ -320,6 +374,10 @@ class ControlFlow:
             s11_working = S11Working(sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type)
             return s11_working.checking_s11_crawler_status()
 
+        elif self.sheet_name == SheetNames.C_11:
+            c11_working = C11Working(sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type, pic=self.pic)
+            return c11_working.checking_c11_crawler_status()
+
 
 if __name__ == "__main__":
     start_time = time.time()
@@ -329,22 +387,33 @@ if __name__ == "__main__":
         f.truncate()
     urls = [
         # "https://docs.google.com/spreadsheets/d/14J67QV_u353oYmNk85EIWJ0HU4NnCFThvSBcer992FQ/edit#gid=0",
-        "https://docs.google.com/spreadsheets/d/1ZgMTydySAvqoyJgo4OZchQVC42NZgHbzocdy50IH2LY/edit#gid=657665900&fvid=887631666"
+        # "https://docs.google.com/spreadsheets/d/1ZgMTydySAvqoyJgo4OZchQVC42NZgHbzocdy50IH2LY/edit#gid=657665900&fvid=887631666"
+        # "https://docs.google.com/spreadsheets/d/1Vip-DJquEIgW8KoOgMspvO7kblGSuammOj5uOmi6YDk/edit#gid=0"
+        # "https://docs.google.com/spreadsheets/d/18kMfBz4XaHG8jjJ3E8lhHi-mw501_zJl39rRz95bcqU/edit#gid=1501426979"
+        # "https://docs.google.com/spreadsheets/d/1Vip-DJquEIgW8KoOgMspvO7kblGSuammOj5uOmi6YDk/edit#gid=2042730270"
+        # "https://docs.google.com/spreadsheets/d/1Vip-DJquEIgW8KoOgMspvO7kblGSuammOj5uOmi6YDk/edit#gid=1760376528",
+        "https://docs.google.com/spreadsheets/d/18kMfBz4XaHG8jjJ3E8lhHi-mw501_zJl39rRz95bcqU/edit#gid=1501426979&fvid=1697167036"
+        # "https://docs.google.com/spreadsheets/d/1U91uRDczj-0ku0dGVCGbm6FL0_QmsDB6lBAPMfr6yCs/edit#gid=0"
+
     ]
-    sheet_name_ = SheetNames.S_11
-    page_type_ = PageType.NewClassic
+    sheet_name_ = SheetNames.C_11
+    page_type_ = PageType.Contribution
+    pic = '21May21 Camille'
 
     # k = S11Working(sheet_name=sheet_name_, urls=urls, page_type=page_type_)
     # print(k.original_file)
 
-    control_flow = ControlFlow(sheet_name=sheet_name_, urls=urls, page_type=page_type_)
+    # control_flow = ControlFlow(sheet_name=sheet_name_, urls=urls, page_type=page_type_)
+    # ControlFlow_C11
+    control_flow = ControlFlow(sheet_name=sheet_name_, urls=urls, page_type=page_type_, pic=pic)
+
     # check_box:
     # control_flow.check_box()
-
     # observe:
     # k = control_flow.observe()
     # print(k)
-
+    # data_dict = generate_data_dict(df=k)
+    # print(data_dict)
 
     # crawl:
     # control_flow.crawl()

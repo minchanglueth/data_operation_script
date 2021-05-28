@@ -2,6 +2,7 @@ from core.models.crawlingtask import Crawlingtask
 from core.models.artist import Artist
 from core.models.album import Album
 from core.models.datasource import DataSource
+from core.models.album_track import Album_Track
 from core.models.data_source_format_master import DataSourceFormatMaster
 from core.models.crawlingtask_action_master import V4CrawlingTaskActionMaster
 from core.models.itunes_album_tracks_release import ItunesRelease
@@ -193,6 +194,20 @@ def get_s11_crawlingtask_info(pic: str):
         crawlingtasks_06.created_at.desc())
     return s11_crawlingtask_info
 
+
+def get_track_title_track_artist_by_ituneid_and_seq(itune_album_id: str, seq: str):
+    get_track_title_track_artist_by_ituneid_and_seq = (db_session.query(
+        # ItunesRelease.album_uuid,
+        # ItunesRelease.album_title,
+
+    )
+                                             .select_from(Album)
+                                             .join(Album_Track, Album.uuid == Album_Track.album_uuid,)
+                                             .join(Track, and_(Album_Track.track_id == Track.id,
+                                                                Track.valid == 1))
+                                             .filter(Album.valid == 1)
+                                             )
+    return get_datasource_by_artistname_formatid
 
 if __name__ == "__main__":
     start_time = time.time()

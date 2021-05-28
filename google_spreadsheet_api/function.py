@@ -99,6 +99,9 @@ def update_value(list_result: list, grid_range_to_update: str, gsheet_id: str):
     '''
     sheet_name!B4:B5
     https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other?hl=en#GridRange
+    list_result = df_to_update.values.tolist()  # transfer data_frame to 2D list
+    list_result.insert(0, df_to_update_columns)
+    grid_range_to_update = f"{sheet_name}!{colnum_string(last_colum_index+1)}{start_row}"
     '''
     body = {
         'values': list_result  # list_result is array 2 dimensional (2D)
@@ -219,7 +222,7 @@ def colnum_string(n):
     return string
 
 
-def update_value_at_last_column(df_to_update: object, gsheet_id: str, sheet_name: str):
+def update_value_at_last_column(df_to_update: object, gsheet_id: str, sheet_name: str, start_row: int = 1):
     n = len(df_to_update.columns)
 
     # insert n_column of df_to_update
@@ -230,15 +233,15 @@ def update_value_at_last_column(df_to_update: object, gsheet_id: str, sheet_name
     df_to_update_columns = df_to_update.columns.tolist()
     list_result = df_to_update.values.tolist()  # transfer data_frame to 2D list
     list_result.insert(0, df_to_update_columns)
-    grid_range_to_update = f"{sheet_name}!{colnum_string(last_colum_index+1)}1"
+    grid_range_to_update = f"{sheet_name}!{colnum_string(last_colum_index+1)}{start_row}"
     update_value(gsheet_id=gsheet_id, grid_range_to_update=grid_range_to_update, list_result=list_result)
 
 
 if __name__ == "__main__":
     pd.set_option("display.max_rows", None, "display.max_columns", 50, 'display.width', 1000)
 
-    gsheet_id = "1FNfYZjn9LNeCUus4JbLdAJ5qSrmFJGYVVhsbjaPAD4g"
-    sheet_name = "S_11"
+    gsheet_id = "18kMfBz4XaHG8jjJ3E8lhHi-mw501_zJl39rRz95bcqU"
+    sheet_name = "Youtube collect_experiment"
     k = get_df_from_speadsheet(gsheet_id=gsheet_id, sheet_name=sheet_name)
     print(k.head(10))
 
