@@ -190,8 +190,8 @@ def get_s11_crawlingtask_info(pic: str):
                                             text("crawlingtasks_E5.id = crawlingtasks_06.ext ->> '$.itunes_track_task_id'")
                                             )).filter(
         crawlingtasks_06.actionid == "9C8473C36E57472281A1C7936108FC06",
-        # func.json_extract(crawlingtasks_06.taskdetail, "$.PIC") == pic,
-        func.json_extract(crawlingtasks_06.taskdetail, "$.PIC") == 'Contribution_Apr_2021_Youtube collect_experiment_2021-06-07',
+        func.json_extract(crawlingtasks_06.taskdetail, "$.PIC") == pic,
+        # func.json_extract(crawlingtasks_06.taskdetail, "$.PIC") == 'Contribution_Apr_2021_Youtube collect_experiment_2021-06-07',
     ).order_by(
         crawlingtasks_06.created_at.desc())
     return s11_crawlingtask_info

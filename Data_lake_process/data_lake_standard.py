@@ -5,7 +5,7 @@ import pandas as pd
 import time
 from core import query_path
 from colorama import Fore, Style
-from Data_lake_process.crawlingtask import crawl_image, crawl_youtube_mp3, crawl_youtube_mp4, crawl_itunes_album
+from Data_lake_process.crawlingtask import crawl_image, crawl_youtube_mp3, crawl_youtube_mp4, crawl_itunes_album, update_contribution
 from Data_lake_process.class_definition import WhenExist, PageType, SheetNames, merge_file, DataReports, \
     get_key_value_from_gsheet_info, add_key_value_from_gsheet_info, get_gsheet_id_from_url
 from Data_lake_process.new_check_box_standard import youtube_check_box, s11_checkbox, update_s11_check_box, c11_checkbox, update_c11_check_box
@@ -331,7 +331,24 @@ class C11Working:
         checking_c11_crawler_status(original_df=self.original_file, pre_valid=self.pre_valid)
 
     def update_d9(self):
-        print("joy xinh")
+        filter_df = self.original_file
+        filter_df = filter_df[
+            ((filter_df['pre_valid'] == pre_valid)
+             & (~filter_df['content type'].str.contains('REJECT'))
+             & (filter_df['track_id'] != 'not found')
+             )
+        ].reset_index()
+        gsheet_info = list(set(filter_df.gsheet_info.tolist()))[0]
+        gsheet_name = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key='gsheet_name')
+        sheet_name = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key='sheet_name')
+        PIC_taskdetail = f"{gsheet_name}_{sheet_name}_{pre_valid}"
+        filter_df['crawling_task'] = filter_df.apply(
+            lambda x: update_contribution(content_type=x['content type'], track_id=x['track_id'],
+                                          concert_live_name=x['live_concert_name_place'], artist_name=x['artist_name'],
+                                          year=x['year'], pic=PIC_taskdetail, youtube_url=x['contribution_link'],
+                                          pointlogsid=x['pointlogsid']), axis=1)
+
+        query_pandas_to_csv(df=filter_df, column='crawling_task')
 
 
 class ControlFlow:
@@ -423,11 +440,11 @@ if __name__ == "__main__":
     urls = [
         # "https://docs.google.com/spreadsheets/d/1ZUzx1smeyIKD4PtQ-hhT1kbPSTGRdu8I8NG1uvzcWr4/edit#gid=218846379"
         # "https://docs.google.com/spreadsheets/d/11SWGQ8AYGq65CbUotKfEVq_ZCGoIt32BpytxAx5z3M0/edit#gid=0"
-        "https://docs.google.com/spreadsheets/d/1UOh2KrBTrU4GQSKVPIyX3K7ilEBlq3ToN7ORVSvywf4/edit#gid=168371794&fvid=1305607229"
+        "https://docs.google.com/spreadsheets/d/1ZUzx1smeyIKD4PtQ-hhT1kbPSTGRdu8I8NG1uvzcWr4/edit#gid=218846379&fvid=948579105"
     ]
     sheet_name_ = SheetNames.C_11
     page_type_ = PageType.Contribution
-    pre_valid = "2021-06-09"
+    pre_valid = "2021-06-07"
 
     # control_flow = ControlFlow(sheet_name=sheet_name_, urls=urls, page_type=page_type_)
     # ControlFlow_C11
@@ -437,7 +454,7 @@ if __name__ == "__main__":
     # control_flow.pre_valid_()
 
     # check_box:
-    control_flow.check_box()
+    # control_flow.check_box()
 
     # observe:
     # k = control_flow.observe()
@@ -450,6 +467,6 @@ if __name__ == "__main__":
     # control_flow.checking()
 
     # update d9
-    # control_flow.update_d9()
+    control_flow.update_d9()
 
     print("\n --- total time to process %s seconds ---" % (time.time() - start_time))
