@@ -140,7 +140,11 @@ class Page(object):
                                              "sportify_album_url"]}
             if "Youtube collect_experiment" in sheet_names:
                 self.C_11 = {"sheet_name": "Youtube collect_experiment",
-                             "column_name": ["p.i.c", "itune_album_url", "track_title/track_num", "contribution_link", "content type"]}
+                             "column_name": ["pre_valid", "p.i.c", "itune_album_url", "official_music_video_2", "artist_name", "year", "live_concert_name_place",
+                                             "track_title/track_num",
+                                             "contribution_link", "content type", "pointlogsid", "itune_id", "region",
+                                             "checking_validate_itune", "06_id", "06_status", "e5_id", "e5_status",
+                                             "track_title", "track_id", "similarity", "d9", "d9_status"]}
 
     def process_file(self, sheet_info: str):
         sheet_name = sheet_info.get('sheet_name')

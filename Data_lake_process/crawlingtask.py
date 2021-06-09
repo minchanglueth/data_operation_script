@@ -199,10 +199,56 @@ def crawl_youtube_mp3(df: object):
             f.write(query)
 
 
+def get_format_id_from_content_type(content_type: str):
+    if content_type in ("OFFICIAL_MUSIC_VIDEO", "OFFICIAL_MUSIC_VIDEO_2"):
+        return DataSourceFormatMaster.FORMAT_ID_MP4_FULL
+    elif content_type == "STATIC_IMAGE_VIDEO":
+        return DataSourceFormatMaster.FORMAT_ID_MP3_FULL
+    elif content_type == "COVER_VIDEO":
+        return DataSourceFormatMaster.FORMAT_ID_MP4_COVER
+    elif content_type == "LIVE_VIDEO":
+        return DataSourceFormatMaster.FORMAT_ID_MP4_LIVE
+    elif content_type == "REMIX_VIDEO":
+        return DataSourceFormatMaster.FORMAT_ID_MP4_REMIX
+    elif content_type == "LYRIC_VIDEO":
+        return DataSourceFormatMaster.FORMAT_ID_MP4_LYRIC
+    else:
+        return "Unknown"
+
+
+def update_contribution(pointlogsid: str, content_type: str, track_id: str, live_concert_name_place: str,
+                        artist_name: str, year: str, pic: str, youtube_url: str):
+    format_id = get_format_id_from_content_type(content_type=content_type)
+    if content_type == 'OFFICIAL_MUSIC_VIDEO_2':
+        when_exists = WhenExist.KEEP_BOTH
+    elif format_id in (DataSourceFormatMaster.FORMAT_ID_MP4_FULL, DataSourceFormatMaster.FORMAT_ID_MP3_FULL):
+        when_exists = WhenExist.SKIP
+    else:
+        when_exists = WhenExist.KEEP_BOTH
+
+    if content_type == 'OFFICIAL_MUSIC_VIDEO_2':
+        # JSON_SET(IFNULL(crawlingtasks.TaskDetail, JSON_OBJECT())
+        query = f"UPDATE pointlogs SET VerifiedInfo = JSON_SET(IFNULL(pointlogs.VerifiedInfo, JSON_OBJECT()), '$.PIC', '{pic}','$.when_exists', '{when_exists}', '$.youtube_url', '{youtube_url}', '$.data_source_format_id', '{format_id}', TargetId = '{track_id}', Valid = 1  WHERE id = '{pointlogsid}';"
+        print(query)
+
+    #     {"PIC": "Justin_Contribution - 24032021", "when_exists": "keep both", "youtube_url": "https://www.youtube.com/watch?v=EyYNMGUK8VY", "data_source_format_id": "74BA994CF2B54C40946EA62C3979DDA3", "other_official_version": "CARscendants Official Video"}
+
+
 if __name__ == "__main__":
     start_time = time.time()
     pd.set_option("display.max_rows", None, "display.max_columns", 50, 'display.width', 1000)
-    # k = page_type
-    # print(k.joy)
+    content_type = 'STATIC_IMAGE_VIDEO'
+    track_id = 'EFBDFE26278B43B7ADBBCB4181A6267E'
+    live_concert_name_place = 'joy'
+    artist_name = 'joy'
+    year = 'joy'
+    pic = 'Justin_Contribution - 24032021'
+    year = ''
+    youtube_url = 'https://www.youtube.com/watch?v=OqBuXQLR4Y8https://youtu.be/OqBuXQLR4Y8https://youtu.be/OqBuXQLR4Y8https://youtu.be/OqBuXQLR4Y8https://youtu.be/OqBuXQLR4Y8'
+    point_log_id = '289894634B144A669F4C9F0A61947E03'
+
+    update_contribution(content_type=content_type, track_id=track_id, live_concert_name_place=live_concert_name_place, artist_name=artist_name, year=year, pic=pic,youtube_url=youtube_url, pointlogsid=point_log_id)
+
+
 
     print("\n --- total time to process %s seconds ---" % (time.time() - start_time))

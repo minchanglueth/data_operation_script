@@ -80,13 +80,8 @@ def drop_outliner_by_zscore(df: object, column_name: str):
     return df
 
 
-def prepare_data(df: object):
-    numerical_data_column = df.select_dtypes("number").columns
-    non_numerical_data_column = df.select_dtypes(["object"]).columns
-    print(df)
-
-# Missing data filling:
-    df_n_missing = missing_value(df=df)
+# def prepare_data(df: object):
+#     print("joy xinh")
 
 
 if __name__ == "__main__":
@@ -100,6 +95,7 @@ if __name__ == "__main__":
     lower_names = [name.lower() for name in df.columns]
     # match column_name = lower column_name
     df.columns = lower_names
+
     # change dtype to save memory usage and performance: memory usage from 924 => 874 KB
     df = df.astype({'overallqual': 'int8',
                     'overallcond': 'int8',
@@ -108,24 +104,18 @@ if __name__ == "__main__":
                     'mosold': 'int8'
                     })
 
-    # k = generate_data_dict(df=df)
-    # print(k)
-    # print(df)
-    df = prepare_data(df=df)
 
-    # data_dict
-    # k = generate_data_dict(df=df)
-    # print(k)
+    k = generate_data_dict(df=df)
+    print(k)
 
-
-    # fill missing value
+    # # fill missing value
     # df = missing_value(df=df)
     #
     # # drop outliner have abs(z-score) > 2
     # df = drop_outliner_by_zscore(df=df, column_name='saleprice')
-
-    # remove variables have highly corr
-    # bỏ biến phụ thuộc (saleprice: vì mình đang dự đoán biến này)
+    #
+    # # remove variables have highly corr
+    # # bỏ biến phụ thuộc (saleprice: vì mình đang dự đoán biến này)
     # df = df.drop(columns=['z_column_name'])
     # corr_matrix = df.corr().abs()
     # # bỏ đi phần đường chéo đối xứng
@@ -133,9 +123,9 @@ if __name__ == "__main__":
     # # lấy ra column có corr > 0.8
     # to_drop = [column for column in upper.columns if any(upper[column] > 0.8)]
     # df = df.drop(columns=to_drop)
-
-    # One hot coding
-    # Drop_first = True để bỏ đi 1 biến khi thực hiện one hot coding
+    #
+    # # One hot coding
+    # # Drop_first = True để bỏ đi 1 biến khi thực hiện one hot coding
     # df = pd.get_dummies(df, drop_first=True)
     # print(df)
     # new_columns = []
@@ -148,13 +138,13 @@ if __name__ == "__main__":
     #         new_name = '_' + new_name
     #     new_columns.append(new_name)
     # df.columns = new_columns
-
-    # Linear regression: su dung phuong phap OLS
-    # results = smf.ols('saleprice ~ overallqual + lotarea', data=df).fit()
-    # print(results.summary())
-
-    # RandomForest
-    # Lấy ra các feature quan trọng, bỏ biến id vì ko có ý nghĩa trong phân tích
+    #
+    # # Linear regression: su dung phuong phap OLS
+    # # results = smf.ols('saleprice ~ overallqual + lotarea', data=df).fit()
+    # # print(results.summary())
+    #
+    # # RandomForest
+    # # Lấy ra các feature quan trọng, bỏ biến id vì ko có ý nghĩa trong phân tích
     # X = df.drop(columns=['saleprice', 'id'])
     # Y = df.saleprice
     # names = X.columns
@@ -167,25 +157,25 @@ if __name__ == "__main__":
     #         'feature_importance': rf.feature_importances_
     #     }
     # )
-
+    #
     # sorted_fi = feature_importance.sort_values(by="feature_importance", ascending=False)
     # top_feature = sorted_fi['names'].head(15).values.tolist()
     # print(top_feature)
-
-
-
-
-    # Built model dựa vào top_feature
-
+    #
+    #
+    #
+    #
+    # # Built model dựa vào top_feature
+    #
     # df = df[top_feature + ['saleprice']]
-
-    # Viết dài quá, sử dụng hàm join để rút ngắn:
-        # ols_features = ""
-        # for feature in top_feature:
-        #     ols_features = ols_features + ' + ' + feature
-        # ols_features = ols_features[3:]
-        # print(ols_features+"\n")
-
+    #
+    # # Viết dài quá, sử dụng hàm join để rút ngắn:
+    #     # ols_features = ""
+    #     # for feature in top_feature:
+    #     #     ols_features = ols_features + ' + ' + feature
+    #     # ols_features = ols_features[3:]
+    #     # print(ols_features+"\n")
+    #
     # ols_features = ' + '.join(top_feature)
     # results = smf.ols(f"saleprice ~ {ols_features}", data=df).fit()
     # print(results.summary())

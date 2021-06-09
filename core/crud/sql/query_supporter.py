@@ -1,6 +1,7 @@
 from core.models.crawlingtask import Crawlingtask
 from core.models.artist import Artist
 from core.models.album import Album
+from core.models.pointlog import PointLog
 from core.models.datasource import DataSource
 from core.models.album_track import Album_Track
 from core.models.data_source_format_master import DataSourceFormatMaster
@@ -189,7 +190,8 @@ def get_s11_crawlingtask_info(pic: str):
                                             text("crawlingtasks_E5.id = crawlingtasks_06.ext ->> '$.itunes_track_task_id'")
                                             )).filter(
         crawlingtasks_06.actionid == "9C8473C36E57472281A1C7936108FC06",
-        func.json_extract(crawlingtasks_06.taskdetail, "$.PIC") == pic,
+        # func.json_extract(crawlingtasks_06.taskdetail, "$.PIC") == pic,
+        func.json_extract(crawlingtasks_06.taskdetail, "$.PIC") == 'Contribution_Apr_2021_Youtube collect_experiment_2021-06-07',
     ).order_by(
         crawlingtasks_06.created_at.desc())
     return s11_crawlingtask_info
@@ -212,20 +214,29 @@ def get_track_title_track_artist_by_ituneid_and_seq(itune_album_id: str, seq: st
                                                                 Album_Track.track_number == seq
                                                                 )
                                                        ).limit(1).first()
+
     return get_track_title_track_artist_by_ituneid_and_seq
+
+
+def get_pointlogsid_valid(pointlogids: list):
+    point_log_valid = db_session.query(
+        PointLog.id
+    ).select_from(PointLog).filter((PointLog.valid == 0),
+                                   PointLog.id.in_(pointlogids)).order_by(
+        PointLog.created_at.asc())
+    return point_log_valid
 
 
 if __name__ == "__main__":
     start_time = time.time()
     pd.set_option("display.max_rows", None, "display.max_columns", 30, 'display.width', 500)
-    itune_url = 'https://music.apple.com/us/album/deadpan-love/1562039096'
-    db_crawlingtasks = get_track_title_track_artist_by_ituneid_and_seq(itune_album_id="1562039096", seq=3)
-    print(db_crawlingtasks.id)
-
-
-
-    # k = get_compiled_raw_mysql(db_crawlingtasks)
-    # print(k)
+    # itune_url = 'https://music.apple.com/us/album/deadpan-love/1562039096'
+    # pointlogids = ['002D10C7039849DB9A290B727A1DA303','00CC3085F30349C7BEDD7FC0914EC296', '1F41FA3473CE48409E97C181C794379D']
+    pic = 'Contribution_Apr_2021_Youtube collect_experiment_2021-05-31'
+    # db_crawlingtasks = get_pointlogsid_valid(pointlogids=pointlogids)
+    db_crawlingtasks = get_s11_crawlingtask_info(pic=pic)
+    k = get_compiled_raw_mysql(db_crawlingtasks)
+    print(k)
     # joy_xinh = get_df_from_query(db_crawlingtasks)
     # print(joy_xinh)
 

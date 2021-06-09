@@ -14,8 +14,10 @@ from Data_lake_process.checking_accuracy_and_crawler_status import checking_imag
     automate_checking_status, checking_s11_crawler_status, checking_c11_crawler_status,  checking_youtube_crawler_status as joy_xinh
 from crawl_itune.functions import get_itune_id_region_from_itune_url
 from core.crud.get_df_from_query import get_df_from_query
-from core.crud.sql.query_supporter import get_crawlingtask_info, get_s11_crawlingtask_info
+from core.crud.sql.query_supporter import get_pointlogsid_valid
 from google_spreadsheet_api.function import update_value, update_value_at_last_column
+from Data_lake_process.class_definition import get_gsheet_id_from_url
+from datetime import date
 
 from tools.hand_on_lab import generate_data_dict
 
@@ -255,7 +257,7 @@ class S11Working:
 
 
 class C11Working:
-    def __init__(self, sheet_name: str, urls: list, page_type: object, pic: str):
+    def __init__(self, sheet_name: str, urls: list, page_type: object, pre_valid: str = None):
         original_file_ = merge_file(sheet_name=sheet_name, urls=urls, page_type=page_type)
         if original_file_.empty:
             print("original_file is empty")
@@ -264,18 +266,38 @@ class C11Working:
             self.original_file = original_file_
             self.sheet_name = sheet_name
             self.page_type = page_type
-            self.pic = pic
+            self.pre_valid = pre_valid
+
+    def pre_valid_(self):
+        original_df = self.original_file
+        original_df['url'] = original_df['gsheet_info'].apply(
+            lambda x: get_key_value_from_gsheet_info(gsheet_info=x, key='url'))
+        gsheet_infos = list(set(original_df.gsheet_info.tolist()))
+        for gsheet_info in gsheet_infos:
+            url = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key='url')
+            original_df_split = original_df[original_df['url'] == url]
+            pointlogids = original_df_split[original_df_split['pointlogsid'] != '']['pointlogsid'].tolist()
+            pointlogids_prevalid = get_df_from_query(get_pointlogsid_valid(pointlogids=pointlogids))
+            data_merge = pd.merge(original_df_split, pointlogids_prevalid, how='left', left_on='pointlogsid',
+                                  right_on='id', validate='m:1').fillna(value='None')
+            data_merge = data_merge[data_merge['id'] != 'None']
+            row_index = data_merge.index
+            for i in row_index:
+                range_to_update = f"Youtube collect_experiment!A{i + 2}"
+                current_date = f"{date.today()}"
+                list_result = [[current_date]]
+                update_value(list_result=list_result, grid_range_to_update=range_to_update, gsheet_id=get_gsheet_id_from_url(url))
 
     def check_box(self):
         df = self.original_file
-        # c11_checkbox(original_df=df, pic=self.pic)
-        update_c11_check_box(original_df=df, pic= self.pic)
+        c11_checkbox(original_df=df, pre_valid=self.pre_valid)
+        update_c11_check_box(original_df=df, pre_valid=self.pre_valid)
 
     def c11_filter(self):
         df = self.original_file
-        if c11_checkbox(original_df=df, pic=self.pic):
+        if c11_checkbox(original_df=df, pre_valid=self.pre_valid):
             filter_df = df[
-                (df['p.i.c'] == self.pic)
+                (df['pre_valid'] == self.pre_valid)
                 & (df['itune_album_url'] != '')
                 & (~df['content type'].str.contains('REJECT'))
                 ].reset_index()
@@ -284,7 +306,7 @@ class C11Working:
             filter_df['region'] = filter_df['itune_album_url'].apply(
                 lambda x: get_itune_id_region_from_itune_url(url=x)[1])
             filter_df = filter_df.drop_duplicates(subset=['itune_id', 'gsheet_info'], keep='first').reset_index()
-        return filter_df
+            return filter_df
 
     def crawl_c11_datalake(self):
         df = self.c11_filter()
@@ -299,36 +321,49 @@ class C11Working:
                                    crawl_itunes_album(ituneid=x['itune_id'],
                                                       priority=get_key_value_from_gsheet_info(gsheet_info=x['gsheet_info'], key='page_priority'),
                                                       is_new_release=is_new_release,
-                                                      pic=f"{get_key_value_from_gsheet_info(gsheet_info=x['gsheet_info'], key='gsheet_name')}_{get_key_value_from_gsheet_info(gsheet_info=x['gsheet_info'], key='sheet_name')}",
+                                                      pic=f"{get_key_value_from_gsheet_info(gsheet_info=x['gsheet_info'], key='gsheet_name')}_{get_key_value_from_gsheet_info(gsheet_info=x['gsheet_info'], key='sheet_name')}_{x['pre_valid']}",
                                                       region=x['region']
                                                       ),
                                    axis=1)
         query_pandas_to_csv(df=df, column='query')
 
     def checking_c11_crawler_status(self):
-        checking_c11_crawler_status(df=self.original_file, pic=self.pic)
+        checking_c11_crawler_status(original_df=self.original_file, pre_valid=self.pre_valid)
+
+    def update_d9(self):
+        print("joy xinh")
 
 
 class ControlFlow:
-    def __init__(self, sheet_name: str, urls: list, page_type: object, pic: str = None):
+    def __init__(self, sheet_name: str, urls: list, page_type: object, pre_valid: str = ""):
         self.page_type = page_type
         self.urls = urls
         self.sheet_name = sheet_name
-        self.pic = pic
+        self.pre_valid = pre_valid
+
+    def pre_valid_(self):
+        if self.sheet_name == SheetNames.C_11:
+            c11_working = C11Working(sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type, pre_valid=self.pre_valid)
+            return c11_working.pre_valid_()
+
+    def update_d9(self):
+        if self.sheet_name == SheetNames.C_11:
+            c11_working = C11Working(sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type, pre_valid=self.pre_valid)
+            return c11_working.update_d9()
 
     def check_box(self):
         if self.sheet_name in (SheetNames.ARTIST_IMAGE, SheetNames.ALBUM_IMAGE):
             image_working = ImageWorking(sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type)
-            check_box = image_working.check_box()
+            return image_working.check_box()
         elif self.sheet_name in (SheetNames.MP3_SHEET_NAME, SheetNames.MP4_SHEET_NAME):
             youtube_working = YoutubeWorking(sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type)
-            check_box = youtube_working.check_box()
+            return youtube_working.check_box()
         elif self.sheet_name == SheetNames.S_11:
             s11_working = S11Working(sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type)
-            check_box = s11_working.check_box()
+            return s11_working.check_box()
         elif self.sheet_name == SheetNames.C_11:
-            c11_working = C11Working(sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type, pic=self.pic)
-            check_box = c11_working.check_box()
+            c11_working = C11Working(sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type, pre_valid=self.pre_valid)
+            return c11_working.check_box()
 
     def observe(self):
         if self.sheet_name in (SheetNames.ARTIST_IMAGE, SheetNames.ALBUM_IMAGE):
@@ -341,41 +376,41 @@ class ControlFlow:
             s11_working = S11Working(sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type)
             return s11_working.s11_filter()
         elif self.sheet_name == SheetNames.C_11:
-            c11_working = C11Working(sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type, pic=self.pic)
+            c11_working = C11Working(sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type, pre_valid=self.pre_valid)
             return c11_working.c11_filter()
 
     def crawl(self):
         if self.sheet_name in (SheetNames.ARTIST_IMAGE, SheetNames.ALBUM_IMAGE):
             image_working = ImageWorking(sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type)
-            image_working.crawl_image_datalake()
+            return image_working.crawl_image_datalake()
 
         elif self.sheet_name in (SheetNames.MP3_SHEET_NAME, SheetNames.MP4_SHEET_NAME):
             youtube_working = YoutubeWorking(sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type)
-            youtube_working.crawl_mp3_mp4_youtube_datalake()
+            return youtube_working.crawl_mp3_mp4_youtube_datalake()
 
         elif self.sheet_name == SheetNames.S_11:
             s11_working = S11Working(sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type)
             return s11_working.crawl_s11_datalake()
 
         elif self.sheet_name == SheetNames.C_11:
-            c11_working = C11Working(sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type, pic=self.pic)
+            c11_working = C11Working(sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type, pre_valid=self.pre_valid)
             return c11_working.crawl_c11_datalake()
 
     def checking(self):
         if self.sheet_name in (SheetNames.ARTIST_IMAGE, SheetNames.ALBUM_IMAGE):
             image_working = ImageWorking(sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type)
-            image_working.checking_image_crawler_status()
+            return image_working.checking_image_crawler_status()
 
         elif self.sheet_name in (SheetNames.MP3_SHEET_NAME, SheetNames.MP4_SHEET_NAME):
             youtube_working = YoutubeWorking(sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type)
-            youtube_working.checking_youtube_crawler_status()
+            return youtube_working.checking_youtube_crawler_status()
 
         elif self.sheet_name == SheetNames.S_11:
             s11_working = S11Working(sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type)
             return s11_working.checking_s11_crawler_status()
 
         elif self.sheet_name == SheetNames.C_11:
-            c11_working = C11Working(sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type, pic=self.pic)
+            c11_working = C11Working(sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type, pre_valid=self.pre_valid)
             return c11_working.checking_c11_crawler_status()
 
 
@@ -386,26 +421,27 @@ if __name__ == "__main__":
     with open(query_path, "w") as f:
         f.truncate()
     urls = [
-        "https://docs.google.com/spreadsheets/d/18kMfBz4XaHG8jjJ3E8lhHi-mw501_zJl39rRz95bcqU/edit#gid=1501426979&fvid=1697167036"
+        # "https://docs.google.com/spreadsheets/d/1ZUzx1smeyIKD4PtQ-hhT1kbPSTGRdu8I8NG1uvzcWr4/edit#gid=218846379"
+        # "https://docs.google.com/spreadsheets/d/11SWGQ8AYGq65CbUotKfEVq_ZCGoIt32BpytxAx5z3M0/edit#gid=0"
+        "https://docs.google.com/spreadsheets/d/1ZUzx1smeyIKD4PtQ-hhT1kbPSTGRdu8I8NG1uvzcWr4/edit#gid=218846379&fvid=948579105"
     ]
     sheet_name_ = SheetNames.C_11
     page_type_ = PageType.Contribution
-    pic = '21May21 Camille'
-
-    # k = S11Working(sheet_name=sheet_name_, urls=urls, page_type=page_type_)
-    # print(k.original_file)
+    pre_valid = "2021-06-07"
 
     # control_flow = ControlFlow(sheet_name=sheet_name_, urls=urls, page_type=page_type_)
     # ControlFlow_C11
-    control_flow = ControlFlow(sheet_name=sheet_name_, urls=urls, page_type=page_type_, pic=pic)
-    #
+    control_flow = ControlFlow(sheet_name=sheet_name_, urls=urls, page_type=page_type_, pre_valid=pre_valid)
+
+    # Contribution: pre_valid
+    # control_flow.pre_valid_()
+
     # check_box:
     # control_flow.check_box()
+
     # observe:
     # k = control_flow.observe()
     # print(k)
-    # data_dict = generate_data_dict(df=k)
-    # print(data_dict)
 
     # crawl:
     # control_flow.crawl()
@@ -413,6 +449,7 @@ if __name__ == "__main__":
     # checking
     control_flow.checking()
 
-
+    # update d9
+    # control_flow.update_d9()
 
     print("\n --- total time to process %s seconds ---" % (time.time() - start_time))

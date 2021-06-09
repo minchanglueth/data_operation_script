@@ -240,10 +240,13 @@ def update_value_at_last_column(df_to_update: object, gsheet_id: str, sheet_name
 if __name__ == "__main__":
     pd.set_option("display.max_rows", None, "display.max_columns", 50, 'display.width', 1000)
 
-    gsheet_id = "18kMfBz4XaHG8jjJ3E8lhHi-mw501_zJl39rRz95bcqU"
-    sheet_name = "Youtube collect_experiment"
-    k = get_df_from_speadsheet(gsheet_id=gsheet_id, sheet_name=sheet_name)
-    print(k.head(10))
+    # gsheet_id = "18kMfBz4XaHG8jjJ3E8lhHi-mw501_zJl39rRz95bcqU"
+    # sheet_name = "Youtube collect_experiment"
+
+    # service()
+
+    # k = get_df_from_speadsheet(gsheet_id=gsheet_id, sheet_name=sheet_name)
+    # print(k.head(10))
 
     # d = {'col1': [1, 2, 0, 0], 'col2': [3, 4, 0, 0]}
     # df_to_update = pd.DataFrame(data=d)
