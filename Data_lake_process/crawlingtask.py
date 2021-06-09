@@ -262,18 +262,23 @@ if __name__ == "__main__":
     # point_log_id = '289894634B144A669F4C9F0A61947E03'
 
     # update_contribution(content_type=content_type, track_id=track_id, live_concert_name_place=live_concert_name_place, artist_name=artist_name, year=year, pic=pic,youtube_url=youtube_url, pointlogsid=point_log_id)
-    url = "https://docs.google.com/spreadsheets/d/1ZUzx1smeyIKD4PtQ-hhT1kbPSTGRdu8I8NG1uvzcWr4/edit#gid=218846379&fvid=948579105"
+    url = "https://docs.google.com/spreadsheets/d/1UOh2KrBTrU4GQSKVPIyX3K7ilEBlq3ToN7ORVSvywf4/edit#gid=168371794&fvid=1305607229"
     from google_spreadsheet_api.function import get_df_from_speadsheet
     df = get_df_from_speadsheet(gsheet_id=get_gsheet_id_from_url(url=url),sheet_name="Youtube collect_experiment")
-    filter_df = df[((df['pre_valid'] == "2021-06-07") & (df['track_id'] != 'None'))]
-    filter_df = df[
+    print(df.head(10))
+    # filter_df = df[((df['pre_valid'] == "2021-06-07") & (df['track_id'] != 'None'))]
+    # filter_df = df[
+    #
+    #         ((df['pre_valid'] == '2021-06-07')
+    #          & (~df['Content type'].str.contains('REJECT'))
+    #          & (df['track_id'] != 'not found')
+    #          )
+    # ].reset_index()
+    # filter_df = filter_df([['PointlogsID', 'Content type', 'OFFICIAL_MUSIC_VIDEO_2', 'Artist_Name', 'Year',
+    #                  'Live_Concert_Name_Place', 'track_id', 'Contribution_link']])
+    # print(filter_df)
 
-            ((df['pre_valid'] == '2021-06-07')
-             & (~df['Content type'].str.contains('REJECT'))
-             )
-
-
-    ]
-    print(filter_df[['PointlogsID', 'Content type', 'OFFICIAL_MUSIC_VIDEO_2', 'Artist_Name', 'Year', 'Live_Concert_Name_Place', 'track_id', 'Contribution_link']])
-
+    # filter_df['crawling_task'] = filter_df.apply(
+    #     lambda x: update_contribution(content_type=x['Content type'], track_id=x['track_id'], concert_live_name=x['Live_Concert_Name_Place'], artist_name=x['Artist_Name'], year=x['Year'], pic="joy xinh",youtube_url=x['Contribution_link'], pointlogsid=x['PointlogsID']), axis=1)
+    # print(filter_df['crawling_task'])
     print("\n --- total time to process %s seconds ---" % (time.time() - start_time))
