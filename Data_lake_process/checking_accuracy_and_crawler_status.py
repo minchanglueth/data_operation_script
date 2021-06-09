@@ -230,8 +230,6 @@ def checking_c11_crawler_status(original_df: object, pre_valid: str = None):
                         )
                 )
                 ]
-                print(data_report)
-
                 if data_report.empty:
                     print(
                         Fore.LIGHTYELLOW_EX + f"Accuracy: ok\nStatus: ok" + Style.RESET_ALL)
