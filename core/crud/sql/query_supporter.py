@@ -1,6 +1,7 @@
 from core.models.crawlingtask import Crawlingtask
 from core.models.artist import Artist
 from core.models.album import Album
+from core.models.external_identity import ExternalIdentity
 from core.models.pointlog import PointLog
 from core.models.datasource import DataSource
 from core.models.album_track import Album_Track
@@ -204,13 +205,14 @@ def get_track_title_track_artist_by_ituneid_and_seq(itune_album_id: str, seq: st
         Track.id,
         Track.duration_ms
     )
-                                                       .select_from(Album)
+                                                       .select_from(ExternalIdentity)
+                                                       .join(Album, Album.uuid == ExternalIdentity.uuid)
                                                        .join(Album_Track, Album.uuid == Album_Track.album_uuid, )
                                                        .join(Track, and_(Album_Track.track_id == Track.id,
                                                                          Track.valid == 1))
                                                        .filter(
                                                                 Album.valid == 1,
-                                                                Album.external_id == itune_album_id,
+                                                                ExternalIdentity.external_id == itune_album_id,
                                                                 Album_Track.track_number == seq
                                                                 )
                                                        ).limit(1).first()
@@ -234,7 +236,7 @@ if __name__ == "__main__":
     # pointlogids = ['002D10C7039849DB9A290B727A1DA303','00CC3085F30349C7BEDD7FC0914EC296', '1F41FA3473CE48409E97C181C794379D']
     pic = 'Contribution_Apr_2021_Youtube collect_experiment_2021-05-31'
     # db_crawlingtasks = get_pointlogsid_valid(pointlogids=pointlogids)
-    db_crawlingtasks = get_s11_crawlingtask_info(pic=pic)
+    db_crawlingtasks = get_track_title_track_artist_by_ituneid_and_seq(itune_album_id= "joy xinh", seq= 1)
     k = get_compiled_raw_mysql(db_crawlingtasks)
     print(k)
     # joy_xinh = get_df_from_query(db_crawlingtasks)

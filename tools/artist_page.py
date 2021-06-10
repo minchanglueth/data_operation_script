@@ -478,8 +478,8 @@ if __name__ == "__main__":
     with open(query_path, "w") as f:
         f.truncate()
     urls = [
-        "https://docs.google.com/spreadsheets/d/1KKtmAEV_MifOehcv7wwBd1I7CrN3kBm3uYfJgSMQogI/edit#gid=1153988175",
-        "https://docs.google.com/spreadsheets/d/1L9g_sQmJQLTZZooSSES3rG-bbhLqW7t6quEhL6ZmAO0/edit#gid=1989088347"
+        "https://docs.google.com/spreadsheets/d/1j_iM9uf_Ao4qgyXZ7-_3BcNnMiY58PrS-Qm57Mkl08g/edit#gid=213858287",
+        # "https://docs.google.com/spreadsheets/d/1L9g_sQmJQLTZZooSSES3rG-bbhLqW7t6quEhL6ZmAO0/edit#gid=1989088347"
     ]
     df = pd.DataFrame()
     for url in urls:
