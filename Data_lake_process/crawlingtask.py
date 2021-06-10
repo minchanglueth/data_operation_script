@@ -217,7 +217,7 @@ def get_format_id_from_content_type(content_type: str):
 
 
 def update_contribution(pointlogsid: str, content_type: str, track_id: str, concert_live_name: str,
-                        artist_name: str, year: str, pic: str, youtube_url: str):
+                        artist_name: str, year: str, pic: str, youtube_url: str, other_official_version: str):
 
     # format_id
     format_id = get_format_id_from_content_type(content_type=content_type)
@@ -231,19 +231,19 @@ def update_contribution(pointlogsid: str, content_type: str, track_id: str, conc
         when_exists = WhenExist.KEEP_BOTH
 
     if content_type == 'OFFICIAL_MUSIC_VIDEO_2':
-        query = f"UPDATE pointlogs SET VerifiedInfo = JSON_SET(IFNULL(pointlogs.VerifiedInfo, JSON_OBJECT()), '$.PIC', '{pic}','$.when_exists', '{when_exists}', '$.youtube_url', '{youtube_url}', '$.data_source_format_id', '{format_id}', TargetId = '{track_id}', Valid = 1  WHERE id = '{pointlogsid}';"
+        query = f"UPDATE pointlogs SET VerifiedInfo = JSON_SET(IFNULL(pointlogs.VerifiedInfo, JSON_OBJECT()), '$.PIC', '{pic}','$.when_exists', '{when_exists}', '$.youtube_url', '{youtube_url}', '$.data_source_format_id', '{format_id}', '$.other_official_version', '{other_official_version}'), TargetId = '{track_id}', Valid = 1  WHERE id = '{pointlogsid}';"
     elif content_type == "OFFICIAL_MUSIC_VIDEO":
-        query = f"UPDATE pointlogs SET VerifiedInfo = JSON_SET(IFNULL(pointlogs.VerifiedInfo, JSON_OBJECT()), '$.PIC', '{pic}','$.when_exists', '{when_exists}', '$.youtube_url', '{youtube_url}', '$.data_source_format_id', '{format_id}', TargetId = '{track_id}', Valid = 1  WHERE id = '{pointlogsid}';"
+        query = f"UPDATE pointlogs SET VerifiedInfo = JSON_SET(IFNULL(pointlogs.VerifiedInfo, JSON_OBJECT()), '$.PIC', '{pic}','$.when_exists', '{when_exists}', '$.youtube_url', '{youtube_url}', '$.data_source_format_id', '{format_id}'), TargetId = '{track_id}', Valid = 1  WHERE id = '{pointlogsid}';"
     elif content_type == 'STATIC_IMAGE_VIDEO':
-        query = f"UPDATE pointlogs SET VerifiedInfo = JSON_SET(IFNULL(pointlogs.VerifiedInfo, JSON_OBJECT()), '$.PIC', '{pic}','$.when_exists', '{when_exists}', '$.youtube_url', '{youtube_url}', '$.data_source_format_id', '{format_id}', TargetId = '{track_id}', Valid = 1  WHERE id = '{pointlogsid}';"
+        query = f"UPDATE pointlogs SET VerifiedInfo = JSON_SET(IFNULL(pointlogs.VerifiedInfo, JSON_OBJECT()), '$.PIC', '{pic}','$.when_exists', '{when_exists}', '$.youtube_url', '{youtube_url}', '$.data_source_format_id', '{format_id}'), TargetId = '{track_id}', Valid = 1  WHERE id = '{pointlogsid}';"
     elif content_type == 'LYRIC_VIDEO':
-        query = f"UPDATE pointlogs SET VerifiedInfo = JSON_SET(IFNULL(pointlogs.VerifiedInfo, JSON_OBJECT()), '$.PIC', '{pic}','$.when_exists', '{when_exists}', '$.youtube_url', '{youtube_url}', '$.data_source_format_id', '{format_id}', TargetId = '{track_id}', Valid = 1  WHERE id = '{pointlogsid}';"
+        query = f"UPDATE pointlogs SET VerifiedInfo = JSON_SET(IFNULL(pointlogs.VerifiedInfo, JSON_OBJECT()), '$.PIC', '{pic}','$.when_exists', '{when_exists}', '$.youtube_url', '{youtube_url}', '$.data_source_format_id', '{format_id}'), TargetId = '{track_id}', Valid = 1  WHERE id = '{pointlogsid}';"
     elif content_type == "REMIX_VIDEO":
-        query = f"UPDATE pointlogs SET VerifiedInfo = JSON_SET(IFNULL(pointlogs.VerifiedInfo, JSON_OBJECT()), '$.PIC', '{pic}','$.when_exists', '{when_exists}', '$.youtube_url', '{youtube_url}', '$.data_source_format_id', '{format_id}', '$.remix_artist', '{artist_name}', TargetId = '{track_id}', Valid = 1  WHERE id = '{pointlogsid}';"
+        query = f"UPDATE pointlogs SET VerifiedInfo = JSON_SET(IFNULL(pointlogs.VerifiedInfo, JSON_OBJECT()), '$.PIC', '{pic}','$.when_exists', '{when_exists}', '$.youtube_url', '{youtube_url}', '$.data_source_format_id', '{format_id}', '$.remix_artist', '{artist_name}'), TargetId = '{track_id}', Valid = 1  WHERE id = '{pointlogsid}';"
     elif content_type == "COVER_VIDEO":
-        query = f"UPDATE pointlogs SET VerifiedInfo = JSON_SET(IFNULL(pointlogs.VerifiedInfo, JSON_OBJECT()), '$.PIC', '{pic}','$.when_exists', '{when_exists}', '$.youtube_url', '{youtube_url}', '$.data_source_format_id', '{format_id}', '$.covered_artist_name', '{artist_name}', TargetId = '{track_id}', Valid = 1  WHERE id = '{pointlogsid}';"
+        query = f"UPDATE pointlogs SET VerifiedInfo = JSON_SET(IFNULL(pointlogs.VerifiedInfo, JSON_OBJECT()), '$.PIC', '{pic}','$.when_exists', '{when_exists}', '$.youtube_url', '{youtube_url}', '$.data_source_format_id', '{format_id}', '$.covered_artist_name', '{artist_name}'), TargetId = '{track_id}', Valid = 1  WHERE id = '{pointlogsid}';"
     elif content_type == "LIVE_VIDEO":
-        query = f"UPDATE pointlogs SET VerifiedInfo = JSON_SET(IFNULL(pointlogs.VerifiedInfo, JSON_OBJECT()), '$.PIC', '{pic}','$.when_exists', '{when_exists}', '$.youtube_url', '{youtube_url}', '$.data_source_format_id', '{format_id}', '$.concert_live_name', '{concert_live_name}', '$.year', '{year}', TargetId = '{track_id}', Valid = 1  WHERE id = '{pointlogsid}';"
+        query = f"UPDATE pointlogs SET VerifiedInfo = JSON_SET(IFNULL(pointlogs.VerifiedInfo, JSON_OBJECT()), '$.PIC', '{pic}','$.when_exists', '{when_exists}', '$.youtube_url', '{youtube_url}', '$.data_source_format_id', '{format_id}', '$.concert_live_name', '{concert_live_name}', '$.year', '{year}'), TargetId = '{track_id}', Valid = 1  WHERE id = '{pointlogsid}';"
     else:
         query = f"-- content_type not existed"
     return query

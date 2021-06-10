@@ -346,6 +346,7 @@ class C11Working:
             lambda x: update_contribution(content_type=x['content type'], track_id=x['track_id'],
                                           concert_live_name=x['live_concert_name_place'], artist_name=x['artist_name'],
                                           year=x['year'], pic=PIC_taskdetail, youtube_url=x['contribution_link'],
+                                          other_official_version=x['official_music_video_2'],
                                           pointlogsid=x['pointlogsid']), axis=1)
 
         row_index = filter_df.index

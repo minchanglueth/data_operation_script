@@ -74,6 +74,10 @@ class PageType:
         name = "contribution"
         priority = 1997
 
+    class ArtistPage:
+        name = "ArtistPage"
+        priority = 1202
+
 
 class Page(object):
     def __init__(self, url: str):
