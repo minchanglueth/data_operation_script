@@ -348,7 +348,13 @@ class C11Working:
                                           year=x['year'], pic=PIC_taskdetail, youtube_url=x['contribution_link'],
                                           pointlogsid=x['pointlogsid']), axis=1)
 
-        query_pandas_to_csv(df=filter_df, column='crawling_task')
+        row_index = filter_df.index
+        with open(query_path, "w") as f:
+            for i in row_index:
+                line = filter_df['crawling_task'].loc[i]
+                # print(line)
+                f.write(f"{line}\n")
+        f.close()
 
 
 class ControlFlow:
@@ -440,7 +446,7 @@ if __name__ == "__main__":
     urls = [
         # "https://docs.google.com/spreadsheets/d/1ZUzx1smeyIKD4PtQ-hhT1kbPSTGRdu8I8NG1uvzcWr4/edit#gid=218846379"
         # "https://docs.google.com/spreadsheets/d/11SWGQ8AYGq65CbUotKfEVq_ZCGoIt32BpytxAx5z3M0/edit#gid=0"
-        "https://docs.google.com/spreadsheets/d/1ZUzx1smeyIKD4PtQ-hhT1kbPSTGRdu8I8NG1uvzcWr4/edit#gid=218846379&fvid=948579105"
+        "https://docs.google.com/spreadsheets/d/1UOh2KrBTrU4GQSKVPIyX3K7ilEBlq3ToN7ORVSvywf4/edit#gid=168371794&fvid=501746560"
     ]
     sheet_name_ = SheetNames.C_11
     page_type_ = PageType.Contribution
@@ -464,9 +470,9 @@ if __name__ == "__main__":
     # control_flow.crawl()
 
     # checking
-    control_flow.checking()
+    # control_flow.checking()
 
     # update d9
-    # control_flow.update_d9()
+    control_flow.update_d9()
 
     print("\n --- total time to process %s seconds ---" % (time.time() - start_time))
