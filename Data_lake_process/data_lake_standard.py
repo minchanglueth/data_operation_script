@@ -461,7 +461,7 @@ if __name__ == "__main__":
     # control_flow.pre_valid_()
 
     # check_box:
-    # control_flow.check_box()
+    control_flow.check_box()
 
     # observe:
     # k = control_flow.observe()

@@ -207,7 +207,7 @@ def c11_checkbox(original_df: object, pre_valid: str = None):
         lambda x: get_key_value_from_gsheet_info(gsheet_info=x, key='url'))
     check_format_s11 = df[~((
                                     (~df['content type'].str.contains('REJECT'))
-                                    & (df['itune_album_url'].str[:32] == 'https://music.apple.com/us/album')
+                                    & (df['itune_album_url'].str[:28] == 'https://music.apple.com/')
                             ) |
                             (
                                     (df['itune_album_url'] == '')
