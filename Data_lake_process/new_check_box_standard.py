@@ -233,10 +233,11 @@ def update_c11_check_box(original_df: object, pre_valid: str):
     original_df['region'] = original_df.apply(
         lambda x: get_itune_id_region_from_itune_url(url=x['itune_album_url'])[1] if (x['itune_album_url'] != '' and x['pre_valid'] == pre_valid) else x['region'], axis=1)
     original_df['checking_validate_itune'] = original_df.apply(lambda x: check_validate_itune(x['itune_id']) if (x['itune_album_url'] != '' and x['pre_valid'] == pre_valid) else x['checking_validate_itune'], axis=1)
-    gsheet_infos = list(set(original_df.gsheet_info.tolist()))
-    sheet_name = get_key_value_from_gsheet_info(gsheet_info=gsheet_infos[0], key='sheet_name')
-    url = get_key_value_from_gsheet_info(gsheet_info=gsheet_infos[0], key='url')
-    grid_range_to_update = f"{sheet_name}!AJ2"
-    list_result = original_df[['itune_id', 'region', 'checking_validate_itune']].values.tolist()  # transfer data_frame to 2D list
-    update_value(list_result=list_result, grid_range_to_update=grid_range_to_update,
-                 gsheet_id=get_gsheet_id_from_url(url=url))
+    print(original_df)
+    # gsheet_infos = list(set(original_df.gsheet_info.tolist()))
+    # sheet_name = get_key_value_from_gsheet_info(gsheet_info=gsheet_infos[0], key='sheet_name')
+    # url = get_key_value_from_gsheet_info(gsheet_info=gsheet_infos[0], key='url')
+    # grid_range_to_update = f"{sheet_name}!AJ2"
+    # list_result = original_df[['itune_id', 'region', 'checking_validate_itune']].values.tolist()  # transfer data_frame to 2D list
+    # update_value(list_result=list_result, grid_range_to_update=grid_range_to_update,
+    #              gsheet_id=get_gsheet_id_from_url(url=url))
