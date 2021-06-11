@@ -334,8 +334,8 @@ class C11Working:
         filter_df = self.original_file
         filter_df = filter_df[
             ((filter_df['pre_valid'] == pre_valid)
-             & (~filter_df['content type'].str.contains('REJECT'))
-             & (filter_df['track_id'] != 'not found')
+             # & (~filter_df['content type'].str.contains('REJECT'))
+             # & (filter_df['track_id'] != 'not found')
              )
         ].reset_index()
         gsheet_info = list(set(filter_df.gsheet_info.tolist()))[0]
