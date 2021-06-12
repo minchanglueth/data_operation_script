@@ -16,7 +16,7 @@ def youtube_check_box(page_name: str, df: object, sheet_name: str):
                  (df['track_id'] != '')
                  & (df['memo'] == 'added')
                  & (df['len'] == 43)
-                 & (df['type'].isin(["c", "d", "z"]))
+                 & (df['type'].str.lower().isin(["c", "d", "z"]))
                  & (df['checking_mp3'] == 'TRUE')
                  & (df['already_existed'] == 'null')
          ) |
@@ -43,7 +43,7 @@ def youtube_check_box(page_name: str, df: object, sheet_name: str):
                  (df['track_id'] != '')
                  & (df['memo'] == 'added')
                  & (df['len'] == 43)
-                 & (df['type'].isin(["c", "d", "z"]))
+                 & (df['type'].str.lower().isin(["c", "d", "z"]))
                  & (df['checking_mp3'] == 'TRUE')
                  & (df['is_released'] == 'TRUE')
          ) |
@@ -146,6 +146,55 @@ def youtube_check_box(page_name: str, df: object, sheet_name: str):
                  & (df['already_existed'] == 'null')
                  & (df['verified'] == 'null')
          )
+         )
+        ]
+    elif page_name == "ArtistPage" and sheet_name == SheetNames.MP3_SHEET_NAME:
+        youtube_check_box = df[~
+        ((
+                 (df['track_id'] != '')
+                 & (df['memo'] == 'added')
+                 & (df['len'] == 43)
+                 & (df['type'].str.lower().isin(["c", "d", "z"]))
+         ) |
+         (
+                 (df['track_id'] != '')
+                 & (df['memo'] == 'not found')
+                 & (df['url_to_add'] == 'none')
+                 & (df['type'] == 'none')
+         ) |
+         (
+
+             (df['assignee'] == 'no need to check')
+         ))
+        ]
+    elif page_name == "ArtistPage" and sheet_name == SheetNames.MP4_SHEET_NAME:
+        youtube_check_box = df[~
+        ((
+                 (df['track_id'] != '')
+                 & (df['memo'] == 'ok')
+                 & (df['url_to_add'] == '')
+         ) |
+         (
+                 (df['track_id'] != '')
+                 & (df['memo'] == 'added')
+                 & (df['len'] == 43)
+         ) |
+         (
+                 (df['track_id'] != '')
+                 & (df['memo'] == 'not found')
+                 & (df['url_to_add'] == 'none')
+         ) |
+         (
+                 (df['track_id'] != '')
+                 & (df['memo'] == 'not ok')
+                 & (df['len'] == 43)
+         ) |
+         (
+                 (df['track_id'] != '')
+                 & (df['memo'] == 'not ok')
+                 & (df['url_to_add'] == 'none')
+         ) |
+         (df['assignee'] == 'no need to check')
          )
         ]
     if youtube_check_box.empty:

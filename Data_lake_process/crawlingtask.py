@@ -156,7 +156,7 @@ def crawl_youtube_mp3(df: object):
                                               priority=priority,
                                               pic=f"{gsheet_name}_{sheet_name_}"
                                               )
-                if type in (Mp3Type.C, Mp3Type.Z):
+                if type.lower() in (Mp3Type.C, Mp3Type.Z):
                     query = query + crawl_youtube(track_id=track_id,
                                                   youtube_url=new_youtube_url,
                                                   format_id=DataSourceFormatMaster.FORMAT_ID_MP4_STATIC,
@@ -164,7 +164,7 @@ def crawl_youtube_mp3(df: object):
                                                   priority=priority,
                                                   pic=f"{gsheet_name}_{sheet_name_}"
                                                   )
-                elif type == Mp3Type.D:
+                elif type.lower() == Mp3Type.D:
                     query = query + crawl_youtube(track_id=track_id,
                                                   youtube_url=new_youtube_url,
                                                   format_id=DataSourceFormatMaster.FORMAT_ID_MP4_LYRIC,
@@ -180,7 +180,7 @@ def crawl_youtube_mp3(df: object):
                                               when_exist=WhenExist.SKIP,
                                               priority=priority,
                                               pic=f"{gsheet_name}_{sheet_name_}")
-                if type in (Mp3Type.C, Mp3Type.Z):
+                if type.lower() in (Mp3Type.C, Mp3Type.Z):
                     query = query + crawl_youtube(track_id=track_id,
                                                   youtube_url=new_youtube_url,
                                                   format_id=DataSourceFormatMaster.FORMAT_ID_MP4_STATIC,
@@ -188,7 +188,7 @@ def crawl_youtube_mp3(df: object):
                                                   priority=priority,
                                                   pic=f"{gsheet_name}_{sheet_name_}"
                                                   )
-                elif type == Mp3Type.D:
+                elif type.lower() == Mp3Type.D:
                     query = query + crawl_youtube(track_id=track_id,
                                                   youtube_url=new_youtube_url,
                                                   format_id=DataSourceFormatMaster.FORMAT_ID_MP4_LYRIC,

@@ -94,11 +94,11 @@ class Page(object):
             if "MP_3" in sheet_names:
                 self.MP3_SHEET_NAME = {"sheet_name": "MP_3", "fomatid": DataSourceFormatMaster.FORMAT_ID_MP3_FULL,
                                        "column_name": ["track_id", "memo", "mp3_link", "url_to_add", "type",
-                                                       "checking_mp3", "already_existed", "is_released"]}
+                                                       "checking_mp3", "already_existed", "is_released", "assignee"]}
             if "MP_4" in sheet_names:
                 self.MP4_SHEET_NAME = {"sheet_name": "MP_4", "fomatid": DataSourceFormatMaster.FORMAT_ID_MP4_FULL,
                                        "column_name": ["track_id", "memo", "mp4_link", "url_to_add", "checking_mp4",
-                                                       "already_existed", "is_released", "verified"]}
+                                                       "already_existed", "is_released", "verified", "assignee"]}
             if "Version_done" in sheet_names:
                 self.VERSION_SHEET_NAME = {"sheet_name": "Version_done",
                                            "fomatid": [DataSourceFormatMaster.FORMAT_ID_MP4_REMIX,

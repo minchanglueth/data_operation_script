@@ -447,28 +447,29 @@ if __name__ == "__main__":
     urls = [
         # "https://docs.google.com/spreadsheets/d/1ZUzx1smeyIKD4PtQ-hhT1kbPSTGRdu8I8NG1uvzcWr4/edit#gid=218846379"
         # "https://docs.google.com/spreadsheets/d/11SWGQ8AYGq65CbUotKfEVq_ZCGoIt32BpytxAx5z3M0/edit#gid=0"
-        "https://docs.google.com/spreadsheets/d/1ZUzx1smeyIKD4PtQ-hhT1kbPSTGRdu8I8NG1uvzcWr4/edit#gid=218846379&fvid=1984765872"
+        # "https://docs.google.com/spreadsheets/d/1ZUzx1smeyIKD4PtQ-hhT1kbPSTGRdu8I8NG1uvzcWr4/edit#gid=218846379&fvid=1984765872",
+        "https://docs.google.com/spreadsheets/d/1j_iM9uf_Ao4qgyXZ7-_3BcNnMiY58PrS-Qm57Mkl08g/edit#gid=213858287"
     ]
-    sheet_name_ = SheetNames.C_11
-    page_type_ = PageType.Contribution
+    sheet_name_ = SheetNames.MP3_SHEET_NAME
+    page_type_ = PageType.ArtistPage
     pre_valid = "2021-06-11"
 
-    # control_flow = ControlFlow(sheet_name=sheet_name_, urls=urls, page_type=page_type_)
+    control_flow = ControlFlow(sheet_name=sheet_name_, urls=urls, page_type=page_type_)
     # ControlFlow_C11
-    control_flow = ControlFlow(sheet_name=sheet_name_, urls=urls, page_type=page_type_, pre_valid=pre_valid)
+    # control_flow = ControlFlow(sheet_name=sheet_name_, urls=urls, page_type=page_type_, pre_valid=pre_valid)
 
     # Contribution: pre_valid
     # control_flow.pre_valid_()
 
     # check_box:
-    control_flow.check_box()
+    # control_flow.check_box()
 
     # observe:
     # k = control_flow.observe()
     # print(k)
 
     # crawl:
-    # control_flow.crawl()
+    control_flow.crawl()
 
     # checking
     # control_flow.checking()
