@@ -177,6 +177,7 @@ class Page(object):
 
             df.columns = df.columns.str.replace('artist_uuid', 'uuid')
             df.columns = df.columns.str.replace('objectid', 'uuid')
+            df.columns = df.columns.str.replace('album_uuid', 'uuid')
 
             df.columns = df.columns.str.replace('content tomadd', 'content_to_add')
 
