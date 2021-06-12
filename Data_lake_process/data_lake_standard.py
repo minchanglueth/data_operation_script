@@ -450,7 +450,7 @@ if __name__ == "__main__":
         # "https://docs.google.com/spreadsheets/d/1ZUzx1smeyIKD4PtQ-hhT1kbPSTGRdu8I8NG1uvzcWr4/edit#gid=218846379&fvid=1984765872",
         "https://docs.google.com/spreadsheets/d/1j_iM9uf_Ao4qgyXZ7-_3BcNnMiY58PrS-Qm57Mkl08g/edit#gid=213858287"
     ]
-    sheet_name_ = SheetNames.MP3_SHEET_NAME
+    sheet_name_ = SheetNames.MP4_SHEET_NAME
     page_type_ = PageType.ArtistPage
     pre_valid = "2021-06-11"
 
