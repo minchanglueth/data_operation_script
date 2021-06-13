@@ -145,7 +145,7 @@ def creat_new_sheet_and_update_data_from_df(df: object, gsheet_id: str, new_shee
         # Creat new sheet and update value
         column_name = df.columns.values.tolist()
         list_result = df.values.tolist()  # transfer data_frame to 2D list
-        list_result.insert_column(0, column_name)
+        list_result.insert(0, column_name)
 
         add_sheet(gsheet_id, new_sheet_name)
         range_to_update = f"{new_sheet_name}!A1"
@@ -156,8 +156,8 @@ def creat_new_sheet_and_update_data_from_df(df: object, gsheet_id: str, new_shee
 
         column_name = df.columns.values.tolist()
         list_result = df.values.tolist()  # transfer data_frame to 2D list
-        list_result.insert_column(0, column_name)
 
+        list_result.insert(0, column_name)
         add_sheet(gsheet_id, new_sheet_name)
         print(f"\ncomplete create new sheet, gsheet_id: {gsheet_id}, sheet_name: {new_sheet_name}")
         range_to_update = f"{new_sheet_name}!A1"

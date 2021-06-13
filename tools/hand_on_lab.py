@@ -49,8 +49,10 @@ def generate_data_dict(df: object):
                                validate='1:m').fillna(value='None')
     data_dict_merge.columns = data_dict_merge.columns.str.replace('index', 'column_name')
     # Write in gsheet
-    # creat_new_sheet_and_update_data_from_df(df=data_dict_merge, gsheet_id="1cZw8dBSCJF1ylVakiqC5oKHIaEvuPV6zid2ct07Bo4k",
-    #                                         new_sheet_name="data")
+    creat_new_sheet_and_update_data_from_df(df=data_dict_merge,
+                                            gsheet_id="1cZw8dBSCJF1ylVakiqC5oKHIaEvuPV6zid2ct07Bo4k",
+                                            new_sheet_name="data dict")
+    # print(data_dict_merge)
     return data_dict_merge
 
 
@@ -83,7 +85,7 @@ def drop_outliner_by_zscore(df: object, column_name: str):
 def prepare_data(df: object):
     numerical_data_column = df.select_dtypes("number").columns
     non_numerical_data_column = df.select_dtypes(["object"]).columns
-    print(df)
+    print(df[numerical_data_column])
 
 # Missing data filling:
     df_n_missing = missing_value(df=df)
@@ -108,10 +110,10 @@ if __name__ == "__main__":
                     'mosold': 'int8'
                     })
 
-    # k = generate_data_dict(df=df)
+    k = generate_data_dict(df=df)
     # print(k)
     # print(df)
-    df = prepare_data(df=df)
+    # df = prepare_data(df=df)
 
     # data_dict
     # k = generate_data_dict(df=df)
