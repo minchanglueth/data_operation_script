@@ -85,10 +85,9 @@ def drop_outliner_by_zscore(df: object, column_name: str):
 def prepare_data(df: object):
     numerical_data_column = df.select_dtypes("number").columns
     non_numerical_data_column = df.select_dtypes(["object"]).columns
-    print(df[numerical_data_column])
 
-# Missing data filling:
     df_n_missing = missing_value(df=df)
+    drop_outliner_by_zscore(df=df_n_missing,)
 
 
 if __name__ == "__main__":
@@ -110,21 +109,11 @@ if __name__ == "__main__":
                     'mosold': 'int8'
                     })
 
-    k = generate_data_dict(df=df)
-    # print(k)
-    # print(df)
-    # df = prepare_data(df=df)
-
-    # data_dict
     # k = generate_data_dict(df=df)
-    # print(k)
+    prepare_data(df=df)
 
-
-    # fill missing value
-    # df = missing_value(df=df)
-    #
-    # # drop outliner have abs(z-score) > 2
-    # df = drop_outliner_by_zscore(df=df, column_name='saleprice')
+    # drop outliner have abs(z-score) > 2
+    df = drop_outliner_by_zscore(df=df, column_name='saleprice')
 
     # remove variables have highly corr
     # bỏ biến phụ thuộc (saleprice: vì mình đang dự đoán biến này)

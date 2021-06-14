@@ -451,10 +451,11 @@ if __name__ == "__main__":
         # "https://docs.google.com/spreadsheets/d/1ZUzx1smeyIKD4PtQ-hhT1kbPSTGRdu8I8NG1uvzcWr4/edit#gid=218846379"
         # "https://docs.google.com/spreadsheets/d/11SWGQ8AYGq65CbUotKfEVq_ZCGoIt32BpytxAx5z3M0/edit#gid=0"
         # "https://docs.google.com/spreadsheets/d/1ZUzx1smeyIKD4PtQ-hhT1kbPSTGRdu8I8NG1uvzcWr4/edit#gid=218846379&fvid=1984765872",
-        "https://docs.google.com/spreadsheets/d/1j_iM9uf_Ao4qgyXZ7-_3BcNnMiY58PrS-Qm57Mkl08g/edit#gid=213858287"
+        # "https://docs.google.com/spreadsheets/d/1j_iM9uf_Ao4qgyXZ7-_3BcNnMiY58PrS-Qm57Mkl08g/edit#gid=213858287"
+        "https://docs.google.com/spreadsheets/d/105rQwsTJe8VQmZayIktBKJcdPIGMYSCQ4o7J42Tvew0/edit#gid=1297302350"
     ]
-    sheet_name_ = SheetNames.ALBUM_IMAGE
-    page_type_ = PageType.ArtistPage
+    sheet_name_ = SheetNames.S_11
+    page_type_ = PageType.NewClassic
     pre_valid = "2021-06-11"
 
     control_flow = ControlFlow(sheet_name=sheet_name_, urls=urls, page_type=page_type_)
@@ -472,10 +473,10 @@ if __name__ == "__main__":
     # print(k)
 
     # crawl:
-    control_flow.crawl()
+    # control_flow.crawl()
 
     # checking
-    # control_flow.checking()
+    control_flow.checking()
 
     # update d9
     # control_flow.update_d9()

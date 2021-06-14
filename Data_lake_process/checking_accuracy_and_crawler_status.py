@@ -93,12 +93,14 @@ def checking_s11_crawler_status(df: object):
             checking_accuracy_result['itune_album_id'] = checking_accuracy_result['itune_album_id'].apply(
                 lambda x: x.strip('"'))
 
-            result = checking_accuracy_result[
-                ((checking_accuracy_result['06_status'] != 'complete')
-                 & (checking_accuracy_result['06_status'] != 'incomplete')) |
-                ((checking_accuracy_result['e5_status'] != 'complete')
-                 & (checking_accuracy_result['e5_status'] != 'incomplete'))
-                ]
+            result = checking_accuracy_result[~
+                                              ((checking_accuracy_result['06_status'] == 'complete')
+                                               & (checking_accuracy_result['e5_status'] == 'complete')) |
+                                              (checking_accuracy_result['06_status'] == 'incomplete') |
+                                              ((checking_accuracy_result['06_status'] == 'complete')
+                                               & (checking_accuracy_result['e5_status'] == 'incomplete'))
+                                              ]
+
             checking = result.empty
             if checking == 1:
                 print(
@@ -144,10 +146,6 @@ def checking_s11_crawler_status(df: object):
                 print(count, "-----", result)
 
 
-# def checking_c11_get_trackid():
-#     title = get_track_title_track_artist_by_ituneid_and_seq(itune_album_id='1560697276', seq='1').title
-#     artist = get_track_title_track_artist_by_ituneid_and_seq(itune_album_id='1560697276', seq='1').artist
-#     print(title, artist)
 def get_format_id_from_content_type(content_type: str):
     if content_type in ("OFFICIAL_MUSIC_VIDEO", "OFFICIAL_MUSIC_VIDEO_2"):
         return DataSourceFormatMaster.FORMAT_ID_MP4_FULL
