@@ -4,7 +4,7 @@ from Data_lake_process.youtube_similarity import similarity
 from core.models.data_source_format_master import DataSourceFormatMaster
 
 from core.models.crawlingtask_action_master import V4CrawlingTaskActionMaster
-from core.crud.sql.query_supporter import get_crawlingtask_info, get_s11_crawlingtask_info, get_track_title_track_artist_by_ituneid_and_seq
+from core.crud.sql.query_supporter import get_crawlingtask_info, get_s11_crawlingtask_info, get_track_title_track_artist_by_ituneid_and_seq, get_youtube_crawlingtask_info
 from crawl_itune.functions import get_itune_id_region_from_itune_url
 from google_spreadsheet_api.function import update_value, update_value_at_last_column
 from colorama import Fore, Style
@@ -276,8 +276,62 @@ def checking_c11_crawler_status(original_df: object, pre_valid: str = None):
                 print(count, "-----", result)
 
 
-def checking_youtube_crawler_status(df: object):
-    print("joy xinh")
+def checking_youtube_crawler_status(df: object, format_id: str):
+    df['check'] = ''
+    df['status'] = ''
+    df['crawlingtask_id'] = ''
+    row_index = df.index
+    for i in row_index:
+        url = df.url_to_add.loc[i]
+        gsheet_info = df.gsheet_info.loc[i]
+        gsheet_name = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key='gsheet_name')
+        sheet_name = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key='sheet_name')
+        PIC_taskdetail = f"{gsheet_name}_{sheet_name}"
+        trackid = df.track_id.loc[i]
+        url = df.url_to_add.loc[i]
+        db_crawlingtask = get_youtube_crawlingtask_info(track_id=trackid, PIC=PIC_taskdetail, format_id= format_id)
+        if db_crawlingtask:
+            crawlingtask_id = db_crawlingtask.id
+            status = db_crawlingtask.status
+            db_url = db_crawlingtask.youtube_url.replace('"', '')
+            check = (url == db_url)
+        else:
+            crawlingtask_id = "missing"
+            status = "missing"
+            check = "missing"
+        df.loc[i, 'check'] = check
+        df.loc[i, 'status'] = status
+        df.loc[i, 'crawlingtask_id'] = crawlingtask_id
+    return df
+
+
+def automate_checking_youtube_crawler_status(original_df: object, filter_df: object, format_id: str):
+    gsheet_infos = list(set(filter_df.gsheet_info.tolist()))
+    count = 0
+    while True and count < 300:
+        checking_accuracy_result = checking_youtube_crawler_status(df=filter_df, format_id=format_id)
+        result = checking_accuracy_result[
+                     (checking_accuracy_result['status'] != 'complete')
+                     & (checking_accuracy_result['status'] != 'incomplete')
+                     & (checking_accuracy_result['status'] != 'missing')
+                     ].status.tolist() == []
+        if result == 1:
+            for gsheet_info in gsheet_infos:
+                gsheet_name = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key='gsheet_name')
+                sheet_name = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key='sheet_name')
+                url = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key='url')
+                print(
+                    Fore.LIGHTYELLOW_EX + f"File: {gsheet_name}, sheet_name: {sheet_name} has been crawled complete already" + Style.RESET_ALL)
+                # print(checking_accuracy_result)
+                updated_column = ['check', 'status', 'crawlingtask_id']
+                merge_df = original_df.merge(checking_accuracy_result[['check', 'status', 'crawlingtask_id', 'index']], left_index=True, right_on='index', how='left').fillna(value='')
+                update_value_at_last_column(df_to_update=merge_df[updated_column],gsheet_id=get_gsheet_id_from_url(url=url),sheet_name=sheet_name)
+
+            break
+        else:
+            count += 1
+            time.sleep(2)
+            print(count, "-----", result)
 
 
 if __name__ == "__main__":

@@ -1,5 +1,6 @@
 from google_spreadsheet_api.function import get_df_from_speadsheet, creat_new_sheet_and_update_data_from_df, get_gsheet_name
 from core.models.crawlingtask_action_master import V4CrawlingTaskActionMaster
+from core.models.data_source_format_master import DataSourceFormatMaster
 from core.crud.sql import artist, album
 import pandas as pd
 import time
@@ -11,10 +12,10 @@ from Data_lake_process.class_definition import WhenExist, PageType, SheetNames, 
 from Data_lake_process.new_check_box_standard import youtube_check_box, s11_checkbox, update_s11_check_box, c11_checkbox, update_c11_check_box
 from Data_lake_process.data_report import update_data_reports
 from Data_lake_process.checking_accuracy_and_crawler_status import checking_image_youtube_accuracy, \
-    automate_checking_status, checking_s11_crawler_status, checking_c11_crawler_status,  checking_youtube_crawler_status as joy_xinh
+    automate_checking_status, checking_s11_crawler_status, checking_c11_crawler_status,  checking_youtube_crawler_status, automate_checking_youtube_crawler_status
 from crawl_itune.functions import get_itune_id_region_from_itune_url
 from core.crud.get_df_from_query import get_df_from_query
-from core.crud.sql.query_supporter import get_pointlogsid_valid
+from core.crud.sql.query_supporter import get_pointlogsid_valid, get_youtube_crawlingtask_info
 from google_spreadsheet_api.function import update_value, update_value_at_last_column
 from Data_lake_process.class_definition import get_gsheet_id_from_url
 from datetime import date
@@ -181,26 +182,17 @@ class YoutubeWorking:
 
     def checking_youtube_crawler_status(self):
         print("checking accuracy")
-        df = self.youtube_filter().copy()
-        joy_xinh(df=df)
-        # gsheet_infos = list(set(df.gsheet_info.tolist()))
-        # step 1.1: checking accuracy base type
-
-        # checking_accuracy_result = checking_image_youtube_accuracy(df=df, actionid=V4CrawlingTaskActionMaster.DOWNLOAD_VIDEO_YOUTUBE)
-        # accuracy_checking = list(set(checking_accuracy_result['check'].tolist()))
-        # if accuracy_checking != [True]:
-        #     print(checking_accuracy_result[['uuid', 'check', 'status', 'crawlingtask_id']])
-        #     # Step 1.2: update data_reports if checking accuracy fail
-        #     for gsheet_info in gsheet_infos:
-        #         update_data_reports(gsheet_info=gsheet_info, status=DataReports.status_type_processing,
-        #                             notice="check accuracy fail")
-        # # Step 2: auto checking status
-        # else:
-        #     print("checking accuracy correctly, now checking status")
-        #     automate_checking_status(df=df, actionid=V4CrawlingTaskActionMaster.DOWNLOAD_VIDEO_YOUTUBE)
-
-            # #     # Step 3: upload image cant crawl
-            # print(checking_accuracy_result)
+        original_df = self.original_file
+        filter_df = self.youtube_filter()
+        if self.sheet_name == SheetNames.MP3_SHEET_NAME:
+            format_id = DataSourceFormatMaster.FORMAT_ID_MP3_FULL
+        elif self.sheet_name == SheetNames.MP4_SHEET_NAME:
+            format_id = DataSourceFormatMaster.FORMAT_ID_MP4_FULL
+        else:
+            print("format_id not support")
+            pass
+        automate_checking_youtube_crawler_status(original_df=self.original_file, filter_df=self.youtube_filter().copy(),
+                                                 format_id=format_id)
 
 
 class S11Working:
@@ -452,9 +444,9 @@ if __name__ == "__main__":
         # "https://docs.google.com/spreadsheets/d/11SWGQ8AYGq65CbUotKfEVq_ZCGoIt32BpytxAx5z3M0/edit#gid=0"
         # "https://docs.google.com/spreadsheets/d/1ZUzx1smeyIKD4PtQ-hhT1kbPSTGRdu8I8NG1uvzcWr4/edit#gid=218846379&fvid=1984765872",
         # "https://docs.google.com/spreadsheets/d/1j_iM9uf_Ao4qgyXZ7-_3BcNnMiY58PrS-Qm57Mkl08g/edit#gid=213858287"
-        "https://docs.google.com/spreadsheets/d/105rQwsTJe8VQmZayIktBKJcdPIGMYSCQ4o7J42Tvew0/edit#gid=1297302350"
+        "https://docs.google.com/spreadsheets/d/105rQwsTJe8VQmZayIktBKJcdPIGMYSCQ4o7J42Tvew0/edit#gid=1166950458"
     ]
-    sheet_name_ = SheetNames.S_11
+    sheet_name_ = SheetNames.MP4_SHEET_NAME
     page_type_ = PageType.NewClassic
     pre_valid = "2021-06-11"
 

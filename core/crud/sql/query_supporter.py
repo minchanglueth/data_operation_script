@@ -229,15 +229,39 @@ def get_pointlogsid_valid(pointlogids: list):
     return point_log_valid
 
 
+def get_youtube_crawlingtask_info(track_id: str, PIC: str, format_id: str):
+    get_crawlingtask_info = (db_session.query(
+        Crawlingtask.id,
+        Crawlingtask.objectid,
+        func.json_extract(Crawlingtask.taskdetail, f"$.youtube_url").label(
+            "youtube_url"),
+        func.json_extract(Crawlingtask.taskdetail, "$.when_exists").label(
+            "when_exists"),
+        Crawlingtask.status
+    )
+        .select_from(Crawlingtask)
+        .filter(Crawlingtask.objectid == track_id,
+                Crawlingtask.actionid == V4CrawlingTaskActionMaster.DOWNLOAD_VIDEO_YOUTUBE,
+                func.json_extract(Crawlingtask.taskdetail, "$.PIC") == PIC,
+                func.json_extract(Crawlingtask.taskdetail, "$.data_source_format_id") == format_id,
+                Crawlingtask.priority != 10000,
+                )
+        .order_by(
+        Crawlingtask.created_at.desc())
+    ).first()
+    return get_crawlingtask_info
+
+
 if __name__ == "__main__":
     start_time = time.time()
     pd.set_option("display.max_rows", None, "display.max_columns", 30, 'display.width', 500)
     # itune_url = 'https://music.apple.com/us/album/deadpan-love/1562039096'
     # pointlogids = ['002D10C7039849DB9A290B727A1DA303','00CC3085F30349C7BEDD7FC0914EC296', '1F41FA3473CE48409E97C181C794379D']
-    pic = 'Contribution_Apr_2021_Youtube collect_experiment_2021-05-31'
-    # db_crawlingtasks = get_pointlogsid_valid(pointlogids=pointlogids)
-    db_crawlingtasks = get_track_title_track_artist_by_ituneid_and_seq(itune_album_id= "joy xinh", seq= 1)
-    k = get_compiled_raw_mysql(db_crawlingtasks)
+    pic = 'NewClassic 14.06.2021_MP_3'
+    trackid = 'E7B5DE4F3C8F4C4F83123B4E0DCDBBC1'
+    format_id = '1A67A5F1E0D84FB9B48234AE65086375'
+    db_crawlingtask = get_youtube_crawlingtask_info(track_id=trackid, PIC=pic, format_id= format_id)
+    k = get_compiled_raw_mysql(db_crawlingtask)
     print(k)
     # joy_xinh = get_df_from_query(db_crawlingtasks)
     # print(joy_xinh)
