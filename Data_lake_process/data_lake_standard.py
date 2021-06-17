@@ -1,26 +1,30 @@
-from google_spreadsheet_api.function import get_df_from_speadsheet, creat_new_sheet_and_update_data_from_df, get_gsheet_name
+from google_spreadsheet_api.function import get_df_from_speadsheet, creat_new_sheet_and_update_data_from_df, \
+    get_gsheet_name
 from core.models.crawlingtask_action_master import V4CrawlingTaskActionMaster
 from core.models.data_source_format_master import DataSourceFormatMaster
 from core.crud.sql import artist, album
+from core.crud.sql.track import get_one_track_by_id
 import pandas as pd
 import time
 from core import query_path
 from colorama import Fore, Style
-from Data_lake_process.crawlingtask import crawl_image, crawl_youtube_mp3, crawl_youtube_mp4, crawl_itunes_album, update_contribution
+from Data_lake_process.crawlingtask import crawl_image, crawl_youtube_mp3, crawl_youtube_mp4, crawl_itunes_album, \
+    update_contribution
 from Data_lake_process.class_definition import WhenExist, PageType, SheetNames, merge_file, DataReports, \
     get_key_value_from_gsheet_info, add_key_value_from_gsheet_info, get_gsheet_id_from_url
-from Data_lake_process.new_check_box_standard import youtube_check_box, s11_checkbox, update_s11_check_box, c11_checkbox, update_c11_check_box
+from Data_lake_process.new_check_box_standard import youtube_check_box, s11_checkbox, update_s11_check_box, \
+    c11_checkbox, update_c11_check_box
 from Data_lake_process.data_report import update_data_reports
 from Data_lake_process.checking_accuracy_and_crawler_status import checking_image_youtube_accuracy, \
-    automate_checking_status, checking_s11_crawler_status, checking_c11_crawler_status,  checking_youtube_crawler_status, automate_checking_youtube_crawler_status
+    automate_checking_status, checking_s11_crawler_status, checking_c11_crawler_status, checking_youtube_crawler_status, \
+    automate_checking_youtube_crawler_status
 from crawl_itune.functions import get_itune_id_region_from_itune_url
 from core.crud.get_df_from_query import get_df_from_query
 from core.crud.sql.query_supporter import get_pointlogsid_valid, get_youtube_crawlingtask_info
 from google_spreadsheet_api.function import update_value, update_value_at_last_column
 from Data_lake_process.class_definition import get_gsheet_id_from_url
 from datetime import date
-
-from tools.hand_on_lab import generate_data_dict
+from Data_lake_process.youtube_similarity import similarity
 
 
 def upload_image_cant_crawl(checking_accuracy_result: object, sheet_name: str):
@@ -106,12 +110,14 @@ class ImageWorking:
         else:
             df['query'] = df.apply(lambda x:
                                    crawl_image(
-                                                object_type=get_key_value_from_gsheet_info(gsheet_info=x['gsheet_info'], key='object_type'),
-                                                url=x['url_to_add'],
-                                                objectid=x['uuid'],
-                                                when_exists=when_exists,
-                                                pic=f"{get_key_value_from_gsheet_info(gsheet_info=x['gsheet_info'], key='gsheet_name')}_{get_key_value_from_gsheet_info(gsheet_info=x['gsheet_info'], key='sheet_name')}",
-                                                priority=get_key_value_from_gsheet_info(gsheet_info=x['gsheet_info'], key='page_priority')
+                                       object_type=get_key_value_from_gsheet_info(gsheet_info=x['gsheet_info'],
+                                                                                  key='object_type'),
+                                       url=x['url_to_add'],
+                                       objectid=x['uuid'],
+                                       when_exists=when_exists,
+                                       pic=f"{get_key_value_from_gsheet_info(gsheet_info=x['gsheet_info'], key='gsheet_name')}_{get_key_value_from_gsheet_info(gsheet_info=x['gsheet_info'], key='sheet_name')}",
+                                       priority=get_key_value_from_gsheet_info(gsheet_info=x['gsheet_info'],
+                                                                               key='page_priority')
                                    ),
                                    axis=1)
             query_pandas_to_csv(df=df, column='query')
@@ -121,7 +127,8 @@ class ImageWorking:
         df = self.image_filter().copy()
         gsheet_infos = list(set(df.gsheet_info.tolist()))
         # step 1.1: checking accuracy
-        checking_accuracy_result = checking_image_youtube_accuracy(df=df, actionid=V4CrawlingTaskActionMaster.ARTIST_ALBUM_IMAGE)
+        checking_accuracy_result = checking_image_youtube_accuracy(df=df,
+                                                                   actionid=V4CrawlingTaskActionMaster.ARTIST_ALBUM_IMAGE)
         accuracy_checking = list(set(checking_accuracy_result['check'].tolist()))
 
         if accuracy_checking != [True]:
@@ -194,6 +201,41 @@ class YoutubeWorking:
         automate_checking_youtube_crawler_status(original_df=self.original_file, filter_df=self.youtube_filter().copy(),
                                                  format_id=format_id)
 
+    def similarity(self):
+        df = self.original_file
+        df['similarity'] = ''
+        df['note'] = ''
+        if self.sheet_name == SheetNames.MP3_SHEET_NAME:
+            format_id = DataSourceFormatMaster.FORMAT_ID_MP3_FULL
+        elif self.sheet_name == SheetNames.MP4_SHEET_NAME:
+            format_id = DataSourceFormatMaster.FORMAT_ID_MP4_FULL
+        else:
+            print("format_id not support")
+            pass
+        gsheet_info = list(set(df.gsheet_info.tolist()))[0]
+        sheet_name = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key='sheet_name')
+        url = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key='url')
+        row_num = df.index
+        for i in row_num:
+            if df['memo'].loc[i] == 'added':
+                trackid = df['track_id'].loc[i]
+                youtube_url = df['url_to_add'].loc[i]
+                db_track = get_one_track_by_id(track_id=trackid)
+                if db_track:
+                    track_title = db_track.title
+                    track_duration = db_track.duration_ms
+                    track_similarity = similarity(track_title=track_title, youtube_url=youtube_url,
+                                                  formatid=format_id,
+                                                  duration=track_duration).get('similarity')
+                else:
+                    track_similarity = 'not found'
+                df.loc[i, 'similarity'] = track_similarity
+            else:
+                pass
+
+        update_value_at_last_column(df_to_update=df[['similarity', 'note']], gsheet_id=get_gsheet_id_from_url(url=url),
+                                    sheet_name=sheet_name)
+
 
 class S11Working:
     def __init__(self, sheet_name: str, urls: list, page_type: object):
@@ -239,7 +281,8 @@ class S11Working:
         else:
             df['query'] = df.apply(lambda x:
                                    crawl_itunes_album(ituneid=x['itune_id'],
-                                                      priority=get_key_value_from_gsheet_info(gsheet_info=x['gsheet_info'], key='page_priority'),
+                                                      priority=get_key_value_from_gsheet_info(
+                                                          gsheet_info=x['gsheet_info'], key='page_priority'),
                                                       is_new_release=is_new_release,
                                                       pic=f"{get_key_value_from_gsheet_info(gsheet_info=x['gsheet_info'], key='gsheet_name')}_{get_key_value_from_gsheet_info(gsheet_info=x['gsheet_info'], key='sheet_name')}",
                                                       region=x['region']
@@ -281,7 +324,8 @@ class C11Working:
                 range_to_update = f"Youtube collect_experiment!A{i + 2}"
                 current_date = f"{date.today()}"
                 list_result = [[current_date]]
-                update_value(list_result=list_result, grid_range_to_update=range_to_update, gsheet_id=get_gsheet_id_from_url(url))
+                update_value(list_result=list_result, grid_range_to_update=range_to_update,
+                             gsheet_id=get_gsheet_id_from_url(url))
 
     def check_box(self):
         df = self.original_file
@@ -314,7 +358,8 @@ class C11Working:
         else:
             df['query'] = df.apply(lambda x:
                                    crawl_itunes_album(ituneid=x['itune_id'],
-                                                      priority=get_key_value_from_gsheet_info(gsheet_info=x['gsheet_info'], key='page_priority'),
+                                                      priority=get_key_value_from_gsheet_info(
+                                                          gsheet_info=x['gsheet_info'], key='page_priority'),
                                                       is_new_release=is_new_release,
                                                       pic=f"{get_key_value_from_gsheet_info(gsheet_info=x['gsheet_info'], key='gsheet_name')}_{get_key_value_from_gsheet_info(gsheet_info=x['gsheet_info'], key='sheet_name')}_{x['pre_valid']}",
                                                       region=x['region']
@@ -329,9 +374,9 @@ class C11Working:
         filter_df = self.original_file
         filter_df = filter_df[
             ((filter_df['pre_valid'] == pre_valid)
-             # & (~filter_df['content type'].str.contains('REJECT'))
-             # & (filter_df['track_id'] != 'not found')
-             )
+                # & (~filter_df['content type'].str.contains('REJECT'))
+                # & (filter_df['track_id'] != 'not found')
+                )
         ].reset_index()
         gsheet_info = list(set(filter_df.gsheet_info.tolist()))[0]
         gsheet_name = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key='gsheet_name')
@@ -362,12 +407,14 @@ class ControlFlow:
 
     def pre_valid_(self):
         if self.sheet_name == SheetNames.C_11:
-            c11_working = C11Working(sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type, pre_valid=self.pre_valid)
+            c11_working = C11Working(sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type,
+                                     pre_valid=self.pre_valid)
             return c11_working.pre_valid_()
 
     def update_d9(self):
         if self.sheet_name == SheetNames.C_11:
-            c11_working = C11Working(sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type, pre_valid=self.pre_valid)
+            c11_working = C11Working(sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type,
+                                     pre_valid=self.pre_valid)
             return c11_working.update_d9()
 
     def check_box(self):
@@ -381,7 +428,8 @@ class ControlFlow:
             s11_working = S11Working(sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type)
             return s11_working.check_box()
         elif self.sheet_name == SheetNames.C_11:
-            c11_working = C11Working(sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type, pre_valid=self.pre_valid)
+            c11_working = C11Working(sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type,
+                                     pre_valid=self.pre_valid)
             return c11_working.check_box()
 
     def observe(self):
@@ -395,7 +443,8 @@ class ControlFlow:
             s11_working = S11Working(sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type)
             return s11_working.s11_filter()
         elif self.sheet_name == SheetNames.C_11:
-            c11_working = C11Working(sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type, pre_valid=self.pre_valid)
+            c11_working = C11Working(sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type,
+                                     pre_valid=self.pre_valid)
             return c11_working.c11_filter()
 
     def crawl(self):
@@ -412,7 +461,8 @@ class ControlFlow:
             return s11_working.crawl_s11_datalake()
 
         elif self.sheet_name == SheetNames.C_11:
-            c11_working = C11Working(sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type, pre_valid=self.pre_valid)
+            c11_working = C11Working(sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type,
+                                     pre_valid=self.pre_valid)
             return c11_working.crawl_c11_datalake()
 
     def checking(self):
@@ -429,8 +479,14 @@ class ControlFlow:
             return s11_working.checking_s11_crawler_status()
 
         elif self.sheet_name == SheetNames.C_11:
-            c11_working = C11Working(sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type, pre_valid=self.pre_valid)
+            c11_working = C11Working(sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type,
+                                     pre_valid=self.pre_valid)
             return c11_working.checking_c11_crawler_status()
+
+    def similarity(self):
+        if self.sheet_name in (SheetNames.MP3_SHEET_NAME, SheetNames.MP4_SHEET_NAME):
+            youtube_working = YoutubeWorking(sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type)
+            return youtube_working.similarity()
 
 
 if __name__ == "__main__":
@@ -446,7 +502,7 @@ if __name__ == "__main__":
         # "https://docs.google.com/spreadsheets/d/1j_iM9uf_Ao4qgyXZ7-_3BcNnMiY58PrS-Qm57Mkl08g/edit#gid=213858287"
         "https://docs.google.com/spreadsheets/d/105rQwsTJe8VQmZayIktBKJcdPIGMYSCQ4o7J42Tvew0/edit#gid=1166950458"
     ]
-    sheet_name_ = SheetNames.MP4_SHEET_NAME
+    sheet_name_ = SheetNames.MP3_SHEET_NAME
     page_type_ = PageType.NewClassic
     pre_valid = "2021-06-11"
 
@@ -464,11 +520,14 @@ if __name__ == "__main__":
     # k = control_flow.observe()
     # print(k)
 
+    # similarity:
+    control_flow.similarity()
+
     # crawl:
     # control_flow.crawl()
 
     # checking
-    control_flow.checking()
+    # control_flow.checking()
 
     # update d9
     # control_flow.update_d9()

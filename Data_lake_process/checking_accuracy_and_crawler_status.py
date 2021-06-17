@@ -325,7 +325,8 @@ def automate_checking_youtube_crawler_status(original_df: object, filter_df: obj
                 # print(checking_accuracy_result)
                 updated_column = ['check', 'status', 'crawlingtask_id']
                 merge_df = original_df.merge(checking_accuracy_result[['check', 'status', 'crawlingtask_id', 'index']], left_index=True, right_on='index', how='left').fillna(value='')
-                update_value_at_last_column(df_to_update=merge_df[updated_column],gsheet_id=get_gsheet_id_from_url(url=url),sheet_name=sheet_name)
+                update_value_at_last_column(df_to_update=merge_df[updated_column],
+                                            gsheet_id=get_gsheet_id_from_url(url=url), sheet_name=sheet_name)
 
             break
         else:
