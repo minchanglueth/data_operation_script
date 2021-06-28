@@ -60,23 +60,23 @@ class SheetNames:
 class PageType:
     class NewClassic:
         name = "NewClassic"
-        priority = 1998
+        priority = 530
 
     class TopSingle:
         name = "TopSingle"
-        priority = 1999
+        priority = 530
 
     class TopAlbum:
         name = "TopAlbum"
-        priority = 999
+        priority = 100
 
     class Contribution:
         name = "contribution"
-        priority = 1997
+        priority = 520
 
     class ArtistPage:
         name = "ArtistPage"
-        priority = 1202
+        priority = 80
 
 
 class Page(object):

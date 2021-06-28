@@ -6,7 +6,7 @@ mydb = mysql.connector.connect(
     user="banhxeo",
     password="rEi2019Wa-05VtJ$p",
     database="v4",
-    port=3308
+    port=3309
 )
 # mydb = mysql.connector.connect(
 #     host="localhost",

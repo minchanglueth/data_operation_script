@@ -1,0 +1,18 @@
+Metadata-Version: 2.1
+Name: BeneDict
+Version: 0.3.2
+Summary: UNKNOWN
+Home-page: http://github.com/SurrealAI/BeneDict
+Author: Jim Fan
+License: GPLv3
+Keywords: dict,utility
+Platform: UNKNOWN
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Environment :: Console
+Classifier: Programming Language :: Python :: 3
+Requires-Python: >=3.5
+Requires-Dist: pyyaml
+
+UNKNOWN
+
+

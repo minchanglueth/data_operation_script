@@ -496,15 +496,12 @@ if __name__ == "__main__":
     with open(query_path, "w") as f:
         f.truncate()
     urls = [
-        # "https://docs.google.com/spreadsheets/d/1ZUzx1smeyIKD4PtQ-hhT1kbPSTGRdu8I8NG1uvzcWr4/edit#gid=218846379"
-        # "https://docs.google.com/spreadsheets/d/11SWGQ8AYGq65CbUotKfEVq_ZCGoIt32BpytxAx5z3M0/edit#gid=0"
-        # "https://docs.google.com/spreadsheets/d/1ZUzx1smeyIKD4PtQ-hhT1kbPSTGRdu8I8NG1uvzcWr4/edit#gid=218846379&fvid=1984765872",
-        # "https://docs.google.com/spreadsheets/d/1j_iM9uf_Ao4qgyXZ7-_3BcNnMiY58PrS-Qm57Mkl08g/edit#gid=213858287"
-        "https://docs.google.com/spreadsheets/d/105rQwsTJe8VQmZayIktBKJcdPIGMYSCQ4o7J42Tvew0/edit#gid=1166950458"
+        # "https://docs.google.com/spreadsheets/d/1SAgurpVss13lTtveFtWWISSVmYiMhRZsfnJvoe1VJv0/edit#gid=13902732"
+        "https://docs.google.com/spreadsheets/d/1vncoT6rjgjQbS8hHtkCm7AScaMO1-EK_lzl9Y7aLajo/edit#gid=0" #NC
     ]
-    sheet_name_ = SheetNames.MP3_SHEET_NAME
+    sheet_name_ = SheetNames.S_11
     page_type_ = PageType.NewClassic
-    pre_valid = "2021-06-11"
+    pre_valid = ""
 
     control_flow = ControlFlow(sheet_name=sheet_name_, urls=urls, page_type=page_type_)
     # ControlFlow_C11
@@ -514,17 +511,17 @@ if __name__ == "__main__":
     # control_flow.pre_valid_()
 
     # check_box:
-    # control_flow.check_box()
+    control_flow.check_box()
 
     # observe:
-    # k = control_flow.observe()
-    # print(k)
+    k = control_flow.observe()
+    print(k)
 
     # similarity:
-    control_flow.similarity()
+    # control_flow.similarity()
 
     # crawl:
-    # control_flow.crawl()
+    control_flow.crawl()
 
     # checking
     # control_flow.checking()

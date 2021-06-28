@@ -95,10 +95,10 @@ def checking_s11_crawler_status(df: object):
 
             result = checking_accuracy_result[~
                                               ((checking_accuracy_result['06_status'] == 'complete')
-                                               & (checking_accuracy_result['e5_status'] == 'complete')) |
+                                               & (checking_accuracy_result['E5_status'] == 'complete')) |
                                               (checking_accuracy_result['06_status'] == 'incomplete') |
                                               ((checking_accuracy_result['06_status'] == 'complete')
-                                               & (checking_accuracy_result['e5_status'] == 'incomplete'))
+                                               & (checking_accuracy_result['E5_status'] == 'incomplete'))
                                               ]
 
             checking = result.empty
@@ -119,12 +119,12 @@ def checking_s11_crawler_status(df: object):
                 ((
                          (data_merge['itune_album_url'].isin(['not found', '']))
                          & (data_merge['06_status'] == 'None')
-                         & (data_merge['e5_status'] == 'None')
+                         & (data_merge['E5_status'] == 'None')
                  ) |
                  (
                          (~data_merge['itune_album_url'].isin(['not found', '']))
                          & (data_merge['06_status'] == 'complete')
-                         & (data_merge['e5_status'] == 'complete')
+                         & (data_merge['E5_status'] == 'complete')
                  ))
                 ]
                 if data_report.empty:

@@ -182,8 +182,8 @@ def get_s11_crawlingtask_info(pic: str):
         func.json_extract(crawlingtasks_06.taskdetail, f"$.album_id").label("itune_album_id"),
         crawlingtasks_06.id.label("06_id"),
         crawlingtasks_06.status.label("06_status"),
-        crawlingtasks_E5.id.label("e5_id"),
-        crawlingtasks_E5.status.label("e5_status")
+        crawlingtasks_E5.id.label("E5_id"),
+        crawlingtasks_E5.status.label("E5_status")
     )
                                  .select_from(crawlingtasks_06)
                                  .outerjoin(crawlingtasks_E5,
