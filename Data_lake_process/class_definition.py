@@ -86,7 +86,7 @@ class Page(object):
         self.page_name = get_gsheet_name(gsheet_id=self.gsheet_id)
         self.sheet_name_type = self.SheetNameType(url=self.url)
 
-    class SheetNameType:
+    class SheetNameType():
         def __init__(self, url: str):
             gsheet_id = get_gsheet_id_from_url(url=url)
             list_of_sheet_title = get_list_of_sheet_title(gsheet_id=gsheet_id)
@@ -209,6 +209,8 @@ class Page(object):
         df['gsheet_info'] = df.apply(lambda x: json.dumps(info), axis=1)
         return df
 
+# media_file = Page.media_file
+SheetNameType = Page.SheetNameType
 
 def merge_file(sheet_name: str, urls: list, page_type: object = None):
     # Step 1: remove duplicate url

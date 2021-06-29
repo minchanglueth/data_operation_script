@@ -144,6 +144,8 @@ class ImageWorking:
             # Step 3: upload image cant crawl
             upload_image_cant_crawl(checking_accuracy_result=checking_accuracy_result, sheet_name=self.sheet_name)
 
+crawl_image_datalake = ImageWorking.crawl_image_datalake
+checking_image_crawler_status = ImageWorking.checking_image_crawler_status
 
 class YoutubeWorking:
     def __init__(self, sheet_name: str, urls: list, page_type: object):
