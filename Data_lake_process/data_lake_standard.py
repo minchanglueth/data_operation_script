@@ -464,9 +464,13 @@ class C11Working:
                 validate="m:1",
             ).fillna(value=np.nan)
             current_date = f"{date.today()}"
-            data_merge["pre_valid"] = data_merge["valid"].map(
-                {np.nan: "", -2: "", 1: "", 0: current_date}
-            )
+
+            def replace_prevalid(valid):
+                if valid == 0:
+                    return current_date
+                pass
+
+            data_merge["pre_valid"] = data_merge["valid"].apply(replace_prevalid)
             range = f"A2:A{data_merge.tail(1).index.item() + 2}"
             values = np.array(data_merge["pre_valid"]).T
             sheet.update_cells(
