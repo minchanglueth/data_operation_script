@@ -78,13 +78,13 @@ def get_youtube_title_and_youtube_uploader_from_youtube_url(youtube_url: str):
 if __name__ == "__main__":
     start_time = time.time()
     youtube_urls = [
-        "https://www.youtube.com/watch?v=3tb-TQNeocY"
+        "https://www.youtube.com/watch?v=pOWuBM2RNmI"
     ]
     for youtube_url in youtube_urls:
         print(youtube_url)
         # get_youtube_title_and_youtube_uploader_from_youtube_url(youtube_url)
-        joy = get_raw_title_uploader_from_youtube_url(youtube_url)
-        print(joy)
+        test = get_youtube_title_and_youtube_uploader_from_youtube_url(youtube_url)
+        print(test)
     t2 = time.time() - start_time
     print(t2)
 

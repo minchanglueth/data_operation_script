@@ -228,6 +228,13 @@ def get_pointlogsid_valid(pointlogids: list):
         PointLog.created_at.asc())
     return point_log_valid
 
+def get_pointlogsid_valid_for_contribution(pointlogids: list):
+    point_log_valid = db_session.query(
+        PointLog.id, PointLog.valid
+    ).select_from(PointLog).filter(PointLog.id.in_(pointlogids)).order_by(
+        PointLog.created_at.asc())
+    return point_log_valid
+
 
 def get_youtube_crawlingtask_info(track_id: str, PIC: str, format_id: str):
     get_crawlingtask_info = (db_session.query(
