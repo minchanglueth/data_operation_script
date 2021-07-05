@@ -15,16 +15,12 @@ port = int(os.getenv("port"))
 print(port)
 
 mydb = mysql.connector.connect(
-    host=host,
-    user=user,
-    password=password,
-    database=database,
-    port=port
+    host=host, user=user, password=password, database=database, port=port
 )
 
 mycursor = mydb.cursor()
 
-mycursor.execute('SELECT * FROM datasources limit 10;')
+mycursor.execute("SELECT * FROM datasources limit 10;")
 
 result = mycursor.fetchone()
 print(result)

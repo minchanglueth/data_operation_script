@@ -24,7 +24,9 @@ class DataSource(Base, TimestampMixin):
     view_count = sa.Column("YoutubeViews", sa.Integer, default=0)
     view_updated_at = sa.Column("YoutubeViewsAt", sa.DateTime)
     info = sa.Column("Info", MutableDict.as_mutable(sa.JSON))
-    display_status = sa.Column("DisplayStatus", sa.SmallInteger, nullable=False, default=1)
+    display_status = sa.Column(
+        "DisplayStatus", sa.SmallInteger, nullable=False, default=1
+    )
     ext = sa.Column("Ext", MutableDict.as_mutable(sa.JSON))
     integrated_loudness = sa.Column("IntegratedLoudness", sa.Numeric(asdecimal=False))
     old_video_id = sa.Column("OldVideoId", sa.BigInteger)

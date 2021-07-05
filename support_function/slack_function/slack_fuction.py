@@ -1,4 +1,5 @@
 import logging
+
 logging.basicConfig(level=logging.DEBUG)
 from slack_sdk import WebClient
 
@@ -17,11 +18,3 @@ def post_message(chanel: str, text: str):
         )
     except Exception as e:
         print(e)
-
-
-
-
-
-
-
-

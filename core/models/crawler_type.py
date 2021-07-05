@@ -1,5 +1,6 @@
 from core.models.data_source_format_master import DataSourceFormatMaster
 
+
 class crawlingtaskactionid:
     # Itunes Crawler
     ITUNES_ALBUM = "9C8473C36E57472281A1C7936108FC06"
@@ -39,4 +40,3 @@ class when_exist:
 
 def generate_task(action_id: str, object_id: str, task_detail: dict) -> str:
     jdjfd
-

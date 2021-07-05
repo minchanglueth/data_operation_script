@@ -15,7 +15,9 @@ class UserNarrative(Base, TimestampMixin):
     published_at = sa.Column("PublishedAt", sa.DateTime)
     user_id = sa.Column("UserId", sa.BigInteger, nullable=False)
     title = sa.Column("Title", sa.String(1024), nullable=False)
-    content_json = sa.Column("ContentJSON", MutableDict.as_mutable(sa.JSON), nullable=False)
+    content_json = sa.Column(
+        "ContentJSON", MutableDict.as_mutable(sa.JSON), nullable=False
+    )
     word_count = sa.Column("WordCount", sa.Integer)
     ext = sa.Column("Ext", MutableDict.as_mutable(sa.JSON))
     blog_url = sa.Column("BlogURL", sa.String(1024))

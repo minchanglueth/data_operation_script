@@ -18,7 +18,9 @@ class User(Base, TimestampMixin):
     locale = sa.Column("Locale", sa.String(8), nullable=False, default="en_US")
     auth_service = sa.Column("AuthService", sa.String(32), default=None)
     auth_data = sa.Column("AuthData", sa.String(256), default=None)
-    auth_service_access_token = sa.Column("AuthServiceAccessToken", sa.String(3072), default=None)
+    auth_service_access_token = sa.Column(
+        "AuthServiceAccessToken", sa.String(3072), default=None
+    )
     gender = sa.Column("Gender", sa.String(6), default=None)
     gender_of_interest = sa.Column("GenderOfInterest", sa.String(6))
     profile = sa.Column("Profile", MutableDict.as_mutable(sa.JSON))

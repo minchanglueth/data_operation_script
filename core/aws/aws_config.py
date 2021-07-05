@@ -1,4 +1,4 @@
-class AWSConfig():
+class AWSConfig:
     S3_DEFAULT_BUCKET = "vibbidi-us"
     S3_IMAGE_BUCKET = "vibbidi-images"
     SNS_DEFAULT_REGION = "ap-northeast-1"

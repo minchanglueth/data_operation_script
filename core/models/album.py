@@ -16,7 +16,9 @@ class Album(Base, TimestampMixin):
     itunes_url = sa.Column("iTunesUrl", sa.String(512))
     # noinspection SpellCheckingInspection
 
-    external_id = sa.Column("ItuneAlbumId", sa.Integer, default=None)  # James: Tentatively keep typo in DB.
+    external_id = sa.Column(
+        "ItuneAlbumId", sa.Integer, default=None
+    )  # James: Tentatively keep typo in DB.
     ext = sa.Column("Ext", MutableDict.as_mutable(sa.JSON))
     info = sa.Column("Info", MutableDict.as_mutable(sa.JSON))
     artist = sa.Column("Artist", sa.String(256))

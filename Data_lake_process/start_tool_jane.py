@@ -9,10 +9,15 @@ if __name__ == "__main__":
 
     # Extract artist_name for collecting from youtube: comment
     from tools.daily_export_artist_contribution import export_artist_contribution
+
     export_artist_contribution()
 
     # Extract wiki, lyric single_page, album_page: comment
-    from tools.daily_singlepage_albumpage import upload_album_wiki, upload_track_wiki, upload_track_lyrics
+    from tools.daily_singlepage_albumpage import (
+        upload_album_wiki,
+        upload_track_wiki,
+        upload_track_lyrics,
+    )
 
     # upload_album_wiki()
     # upload_track_wiki()

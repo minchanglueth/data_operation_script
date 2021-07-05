@@ -9,13 +9,16 @@ session = aiobotocore.get_session()
 
 def auto_async_client(*create_client_args, **create_client_kwargs):
     """
-        First argument of decorated function must be ``client``.
-        Omit this argument when you call decorated function.
+    First argument of decorated function must be ``client``.
+    Omit this argument when you call decorated function.
     """
+
     def decorator_auto_async_client(func):
         @functools.wraps(func)
         async def wrapper_auto_async_client(*args, **kwargs):
-            async with session.create_client(*create_client_args, **create_client_kwargs) as client:
+            async with session.create_client(
+                *create_client_args, **create_client_kwargs
+            ) as client:
                 return await func(client, *args, **kwargs)
 
         return wrapper_auto_async_client
