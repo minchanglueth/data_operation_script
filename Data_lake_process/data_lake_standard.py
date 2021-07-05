@@ -714,7 +714,7 @@ if __name__ == "__main__":
         f.truncate()
     urls = [
         # "https://docs.google.com/spreadsheets/d/1SAgurpVss13lTtveFtWWISSVmYiMhRZsfnJvoe1VJv0/edit#gid=13902732"
-        "https://docs.google.com/spreadsheets/d/1vncoT6rjgjQbS8hHtkCm7AScaMO1-EK_lzl9Y7aLajo/edit#gid=0"  # NC
+        "https://docs.google.com/spreadsheets/d/1ZUzx1smeyIKD4PtQ-hhT1kbPSTGRdu8I8NG1uvzcWr4/edit#gid=1282374284"  # NC
     ]
     sheet_name_ = SheetNames.MP4_SHEET_NAME
     page_type_ = PageType.ArtistPage
@@ -728,7 +728,7 @@ if __name__ == "__main__":
     # control_flow.pre_valid_()
 
     # check_box:
-    control_flow.check_box()
+    # control_flow.check_box()
 
     # observe:
     # k = control_flow.observe()

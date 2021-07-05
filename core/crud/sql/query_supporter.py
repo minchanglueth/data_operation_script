@@ -308,7 +308,7 @@ def get_youtube_crawlingtask_info(track_id: str, PIC: str, format_id: str):
             func.json_extract(Crawlingtask.taskdetail, "$.data_source_format_id")
             == format_id,
             Crawlingtask.priority != 10000,
-            Crawlingtask.status != null,
+            Crawlingtask.status.isnot(None),
         )
         .order_by(Crawlingtask.created_at.desc())
     ).first()
