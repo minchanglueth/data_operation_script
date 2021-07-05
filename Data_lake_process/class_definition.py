@@ -209,13 +209,16 @@ class Page(object):
         df['gsheet_info'] = df.apply(lambda x: json.dumps(info), axis=1)
         return df
 
+
 # media_file = Page.media_file
 SheetNameType = Page.SheetNameType
+
 
 def merge_file(sheet_name: str, urls: list, page_type: object = None):
     # Step 1: remove duplicate url
     url_reformats = list(
         set(map(lambda x: "https://docs.google.com/spreadsheets/d/" + get_gsheet_id_from_url(x), urls)))
+    # print(url_reformats)
     priority = page_type.priority
     df = pd.DataFrame()
     for url in url_reformats:
@@ -234,7 +237,7 @@ if __name__ == "__main__":
     start_time = time.time()
     pd.set_option("display.max_rows", None, "display.max_columns", 50, 'display.width', 1000)
     urls = [
-        "https://docs.google.com/spreadsheets/d/18kMfBz4XaHG8jjJ3E8lhHi-mw501_zJl39rRz95bcqU/edit#gid=1501426979"
+        "https://docs.google.com/spreadsheets/d/1byh3LFm1NhzFPLfROyS9kwgqKKG2P8k7aTnGQXAXr-o/edit#gid=1962142102"
     ]
 
     sheet_name = SheetNames.C_11

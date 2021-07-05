@@ -20,13 +20,13 @@ prod_password = os.getenv("prod_password")
 # with open(config_file) as json_data_file:
 #     config = json.load(json_data_file)
 
-if os.getenv('host'):
+if os.getenv("host"):
     # mysql_config = config['mysql']
     RDBMS = "mysql"
     PIP_PACKAGE = "mysqlconnector"
     SQLALCHEMY_DATABASE_URI = "{}+{}://{}:{}@{}:{}/{}".format(
-        RDBMS, PIP_PACKAGE, user, password,
-        host, port, database)
+        RDBMS, PIP_PACKAGE, user, password, host, port, database
+    )
 
     engine = create_engine(SQLALCHEMY_DATABASE_URI)
     if engine is None:
@@ -35,8 +35,3 @@ if os.getenv('host'):
 else:
     print("bad config file")
     exit(1)
-
-
-
-
-

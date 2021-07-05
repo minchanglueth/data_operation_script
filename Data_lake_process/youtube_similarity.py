@@ -56,7 +56,7 @@ if __name__ == "__main__":
     pd.set_option("display.max_rows", None, "display.max_columns", 50, 'display.width', 1000)
     # https://docs.google.com/spreadsheets/d/1eO8J2qqjxgRVnc3b1EWGskVHYc1baUAmDzdqT6hIdRg/edit#gid=926860952
     gsheet_id = '1bKbrX9lul1njeUgBHgPvuzpmuCes7XNVP6AAlIqXONw'
-    sheet_name = 'mp_4'
+    sheet_name = 'mp_4_1'
     df = get_df_from_speadsheet(gsheet_id=gsheet_id, sheet_name=sheet_name)
     df["DurationMs"].replace({"": "0"}, inplace=True)
     df = df.loc[:]
