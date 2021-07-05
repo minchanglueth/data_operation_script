@@ -10,7 +10,9 @@ from app.biz.aws.s3.aws_s3 import existing_on_s3
 
 
 @auto_s3_async_client
-async def upload_to_s3_async(client, s3_key: str, file_path: str, bucket: str = AWSConfig.S3_DEFAULT_BUCKET) -> bool:
+async def upload_to_s3_async(
+    client, s3_key: str, file_path: str, bucket: str = AWSConfig.S3_DEFAULT_BUCKET
+) -> bool:
     try:
         with open(file_path, "rb") as f:
             await client.put_object(Bucket=bucket, Key=s3_key, Body=f)
@@ -23,7 +25,10 @@ async def upload_to_s3_async(client, s3_key: str, file_path: str, bucket: str = 
 
 @auto_s3_async_client
 async def download_from_s3_async(
-    client, s3_key: str, downloaded_file_path: str, bucket: str = AWSConfig.S3_DEFAULT_BUCKET
+    client,
+    s3_key: str,
+    downloaded_file_path: str,
+    bucket: str = AWSConfig.S3_DEFAULT_BUCKET,
 ) -> bool:
     try:
         response = await client.get_object(Bucket=bucket, Key=s3_key)
@@ -38,7 +43,9 @@ async def download_from_s3_async(
 
 
 @auto_s3_async_client
-async def remove_from_s3_async(client, s3_key: str, bucket: str = AWSConfig.S3_DEFAULT_BUCKET) -> bool:
+async def remove_from_s3_async(
+    client, s3_key: str, bucket: str = AWSConfig.S3_DEFAULT_BUCKET
+) -> bool:
     try:
         await client.delete_object(Bucket=bucket, Key=s3_key)
         return True
@@ -48,7 +55,9 @@ async def remove_from_s3_async(client, s3_key: str, bucket: str = AWSConfig.S3_D
 
 
 @auto_s3_async_client
-async def remove_by_keys_async(client, keys: List[str], bucket: str = AWSConfig.S3_DEFAULT_BUCKET):
+async def remove_by_keys_async(
+    client, keys: List[str], bucket: str = AWSConfig.S3_DEFAULT_BUCKET
+):
     tasks = []
     for key in keys:
         if existing_on_s3(key):

@@ -9,7 +9,7 @@ class Album_Track(Base):
     album_uuid = sa.Column("AlbumId", sa.String(32), nullable=False, primary_key=True)
     track_id = sa.Column("TrackId", sa.String(32), nullable=False, primary_key=True)
     disc_number = sa.Column("DiscNumber", sa.SmallInteger, default=None)
-    track_number = sa.Column("TrackNumber", sa.SmallInteger, nullable=False, default=1, primary_key=True)
+    track_number = sa.Column(
+        "TrackNumber", sa.SmallInteger, nullable=False, default=1, primary_key=True
+    )
     album_priority = sa.Column("AlbumPriority", sa.SmallInteger, default=1)
-
-

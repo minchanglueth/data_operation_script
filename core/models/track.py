@@ -1,6 +1,8 @@
 import sqlalchemy as sa
 from sqlalchemy.ext.mutable import MutableDict
 from core.models.base_class import Base, TimestampMixin
+
+
 class Track(Base, TimestampMixin):
     __tablename__ = "Tracks"
     id = sa.Column("Id", sa.String(32), primary_key=True)
@@ -15,5 +17,3 @@ class Track(Base, TimestampMixin):
     image_url = sa.Column("ImageURL", sa.String(1024))
     info = sa.Column("Info", MutableDict.as_mutable(sa.JSON))
     ext = sa.Column("Ext", MutableDict.as_mutable(sa.JSON))
-
-

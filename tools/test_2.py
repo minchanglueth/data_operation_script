@@ -1,6 +1,11 @@
 # https://docs.google.com/spreadsheets/d/1iEZRdDJJ3bu0BIrjgW7MTlVWsbszpIo-Lr0Ca5Da6N4/edit#gid=854983440
-from google_spreadsheet_api.function import get_df_from_speadsheet, get_list_of_sheet_title, update_value, \
-    creat_new_sheet_and_update_data_from_df, get_gsheet_name
+from google_spreadsheet_api.function import (
+    get_df_from_speadsheet,
+    get_list_of_sheet_title,
+    update_value,
+    creat_new_sheet_and_update_data_from_df,
+    get_gsheet_name,
+)
 import time
 import pandas as pd
 import numpy as np
@@ -45,9 +50,12 @@ def generate_data_dict(df: object):
     }
     data_dict_2 = pd.DataFrame(result2).reset_index()
 
-    data_dict_merge = pd.merge(data_dict_2, data_dict_1, how='left', on='index',
-                               validate='1:m').fillna(value='None')
-    data_dict_merge.columns = data_dict_merge.columns.str.replace('index', 'column_name')
+    data_dict_merge = pd.merge(
+        data_dict_2, data_dict_1, how="left", on="index", validate="1:m"
+    ).fillna(value="None")
+    data_dict_merge.columns = data_dict_merge.columns.str.replace(
+        "index", "column_name"
+    )
     # Write in gsheet
     # creat_new_sheet_and_update_data_from_df(df=data_dict_merge, gsheet_id="1cZw8dBSCJF1ylVakiqC5oKHIaEvuPV6zid2ct07Bo4k",
     #                                         new_sheet_name="data")
@@ -62,7 +70,9 @@ def missing_value(df: object):
 
     # Missing value
     # Numerical column_name: fullfilled by mean()
-    df[numerical_data_column] = df[numerical_data_column].fillna(df[numerical_data_column].mean())
+    df[numerical_data_column] = df[numerical_data_column].fillna(
+        df[numerical_data_column].mean()
+    )
 
     # Non numerical column_name: fullfilled by mode()
     # Non numerical column_name: fullfilled by other level
@@ -72,8 +82,8 @@ def missing_value(df: object):
 
 
 def drop_outliner_by_zscore(df: object, column_name: str):
-    z_column_name = zscore(df['saleprice'])
-    df['z_column_name'] = z_column_name
+    z_column_name = zscore(df["saleprice"])
+    df["z_column_name"] = z_column_name
     df_outliner = df[((df.z_column_name > 2) | (df.z_column_name < -2))]
     index_outliner = df_outliner.index
     df = df.drop(index_outliner)
@@ -86,9 +96,13 @@ def drop_outliner_by_zscore(df: object, column_name: str):
 
 if __name__ == "__main__":
     start_time = time.time()
-    pd.set_option("display.max_rows", None, "display.max_columns", 50, 'display.width', 1000)
+    pd.set_option(
+        "display.max_rows", None, "display.max_columns", 50, "display.width", 1000
+    )
 
-    train_path = "https://raw.githubusercontent.com/tiwari91/Housing-Prices/master/train.csv"
+    train_path = (
+        "https://raw.githubusercontent.com/tiwari91/Housing-Prices/master/train.csv"
+    )
 
     df = pd.read_csv(train_path)
     # lowercase entire column name
@@ -97,13 +111,15 @@ if __name__ == "__main__":
     df.columns = lower_names
 
     # change dtype to save memory usage and performance: memory usage from 924 => 874 KB
-    df = df.astype({'overallqual': 'int8',
-                    'overallcond': 'int8',
-                    'fireplaces': 'int8',
-                    'garagecars': 'int8',
-                    'mosold': 'int8'
-                    })
-
+    df = df.astype(
+        {
+            "overallqual": "int8",
+            "overallcond": "int8",
+            "fireplaces": "int8",
+            "garagecars": "int8",
+            "mosold": "int8",
+        }
+    )
 
     k = generate_data_dict(df=df)
     print(k)
@@ -180,13 +196,9 @@ if __name__ == "__main__":
     # results = smf.ols(f"saleprice ~ {ols_features}", data=df).fit()
     # print(results.summary())
 
-
     #
 
-
     # Lấy ra n feature có feature_importance cao nhất
-
-
 
     # Histogram
     # plt.hist(df['saleprice'], bins=100)

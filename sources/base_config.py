@@ -25,7 +25,12 @@ for local_config_file in glob.iglob("local.*.env"):
 
 sentry_sdk.init(
     dsn=os.getenv("SENTRY_DSN"),
-    integrations=[CeleryIntegration(), SqlalchemyIntegration(), AioHttpIntegration(), RedisIntegration()],
+    integrations=[
+        CeleryIntegration(),
+        SqlalchemyIntegration(),
+        AioHttpIntegration(),
+        RedisIntegration(),
+    ],
 )
 
 
