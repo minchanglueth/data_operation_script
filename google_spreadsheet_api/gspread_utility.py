@@ -1,27 +1,22 @@
 import gspread
 from gspread_pandas import Spread, Client
-import os.path
-import pickle
 
-from gspread_pandas import conf
 
-from core import credentials_path, BASE_DIR
+# gspread.auth.DEFAULT_CREDENTIALS_FILENAME = credentials_path
 
-gspread.auth.DEFAULT_CREDENTIALS_FILENAME = credentials_path
+# gc = gspread.oauth()
 
-gc = gspread.oauth()
+# config_dir = os.path.join(BASE_DIR, "sources")
 
-config_dir = os.path.join(BASE_DIR, "sources")
-
-config = conf.get_config(conf_dir=config_dir, file_name="credentials.json")
+# config = conf.get_config(conf_dir=config_dir, file_name="credentials.json")
 
 
 def get_worksheet(url, sheet_name):
-    return Spread(spread=url, sheet=sheet_name, config=config)
+    return Spread(spread=url, sheet=sheet_name)
 
 
 def get_df_from_gsheet(url, sheet_name):
-    gsheet_file = Spread(spread=url, sheet=sheet_name, config=config)
+    gsheet_file = Spread(spread=url, sheet=sheet_name)
     df = gsheet_file.sheet_to_df()
     return df
 

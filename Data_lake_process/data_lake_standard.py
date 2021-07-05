@@ -763,7 +763,7 @@ if __name__ == "__main__":
     # control_flow.crawl()
 
     # checking
-    control_flow.checking()
+    # control_flow.checking()
 
     # update d9
     # control_flow.update_d9()
