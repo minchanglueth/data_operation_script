@@ -17,6 +17,7 @@ from core.crud.sql.query_supporter import (
     get_s11_crawlingtask_info,
     get_track_title_track_artist_by_ituneid_and_seq,
     get_youtube_crawlingtask_info,
+    get_crawling_result_cy_itunes,
 )
 from crawl_itune.functions import get_itune_id_region_from_itune_url
 from google_spreadsheet_api.function import update_value, update_value_at_last_column
@@ -396,6 +397,97 @@ def checking_c11_crawler_status(original_df: object, pre_valid: str = None):
                 # update data to gsheet
                 data_updated = data_merge[updated_columns]
                 grid_range_to_update = f"{sheet_name}!AM2"
+                list_result = (
+                    data_updated.values.tolist()
+                )  # transfer data_frame to 2D list
+                update_value(
+                    list_result=list_result,
+                    grid_range_to_update=grid_range_to_update,
+                    gsheet_id=get_gsheet_id_from_url(url=url),
+                )
+                break
+            else:
+                count += 1
+                print(
+                    Fore.LIGHTYELLOW_EX
+                    + f"File: {gsheet_name}, sheet_name: {sheet_name} hasn't been crawled complete"
+                    + Style.RESET_ALL
+                )
+                time.sleep(10)
+                print(count, "-----", result)
+
+
+def result_d9(df: object, pre_valid: str):
+    # print(df)
+    original_df = df.copy()
+    # print(original_df[['pointlogsid']])
+    filter_df = original_df[original_df["pre_valid"] == pre_valid]
+    pointlogsid_list = filter_df["pointlogsid"].tolist()
+
+    original_df["url"] = original_df["gsheet_info"].apply(
+        lambda x: get_key_value_from_gsheet_info(gsheet_info=x, key="url")
+    )
+    gsheet_infos = list(set(original_df.gsheet_info.tolist()))
+    for gsheet_info in gsheet_infos:
+        gsheet_name = get_key_value_from_gsheet_info(
+            gsheet_info=gsheet_info, key="gsheet_name"
+        )
+        sheet_name = get_key_value_from_gsheet_info(
+            gsheet_info=gsheet_info, key="sheet_name"
+        )
+        url = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key="url")
+        original_df_split = original_df.reset_index()
+        count = 0
+        while True and count < 300:
+            # print(get_crawling_result_cy_itunes(pointlogsid_list))
+            checking_result_d9 = get_df_from_query(
+                get_crawling_result_cy_itunes(pointlogsid_list)
+            )
+            # print(checking_result_d9)
+            result = checking_result_d9[
+                ~(
+                    (checking_result_d9["d9_status"] == "complete")
+                    | (checking_result_d9["d9_status"] == "incomplete")
+                    | (checking_result_d9["d9_status"] == "None")
+                )
+            ]
+
+            checking = result.empty
+            if checking == 1:
+                print(
+                    Fore.LIGHTYELLOW_EX
+                    + f"D9 has been crawled complete already"
+                    + Style.RESET_ALL
+                )
+
+                data_merge = pd.merge(
+                    original_df_split,
+                    checking_result_d9,
+                    how="left",
+                    left_on="pointlogsid",
+                    right_on="pointlogsid",
+                    validate="m:1",
+                ).fillna(value="")
+
+                data_merge["d9_id"] = ""
+                data_merge.loc[data_merge["d9_id"] == "", "d9_id"] = data_merge[
+                    "d9_id_y"
+                ]
+                data_merge.loc[data_merge["d9_id"] == "", "d9_id"] = data_merge[
+                    "d9_id_x"
+                ]
+                data_merge["d9_status"] = ""
+                data_merge.loc[data_merge["d9_status"] == "", "d9_status"] = data_merge[
+                    "d9_status_y"
+                ]
+                data_merge.loc[data_merge["d9_status"] == "", "d9_status"] = data_merge[
+                    "d9_status_x"
+                ]
+
+                # update data to gsheet
+                updated_columns = ["d9_id", "d9_status"]
+                data_updated = data_merge[updated_columns]
+                grid_range_to_update = f"{sheet_name}!AU2"
                 list_result = (
                     data_updated.values.tolist()
                 )  # transfer data_frame to 2D list
