@@ -13,14 +13,14 @@ from core.models.track import Track
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker, aliased
 from sqlalchemy import func, union, distinct, desc, and_, or_, tuple_, extract
-from sqlalchemy import text
+from sqlalchemy import text, literal
 from core.mysql_database_connection.sqlalchemy_create_engine import (
     SQLALCHEMY_DATABASE_URI,
 )
 from typing import Optional, Tuple, Dict, List
 from sqlalchemy.orm import aliased
 from core.crud.get_df_from_query import get_df_from_query
-
+from core.models.crawler_type import crawlingtaskactionid
 
 from datetime import date
 import time
@@ -236,10 +236,13 @@ def get_s11_crawlingtask_info(pic: str):
             .select_from(crawlingtasks_06)
             .outerjoin(
                 crawlingtasks_E5,
-                # crawlingtasks_E5.id == func.json_extract(crawlingtasks_06.ext, "$.itunes_track_task_id"), #performance query problem
-                text(
-                    "crawlingtasks_E5.id = crawlingtasks_06.ext ->> '$.itunes_track_task_id'"
-                ),
+                crawlingtasks_E5.id
+                == func.json_unquote(
+                    func.json_extract(crawlingtasks_06.ext, "$.itunes_track_task_id")
+                )
+                # text(
+                #     "crawlingtasks_E5.id = crawlingtasks_06.ext ->> '$.itunes_track_task_id'"
+                # ),
             )
         )
         .filter(
@@ -321,6 +324,44 @@ def get_youtube_crawlingtask_info(track_id: str, PIC: str, format_id: str):
         .order_by(Crawlingtask.created_at.desc())
     ).first()
     return get_crawlingtask_info
+
+
+def get_crawling_result_cy_itunes(pointlogids: list):
+    get_crawling_result_cy_itunes_valid = (
+        db_session.query(
+            PointLog.id.label("pointlogsid"),
+            Crawlingtask.id.label("d9_id"),
+            Crawlingtask.status.label("d9_status"),
+        )
+        .select_from(PointLog)
+        .outerjoin(
+            Crawlingtask,
+            and_(
+                Crawlingtask.id
+                == func.json_unquote(func.json_extract(PointLog.ext, "$.crawler_id")),
+                Crawlingtask.actionid == crawlingtaskactionid.CONTRIBUTION_TRACK_VIDEO,
+            ),
+        )
+        .filter((PointLog.valid == 1), PointLog.id.in_(pointlogids))
+        # .filter((PointLog.valid == 1), PointLog.id == pointlogids)
+        .order_by(PointLog.created_at.asc())
+    )
+    get_crawling_result_cy_itunes_invalid = (
+        db_session.query(
+            PointLog.id.label("pointlogsid"),
+            literal("None").label("d9_id"),
+            literal("None").label("d9_status"),
+        )
+        .select_from(PointLog)
+        .filter((PointLog.valid == -2), PointLog.id.in_(pointlogids))
+        # .filter((PointLog.valid == 1), PointLog.id == pointlogids)
+        .order_by(PointLog.created_at.asc())
+    )
+    get_crawling_result_cy_itunes = get_crawling_result_cy_itunes_valid.union(
+        get_crawling_result_cy_itunes_invalid
+    )
+    # print(get_crawling_result_cy_itunes)
+    return get_crawling_result_cy_itunes
 
 
 if __name__ == "__main__":

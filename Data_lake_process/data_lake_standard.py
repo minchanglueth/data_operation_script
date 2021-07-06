@@ -47,6 +47,7 @@ from Data_lake_process.checking_accuracy_and_crawler_status import (
     checking_c11_crawler_status,
     checking_youtube_crawler_status,
     automate_checking_youtube_crawler_status,
+    result_d9,
 )
 from crawl_itune.functions import get_itune_id_region_from_itune_url
 from core.crud.get_df_from_query import get_df_from_query
@@ -529,6 +530,9 @@ class C11Working:
             original_df=self.original_file, pre_valid=self.pre_valid
         )
 
+    def result_d9(self):
+        result_d9(df=self.original_file, pre_valid=self.pre_valid)
+
     def update_d9(self):
         filter_df = self.original_file
         filter_df = filter_df[
@@ -546,29 +550,103 @@ class C11Working:
             gsheet_info=gsheet_info, key="sheet_name"
         )
         PIC_taskdetail = f"{gsheet_name}_{sheet_name}_{pre_valid}"
-        filter_df["crawling_task"] = filter_df.apply(
-            lambda x: update_contribution(
-                content_type=x["content type"],
-                track_id=x["track_id"],
-                concert_live_name=x["live_concert_name_place"],
-                artist_name=x["artist_name"],
-                year=x["year"],
-                pic=PIC_taskdetail,
-                youtube_url=x["contribution_link"],
-                other_official_version=x["official_music_video_2"],
-                pointlogsid=x["pointlogsid"],
-            ),
-            axis=1,
-        )
 
-        row_index = filter_df.index
-        with open(query_path, "w") as f:
-            for i in row_index:
-                line = filter_df["crawling_task"].loc[i]
-                # print(line)
-                f.write(f"{line}\n")
-        f.close()
+        filter_df["hyperlink"] = ""
+        for i in filter_df[
+            "contribution_link"
+        ]:  # chỉnh lại format của link youtube_url
+            if len(i) < 43:
+                filter_df["hyperlink"].loc[filter_df["contribution_link"] == i] = (
+                    "https://www.youtube.com/watch?v=" + i.strip()[-11:]
+                )
+            else:
+                filter_df["hyperlink"].loc[
+                    filter_df["contribution_link"] == i
+                ] = i.strip()[:43]
 
+        df_similarity_recheck = filter_df[
+            ((filter_df["similarity"] != "100") & (filter_df["recheck"] != "ok"))
+            & (filter_df["similarity"] != "not found")
+        ]
+
+        criteria = {
+            "LIVE_VIDEO": "live_concert_name_place",
+            "OFFICIAL_MUSIC_VIDEO_2": "official_music_video_2",
+            "COVER_VIDEO": "artist_name",
+            "REMIX_VIDEO": "artist_name",
+        }
+
+        append_missing_df = pd.DataFrame()
+        for content_type in criteria:
+            df_value = filter_df[filter_df["content type"] == content_type][
+                criteria.get(content_type)
+            ]
+            for value in df_value:
+                if value.strip() == "":
+                    missing_df = filter_df[
+                        (filter_df["content type"] == content_type)
+                        & (filter_df[criteria.get(content_type)] == value)
+                    ]
+                else:
+                    missing_df = []
+                append_missing_df = append_missing_df.append(missing_df)
+        append_missing_df = append_missing_df.drop_duplicates(subset=None, keep="first")
+
+        if df_similarity_recheck.empty and append_missing_df.empty:
+            filter_df["crawling_task"] = filter_df.apply(
+                lambda x: update_contribution(
+                    content_type=x["content type"],
+                    track_id=x["track_id"],
+                    concert_live_name=x["live_concert_name_place"],
+                    artist_name=x["artist_name"],
+                    year=x["year"],
+                    pic=PIC_taskdetail,
+                    youtube_url=x["hyperlink"],
+                    other_official_version=x["official_music_video_2"],
+                    pointlogsid=x["pointlogsid"],
+                ),
+                axis=1,
+            )
+
+            print(
+                filter_df[
+                    [
+                        "pointlogsid",
+                        "hyperlink",
+                        "similarity",
+                        "recheck",
+                        "crawling_task",
+                    ]
+                ]
+            )
+
+            row_index = filter_df.index
+            with open(query_path, "w") as f:
+                for i in row_index:
+                    line = filter_df["crawling_task"].loc[i]
+                    # print(line)
+                    f.write(f"{line}\n")
+            f.close()
+            print(Fore.LIGHTGREEN_EX + "Queries are printed out, please check" + Style.RESET_ALL)
+        else:
+            def missing_similarity():
+                print(Fore.LIGHTRED_EX +
+                        "\nmissing similarity recheck as below\n" +
+                        Style.RESET_ALL,
+                        df_similarity_recheck[["pointlogsid", "hyperlink", "similarity", "recheck"]])
+            def missing_content_info():
+                print(Fore.LIGHTRED_EX +
+                    "\nmissing info from content type/track_id as below\n" +
+                    Style.RESET_ALL,
+                    append_missing_df[["pointlogsid", "content type", "official_music_video_2", "artist_name", "year", "live_concert_name_place"]])
+            
+            if append_missing_df.empty:
+                missing_similarity()
+            elif df_similarity_recheck.empty:
+                missing_content_info()
+            else:
+                missing_similarity()
+                missing_content_info()
 
 class ControlFlow:
     def __init__(
@@ -722,6 +800,16 @@ class ControlFlow:
             )
             return youtube_working.similarity()
 
+    def result_d9(self):
+        if self.sheet_name == SheetNames.C_11:
+            c11_working = C11Working(
+                sheet_name=self.sheet_name,
+                urls=self.urls,
+                page_type=self.page_type,
+                pre_valid=self.pre_valid,
+            )
+            return c11_working.result_d9()
+
 
 if __name__ == "__main__":
     start_time = time.time()
@@ -733,11 +821,12 @@ if __name__ == "__main__":
         f.truncate()
     urls = [
         # "https://docs.google.com/spreadsheets/d/1SAgurpVss13lTtveFtWWISSVmYiMhRZsfnJvoe1VJv0/edit#gid=13902732"
-        "https://docs.google.com/spreadsheets/d/1ZUzx1smeyIKD4PtQ-hhT1kbPSTGRdu8I8NG1uvzcWr4"  # NC
+        # "https://docs.google.com/spreadsheets/d/1ZUzx1smeyIKD4PtQ-hhT1kbPSTGRdu8I8NG1uvzcWr4"  # NC
+        "https://docs.google.com/spreadsheets/d/1pkS4-0i5zGp1gYpvfdTODFtAszmBr1QjXVLUbyzi58Y/edit#gid=1110031260"
     ]
     sheet_name_ = SheetNames.C_11
     page_type_ = PageType.Contribution
-    pre_valid = ""
+    pre_valid = "2021-07-02"
 
     # control_flow = ControlFlow(
     #     sheet_name=sheet_name_, urls=urls, page_type=page_type_)
@@ -747,7 +836,7 @@ if __name__ == "__main__":
     )
 
     # Contribution: pre_valid
-    control_flow.pre_valid_()
+    # control_flow.pre_valid_()
 
     # check_box:
     # control_flow.check_box()
@@ -766,6 +855,9 @@ if __name__ == "__main__":
     # control_flow.checking()
 
     # update d9
-    # control_flow.update_d9()
+    control_flow.update_d9()
+
+    # check d9_result
+    # control_flow.result_d9()
 
     print("\n --- total time to process %s seconds ---" % (time.time() - start_time))
