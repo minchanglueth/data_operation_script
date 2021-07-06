@@ -356,7 +356,7 @@ def update_c11_check_box(original_df: object, pre_valid: str):
         gsheet_info=gsheet_infos[0], key="sheet_name"
     )
     url = get_key_value_from_gsheet_info(gsheet_info=gsheet_infos[0], key="url")
-    grid_range_to_update = f"{sheet_name}!AJ2"
+    grid_range_to_update = f"{sheet_name}!Q2"
     list_result = original_df[
         ["itune_id", "region", "checking_validate_itune"]
     ].values.tolist()  # transfer data_frame to 2D list

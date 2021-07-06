@@ -240,7 +240,7 @@ class Page(object):
                         "track_id",
                         "similarity",
                         "recheck",
-                        "d9",
+                        "d9_id",
                         "d9_status",
                     ],
                 }
