@@ -239,6 +239,7 @@ class Page(object):
                         "track_title",
                         "track_id",
                         "similarity",
+                        "recheck",
                         "d9",
                         "d9_status",
                     ],

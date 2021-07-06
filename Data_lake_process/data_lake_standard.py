@@ -569,7 +569,30 @@ class C11Working:
             & (filter_df["similarity"] != "not found")
         ]
 
-        if df_similarity_recheck.empty:
+        criteria = {
+            "LIVE_VIDEO": "live_concert_name_place",
+            "OFFICIAL_MUSIC_VIDEO_2": "official_music_video_2",
+            "COVER_VIDEO": "artist_name",
+            "REMIX_VIDEO": "artist_name",
+        }
+
+        append_missing_df = pd.DataFrame()
+        for content_type in criteria:
+            df_value = filter_df[filter_df["content type"] == content_type][
+                criteria.get(content_type)
+            ]
+            for value in df_value:
+                if value.strip() == "":
+                    missing_df = filter_df[
+                        (filter_df["content type"] == content_type)
+                        & (filter_df[criteria.get(content_type)] == value)
+                    ]
+                else:
+                    missing_df = []
+                append_missing_df = append_missing_df.append(missing_df)
+        append_missing_df = append_missing_df.drop_duplicates(subset=None, keep="first")
+
+        if df_similarity_recheck.empty and append_missing_df.empty:
             filter_df["crawling_task"] = filter_df.apply(
                 lambda x: update_contribution(
                     content_type=x["content type"],
@@ -604,19 +627,26 @@ class C11Working:
                     # print(line)
                     f.write(f"{line}\n")
             f.close()
+            print(Fore.LIGHTGREEN_EX + "Queries are printed out, please check" + Style.RESET_ALL)
         else:
-            print(
-                Fore.LIGHTRED_EX
-                + "\nmissing similarity recheck as below, please ignore if empty"
-                + Style.RESET_ALL
-            )
-
-            print(
-                df_similarity_recheck[
-                    ["pointlogsid", "hyperlink", "similarity", "recheck"]
-                ]
-            )
-
+            def missing_similarity():
+                print(Fore.LIGHTRED_EX +
+                        "\nmissing similarity recheck as below\n" +
+                        Style.RESET_ALL,
+                        df_similarity_recheck[["pointlogsid", "hyperlink", "similarity", "recheck"]])
+            def missing_content_info():
+                print(Fore.LIGHTRED_EX +
+                    "\nmissing info from content type/track_id as below\n" +
+                    Style.RESET_ALL,
+                    append_missing_df[["pointlogsid", "content type", "official_music_video_2", "artist_name", "year", "live_concert_name_place"]])
+            
+            if append_missing_df.empty:
+                missing_similarity()
+            elif df_similarity_recheck.empty:
+                missing_content_info()
+            else:
+                missing_similarity()
+                missing_content_info()
 
 class ControlFlow:
     def __init__(
@@ -791,11 +821,12 @@ if __name__ == "__main__":
         f.truncate()
     urls = [
         # "https://docs.google.com/spreadsheets/d/1SAgurpVss13lTtveFtWWISSVmYiMhRZsfnJvoe1VJv0/edit#gid=13902732"
-        "https://docs.google.com/spreadsheets/d/1ZUzx1smeyIKD4PtQ-hhT1kbPSTGRdu8I8NG1uvzcWr4"  # NC
+        # "https://docs.google.com/spreadsheets/d/1ZUzx1smeyIKD4PtQ-hhT1kbPSTGRdu8I8NG1uvzcWr4"  # NC
+        "https://docs.google.com/spreadsheets/d/1pkS4-0i5zGp1gYpvfdTODFtAszmBr1QjXVLUbyzi58Y/edit#gid=1110031260"
     ]
     sheet_name_ = SheetNames.C_11
     page_type_ = PageType.Contribution
-    pre_valid = ""
+    pre_valid = "2021-07-02"
 
     # control_flow = ControlFlow(
     #     sheet_name=sheet_name_, urls=urls, page_type=page_type_)
@@ -805,7 +836,7 @@ if __name__ == "__main__":
     )
 
     # Contribution: pre_valid
-    control_flow.pre_valid_()
+    # control_flow.pre_valid_()
 
     # check_box:
     # control_flow.check_box()
@@ -827,6 +858,6 @@ if __name__ == "__main__":
     control_flow.update_d9()
 
     # check d9_result
-    control_flow.result_d9()
+    # control_flow.result_d9()
 
     print("\n --- total time to process %s seconds ---" % (time.time() - start_time))

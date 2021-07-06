@@ -35,3 +35,31 @@ if os.getenv("host"):
 else:
     print("bad config file")
     exit(1)
+
+# from sqlalchemy import create_engine
+# import json
+# from core import config_path
+# from core.mysql_database_connection.mysql_connector import tunnel
+
+# tunnel.start()
+# port = tunnel.local_bind_port
+
+# config_file = config_path
+# with open(config_file) as json_data_file:
+#     config = json.load(json_data_file)
+
+# if config.get('mysql', False):
+#     mysql_config = config['mysql']
+#     RDBMS = "mysql"
+#     PIP_PACKAGE = "mysqlconnector"
+#     SQLALCHEMY_DATABASE_URI = "{}+{}://{}:{}@{}:{}/{}".format(
+#         RDBMS, PIP_PACKAGE, mysql_config['user_stg'], mysql_config['password_stg'], #thêm _stg khi test stg
+#         mysql_config['host'], port, mysql_config['database'])
+
+#     engine = create_engine(SQLALCHEMY_DATABASE_URI)
+#     if engine is None:
+#         print("failed to connect to MySQL")
+#         exit(1)
+# else:
+#     print("bad config file")
+#     exit(1)

@@ -3,7 +3,9 @@
     "host": "localhost",
     "port": 3309,
     "user": "banhxeo",
+    "user_stg": "sysadm",
     "password": "rEi2019Wa-05VtJ$p",
+    "password_stg": "kerberos1221",
     "database": "v4",
     "stg_password": "kerberos1221",
     "prod_password": "ek7F7ck3"
