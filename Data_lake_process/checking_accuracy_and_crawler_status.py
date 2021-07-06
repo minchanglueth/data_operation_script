@@ -396,7 +396,7 @@ def checking_c11_crawler_status(original_df: object, pre_valid: str = None):
                     updated_columns = ["06_id", "06_status", "e5_id", "e5_status"]
                 # update data to gsheet
                 data_updated = data_merge[updated_columns]
-                grid_range_to_update = f"{sheet_name}!AM2"
+                grid_range_to_update = f"{sheet_name}!T2"
                 list_result = (
                     data_updated.values.tolist()
                 )  # transfer data_frame to 2D list
@@ -443,7 +443,6 @@ def result_d9(df: object, pre_valid: str):
             checking_result_d9 = get_df_from_query(
                 get_crawling_result_cy_itunes(pointlogsid_list)
             )
-            # print(checking_result_d9)
             result = checking_result_d9[
                 ~(
                     (checking_result_d9["d9_status"] == "complete")
@@ -487,7 +486,7 @@ def result_d9(df: object, pre_valid: str):
                 # update data to gsheet
                 updated_columns = ["d9_id", "d9_status"]
                 data_updated = data_merge[updated_columns]
-                grid_range_to_update = f"{sheet_name}!AU2"
+                grid_range_to_update = f"{sheet_name}!AB2"
                 list_result = (
                     data_updated.values.tolist()
                 )  # transfer data_frame to 2D list

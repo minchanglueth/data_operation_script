@@ -36,11 +36,11 @@ print(result)
 # mypkey = paramiko.RSAKey.from_private_key_file(home + pkeyfilepath)
 # # if you want to use ssh password use - ssh_password='your ssh password', bellow
 
-# # sql_hostname = 'v4-mysql-master.vibbidi.com'
-# sql_hostname = 'db-stg01.vibbidi.local'
+# sql_hostname = 'v4-mysql-master.vibbidi.com'
+# # sql_hostname = 'db-stg01.vibbidi.local'
 # sql_username = 'sysadm'
-# # sql_password = 'ek7F7ck3'
-# sql_password = 'kerberos1221'
+# sql_password = 'ek7F7ck3'
+# # sql_password = 'kerberos1221'
 # # sql_main_database = 'original_social_graph'
 # sql_port = 3306
 # ssh_host = 'db-proxy.vibbidi.net'

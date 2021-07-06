@@ -53,7 +53,7 @@ else:
 #     RDBMS = "mysql"
 #     PIP_PACKAGE = "mysqlconnector"
 #     SQLALCHEMY_DATABASE_URI = "{}+{}://{}:{}@{}:{}/{}".format(
-#         RDBMS, PIP_PACKAGE, mysql_config['user_stg'], mysql_config['password_stg'], #thêm _stg khi test stg
+#         RDBMS, PIP_PACKAGE, mysql_config['user'], mysql_config['password'], #thêm _stg khi test stg
 #         mysql_config['host'], port, mysql_config['database'])
 
 #     engine = create_engine(SQLALCHEMY_DATABASE_URI)

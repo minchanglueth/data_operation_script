@@ -360,7 +360,6 @@ def get_crawling_result_cy_itunes(pointlogids: list):
     get_crawling_result_cy_itunes = get_crawling_result_cy_itunes_valid.union(
         get_crawling_result_cy_itunes_invalid
     )
-    # print(get_crawling_result_cy_itunes)
     return get_crawling_result_cy_itunes
 
 
