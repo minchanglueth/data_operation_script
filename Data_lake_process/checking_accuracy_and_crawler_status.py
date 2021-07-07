@@ -448,6 +448,8 @@ def result_d9(df: object, pre_valid: str):
                     (checking_result_d9["d9_status"] == "complete")
                     | (checking_result_d9["d9_status"] == "incomplete")
                     | (checking_result_d9["d9_status"] == "None")
+                    | (checking_result_d9["d9_status"] == "local_pending")
+                    | (checking_result_d9["d9_status"] == "ERROR")
                 )
             ]
 

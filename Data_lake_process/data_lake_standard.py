@@ -830,7 +830,7 @@ if __name__ == "__main__":
     ]
     sheet_name_ = SheetNames.C_11
     page_type_ = PageType.Contribution
-    pre_valid = "2021-07-02"
+    pre_valid = "2021-07-07"
 
     # control_flow = ControlFlow(
     #     sheet_name=sheet_name_, urls=urls, page_type=page_type_)
