@@ -327,6 +327,83 @@ def get_youtube_crawlingtask_info(track_id: str, PIC: str, format_id: str):
 
 
 def get_crawling_result_cy_itunes(pointlogids: list):
+    get_crawling_result_cy_itunes_nouserid_error_id = (
+        db_session.query(PointLog.id.label("pointlogsid"))
+        .select_from(PointLog)
+        .filter(
+            (PointLog.valid == 1),
+            (
+                PointLog.crawler_status
+                == "error"
+            ),
+            (PointLog.user_id == None),
+            PointLog.id.in_(pointlogids),
+        )
+        .order_by(PointLog.created_at.asc())
+        .subquery()
+    )
+    get_crawling_result_cy_itunes_nouserid_error = (
+        db_session.query(
+            PointLog.id.label("pointlogsid"),
+            literal("NoUserId").label("d9_id"),
+            literal("ERROR").label("d9_status"),
+        )
+        .select_from(PointLog)
+        .filter(
+            (PointLog.valid == 1),
+            (
+                PointLog.crawler_status
+                == "error"
+            ),
+            (PointLog.user_id == None),
+            PointLog.id.in_(pointlogids),
+        )
+        .order_by(PointLog.created_at.asc())
+    )
+    get_crawling_result_cy_itunes_local_pending_id = (
+        db_session.query(PointLog.id.label("pointlogsid"))
+        .select_from(PointLog)
+        .join(
+            Crawlingtask,
+            and_(
+                Crawlingtask.id
+                == func.json_unquote(func.json_extract(PointLog.ext, "$.crawler_id")),
+                Crawlingtask.actionid == crawlingtaskactionid.CONTRIBUTION_TRACK_VIDEO,
+                Crawlingtask.priority == 10000,
+                Crawlingtask.status == None,
+            ),
+        )
+        .filter(
+            (PointLog.valid == 1),
+            PointLog.id.in_(pointlogids),
+        )
+        .order_by(PointLog.created_at.asc())
+        .subquery()
+    )
+    get_crawling_result_cy_itunes_local_pending = (
+        db_session.query(
+            PointLog.id.label("pointlogsid"),
+            Crawlingtask.id.label("d9_id"),
+            literal("local_pending").label("d9_status"),
+        )
+        .select_from(PointLog)
+        .join(
+            Crawlingtask,
+            and_(
+                Crawlingtask.id
+                == func.json_unquote(func.json_extract(PointLog.ext, "$.crawler_id")),
+                Crawlingtask.actionid == crawlingtaskactionid.CONTRIBUTION_TRACK_VIDEO,
+                Crawlingtask.priority == 10000,
+                Crawlingtask.status == None,
+            ),
+        )
+        .filter(
+            (PointLog.valid == 1),
+            # PointLog.user_id != None,
+            PointLog.id.in_(pointlogids),
+        )
+        .order_by(PointLog.created_at.asc())
+    )
     get_crawling_result_cy_itunes_valid = (
         db_session.query(
             PointLog.id.label("pointlogsid"),
@@ -342,8 +419,12 @@ def get_crawling_result_cy_itunes(pointlogids: list):
                 Crawlingtask.actionid == crawlingtaskactionid.CONTRIBUTION_TRACK_VIDEO,
             ),
         )
-        .filter((PointLog.valid == 1), PointLog.id.in_(pointlogids))
-        # .filter((PointLog.valid == 1), PointLog.id == pointlogids)
+        .filter(
+            (PointLog.valid == 1),
+            PointLog.id.not_in(get_crawling_result_cy_itunes_nouserid_error_id),
+            PointLog.id.not_in(get_crawling_result_cy_itunes_local_pending_id),
+            PointLog.id.in_(pointlogids),
+        )
         .order_by(PointLog.created_at.asc())
     )
     get_crawling_result_cy_itunes_invalid = (
@@ -354,12 +435,14 @@ def get_crawling_result_cy_itunes(pointlogids: list):
         )
         .select_from(PointLog)
         .filter((PointLog.valid == -2), PointLog.id.in_(pointlogids))
-        # .filter((PointLog.valid == 1), PointLog.id == pointlogids)
         .order_by(PointLog.created_at.asc())
     )
-    get_crawling_result_cy_itunes = get_crawling_result_cy_itunes_valid.union(
-        get_crawling_result_cy_itunes_invalid
+    get_crawling_result_cy_itunes = (
+        get_crawling_result_cy_itunes_valid.union(get_crawling_result_cy_itunes_invalid)
+        .union(get_crawling_result_cy_itunes_nouserid_error)
+        .union(get_crawling_result_cy_itunes_local_pending)
     )
+    print(get_crawling_result_cy_itunes)
     return get_crawling_result_cy_itunes
 
 
