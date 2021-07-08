@@ -60,7 +60,10 @@ from Data_lake_process.class_definition import get_gsheet_id_from_url
 from datetime import date
 from Data_lake_process.youtube_similarity import similarity
 from google_spreadsheet_api.gspread_utility import get_df_from_gsheet, get_worksheet
-from support_function.slack_function.slack_message import send_message_slack, cy_Itunes_plupdate
+from support_function.slack_function.slack_message import (
+    send_message_slack,
+    cy_Itunes_plupdate,
+)
 
 # gc = gspread.oauth()
 
@@ -473,11 +476,9 @@ class C11Working:
                 pass
 
             data_merge["pre_valid"] = data_merge["valid"].apply(replace_prevalid)
-            range = f"A2:A{data_merge.tail(1).index.item() + 2}"
+            range = f"A{data_merge.tail(1).index.item() + 2}"
             values = np.array(data_merge["pre_valid"]).T
-            sheet.update_cells(
-                "A2", f"A{data_merge.tail(1).index.item() + 2}", vals=values
-            )
+            sheet.update_cells("A2", range, vals=values)
 
     def check_box(self):
         df = self.original_file
@@ -534,7 +535,12 @@ class C11Working:
     def result_d9(self):
         result_d9(df=self.original_file, pre_valid=self.pre_valid)
         # send_message_slack("missing songs found from itunes",len(self.original_file[self.original_file['d9_status'] == 'complete']),cy_Itunes_plupdate,self.pre_valid).msg_slack()
-        send_message_slack("missing songs found from itunes",len(self.original_file[self.original_file['d9_status'] == 'complete']),cy_Itunes_plupdate,self.pre_valid).send_to_slack()
+        send_message_slack(
+            "missing songs found from itunes",
+            len(self.original_file[self.original_file["d9_status"] == "complete"]),
+            cy_Itunes_plupdate,
+            self.pre_valid,
+        ).send_to_slack()
 
     def update_d9(self):
         filter_df = self.original_file
@@ -630,19 +636,40 @@ class C11Working:
                     # print(line)
                     f.write(f"{line}\n")
             f.close()
-            print(Fore.LIGHTGREEN_EX + "Queries are printed out, please check" + Style.RESET_ALL)
+            print(
+                Fore.LIGHTGREEN_EX
+                + "Queries are printed out, please check"
+                + Style.RESET_ALL
+            )
         else:
+
             def missing_similarity():
-                print(Fore.LIGHTRED_EX +
-                        "\nmissing similarity recheck as below\n" +
-                        Style.RESET_ALL,
-                        df_similarity_recheck[["pointlogsid", "hyperlink", "similarity", "recheck"]])
+                print(
+                    Fore.LIGHTRED_EX
+                    + "\nmissing similarity recheck as below\n"
+                    + Style.RESET_ALL,
+                    df_similarity_recheck[
+                        ["pointlogsid", "hyperlink", "similarity", "recheck"]
+                    ],
+                )
+
             def missing_content_info():
-                print(Fore.LIGHTRED_EX +
-                    "\nmissing info from content type/track_id as below\n" +
-                    Style.RESET_ALL,
-                    append_missing_df[["pointlogsid", "content type", "official_music_video_2", "artist_name", "year", "live_concert_name_place"]])
-            
+                print(
+                    Fore.LIGHTRED_EX
+                    + "\nmissing info from content type/track_id as below\n"
+                    + Style.RESET_ALL,
+                    append_missing_df[
+                        [
+                            "pointlogsid",
+                            "content type",
+                            "official_music_video_2",
+                            "artist_name",
+                            "year",
+                            "live_concert_name_place",
+                        ]
+                    ],
+                )
+
             if append_missing_df.empty:
                 missing_similarity()
             elif df_similarity_recheck.empty:
@@ -650,6 +677,7 @@ class C11Working:
             else:
                 missing_similarity()
                 missing_content_info()
+
 
 class ControlFlow:
     def __init__(
@@ -825,12 +853,13 @@ if __name__ == "__main__":
     urls = [
         # "https://docs.google.com/spreadsheets/d/1SAgurpVss13lTtveFtWWISSVmYiMhRZsfnJvoe1VJv0/edit#gid=13902732"
         # "https://docs.google.com/spreadsheets/d/1ZUzx1smeyIKD4PtQ-hhT1kbPSTGRdu8I8NG1uvzcWr4"  # NC
-        "https://docs.google.com/spreadsheets/d/1pkS4-0i5zGp1gYpvfdTODFtAszmBr1QjXVLUbyzi58Y/edit#gid=1110031260"
+        # "https://docs.google.com/spreadsheets/d/1pkS4-0i5zGp1gYpvfdTODFtAszmBr1QjXVLUbyzi58Y/edit#gid=1110031260"
         # "https://docs.google.com/spreadsheets/d/1ZUzx1smeyIKD4PtQ-hhT1kbPSTGRdu8I8NG1uvzcWr4/edit#gid=218846379"
+        "https://docs.google.com/spreadsheets/d/1cX5azNWbmAP4Qy2uM3Ji0D5TxikwDtpsU1rmUkFmsLA/edit#gid=1110031260"
     ]
     sheet_name_ = SheetNames.C_11
     page_type_ = PageType.Contribution
-    pre_valid = "2021-07-07"
+    pre_valid = ""
 
     # control_flow = ControlFlow(
     #     sheet_name=sheet_name_, urls=urls, page_type=page_type_)
@@ -840,7 +869,7 @@ if __name__ == "__main__":
     )
 
     # Contribution: pre_valid
-    # control_flow.pre_valid_()
+    control_flow.pre_valid_()
 
     # check_box:
     # control_flow.check_box()
@@ -862,6 +891,6 @@ if __name__ == "__main__":
     # control_flow.update_d9()
 
     # check d9_result
-    control_flow.result_d9()
+    # control_flow.result_d9()
 
     print("\n --- total time to process %s seconds ---" % (time.time() - start_time))
