@@ -6,7 +6,7 @@ from slack_sdk import WebClient
 # Get application first: https://api.slack.com/apps/A02341UQV2M/oauth?success=1
 
 # client_slack = WebClient(token='xoxb-1216139827667-1906835181267-xoLprkbWxRUG3Kv3xUVJ2iGO')  # slack ở bên M<3
-client_slack = WebClient(token='xoxb-3598555470-1887074714135-AHfOwytthTO1jJ106XmwfbeF') # slack ở VIBBIDI
+# client_slack = WebClient(token='xoxb-3598555470-1887074714135-AHfOwytthTO1jJ106XmwfbeF') # slack ở VIBBIDI
 
 # # để DELETE slack post
 # from slack_sdk.errors import SlackApiError
