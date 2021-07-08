@@ -442,7 +442,7 @@ def get_crawling_result_cy_itunes(pointlogids: list):
         .union(get_crawling_result_cy_itunes_nouserid_error)
         .union(get_crawling_result_cy_itunes_local_pending)
     )
-    print(get_crawling_result_cy_itunes)
+    # print(get_crawling_result_cy_itunes)
     return get_crawling_result_cy_itunes
 
 
