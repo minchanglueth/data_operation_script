@@ -222,20 +222,19 @@ def checking_s11_crawler_status(df: object):
 
 
 def get_format_id_from_content_type(content_type: str):
-    if content_type in ("OFFICIAL_MUSIC_VIDEO", "OFFICIAL_MUSIC_VIDEO_2"):
-        return DataSourceFormatMaster.FORMAT_ID_MP4_FULL
-    elif content_type == "STATIC_IMAGE_VIDEO":
-        return DataSourceFormatMaster.FORMAT_ID_MP3_FULL
-    elif content_type == "COVER_VIDEO":
-        return DataSourceFormatMaster.FORMAT_ID_MP4_COVER
-    elif content_type == "LIVE_VIDEO":
-        return DataSourceFormatMaster.FORMAT_ID_MP4_LIVE
-    elif content_type == "REMIX_VIDEO":
-        return DataSourceFormatMaster.FORMAT_ID_MP4_REMIX
-    elif content_type == "LYRIC_VIDEO":
-        return DataSourceFormatMaster.FORMAT_ID_MP4_LYRIC
-    else:
+    format_id_map = {
+        "OFFICIAL_MUSIC_VIDEO": DataSourceFormatMaster.FORMAT_ID_MP4_FULL,
+        "OFFICIAL_MUSIC_VIDEO_2": DataSourceFormatMaster.FORMAT_ID_MP4_FULL,
+        "STATIC_IMAGE_VIDEO": DataSourceFormatMaster.FORMAT_ID_MP3_FULL,
+        "COVER_VIDEO": DataSourceFormatMaster.FORMAT_ID_MP4_COVER,
+        "LIVE_VIDEO": DataSourceFormatMaster.FORMAT_ID_MP4_LIVE,
+        "REMIX_VIDEO": DataSourceFormatMaster.FORMAT_ID_MP4_REMIX,
+        "LYRIC_VIDEO": DataSourceFormatMaster.FORMAT_ID_MP4_LYRIC,
+    }
+    if content_type not in format_id_map.keys():
         return "Unknown"
+    else:
+        return format_id_map[content_type]
 
 
 def checking_c11_crawler_status(original_df: object, pre_valid: str = None):

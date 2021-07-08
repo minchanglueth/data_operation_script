@@ -708,24 +708,6 @@ class ControlFlow:
             )
             return c11_working.update_d9()
 
-    # def check_box(self):
-    #     if self.sheet_name in (SheetNames.ARTIST_IMAGE, SheetNames.ALBUM_IMAGE):
-    #         image_working = ImageWorking(
-    #             sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type)
-    #         return image_working.check_box()
-    #     elif self.sheet_name in (SheetNames.MP3_SHEET_NAME, SheetNames.MP4_SHEET_NAME):
-    #         youtube_working = YoutubeWorking(
-    #             sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type)
-    #         return youtube_working.check_box()
-    #     elif self.sheet_name == SheetNames.S_11:
-    #         s11_working = S11Working(
-    #             sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type)
-    #         return s11_working.check_box()
-    #     elif self.sheet_name == SheetNames.C_11:
-    #         c11_working = C11Working(sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type,
-    #                                  pre_valid=self.pre_valid)
-    #         return c11_working.check_box()
-
     def check_box(self):
         switcher = {
             SheetNames.ARTIST_IMAGE: ImageWorking,
