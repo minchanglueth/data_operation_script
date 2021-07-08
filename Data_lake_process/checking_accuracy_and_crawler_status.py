@@ -21,10 +21,12 @@ from core.crud.sql.query_supporter import (
 )
 from crawl_itune.functions import get_itune_id_region_from_itune_url
 from google_spreadsheet_api.function import update_value, update_value_at_last_column
+from google_spreadsheet_api.gspread_utility import get_worksheet
 from colorama import Fore, Style
 import time
 from core.crud.get_df_from_query import get_df_from_query
 import pandas as pd
+import numpy as np
 
 
 def checking_image_youtube_accuracy(df: object, actionid: str):
@@ -247,7 +249,7 @@ def checking_c11_crawler_status(original_df: object, pre_valid: str = None):
     original_df["url"] = original_df["gsheet_info"].apply(
         lambda x: get_key_value_from_gsheet_info(gsheet_info=x, key="url")
     )
-    gsheet_infos = list(set(original_df.gsheet_info.tolist()))
+    gsheet_infos = original_df.gsheet_info.unique()
     for gsheet_info in gsheet_infos:
         gsheet_name = get_key_value_from_gsheet_info(
             gsheet_info=gsheet_info, key="gsheet_name"
@@ -387,6 +389,7 @@ def checking_c11_crawler_status(original_df: object, pre_valid: str = None):
                         "similarity",
                     ]
                     print(data_merge[updated_columns])
+                    range_update = f"Z{data_merge.tail(1).index.item() + 2}"
                 else:
                     print(
                         Fore.LIGHTYELLOW_EX
@@ -394,17 +397,13 @@ def checking_c11_crawler_status(original_df: object, pre_valid: str = None):
                         + Style.RESET_ALL
                     )
                     updated_columns = ["06_id", "06_status", "e5_id", "e5_status"]
+                    range_update = f"W{data_merge.tail(1).index.item() + 2}"
                 # update data to gsheet
-                data_updated = data_merge[updated_columns]
-                grid_range_to_update = f"{sheet_name}!T2"
-                list_result = (
-                    data_updated.values.tolist()
-                )  # transfer data_frame to 2D list
-                update_value(
-                    list_result=list_result,
-                    grid_range_to_update=grid_range_to_update,
-                    gsheet_id=get_gsheet_id_from_url(url=url),
-                )
+                data_updated = np.array(data_merge[updated_columns])
+                # flatten
+                data_up = [i for j in data_updated for i in j]
+                sh = get_worksheet(url, sheet_name)
+                sh.update_cells("T2", range_update, vals=data_up)
                 break
             else:
                 count += 1
