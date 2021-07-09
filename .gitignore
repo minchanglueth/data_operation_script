@@ -1,6 +1,7 @@
 .env
 .vscode/
 data/
+*.pyc
 support_function/slack_function/slack_connect.py
 core/mysql_database_connection/mysql_connector.py
 core/mysql_database_connection/sqlalchemy_create_engine.py
