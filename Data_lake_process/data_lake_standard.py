@@ -854,12 +854,12 @@ if __name__ == "__main__":
         # "https://docs.google.com/spreadsheets/d/1SAgurpVss13lTtveFtWWISSVmYiMhRZsfnJvoe1VJv0/edit#gid=13902732"
         # "https://docs.google.com/spreadsheets/d/1ZUzx1smeyIKD4PtQ-hhT1kbPSTGRdu8I8NG1uvzcWr4"  # NC
         # "https://docs.google.com/spreadsheets/d/1pkS4-0i5zGp1gYpvfdTODFtAszmBr1QjXVLUbyzi58Y/edit#gid=1110031260"
-        # "https://docs.google.com/spreadsheets/d/1ZUzx1smeyIKD4PtQ-hhT1kbPSTGRdu8I8NG1uvzcWr4/edit#gid=218846379"
-        "https://docs.google.com/spreadsheets/d/1cX5azNWbmAP4Qy2uM3Ji0D5TxikwDtpsU1rmUkFmsLA/edit#gid=1110031260"
+        "https://docs.google.com/spreadsheets/d/1ZUzx1smeyIKD4PtQ-hhT1kbPSTGRdu8I8NG1uvzcWr4/edit#gid=218846379"
+        # "https://docs.google.com/spreadsheets/d/1cX5azNWbmAP4Qy2uM3Ji0D5TxikwDtpsU1rmUkFmsLA/edit#gid=1110031260"
     ]
     sheet_name_ = SheetNames.C_11
     page_type_ = PageType.Contribution
-    pre_valid = ""
+    pre_valid = "2021-07-09"
 
     # control_flow = ControlFlow(
     #     sheet_name=sheet_name_, urls=urls, page_type=page_type_)
@@ -869,10 +869,10 @@ if __name__ == "__main__":
     )
 
     # Contribution: pre_valid
-    control_flow.pre_valid_()
+    # control_flow.pre_valid_()
 
     # check_box:
-    # control_flow.check_box()
+    control_flow.check_box()
 
     # observe:
     # k = control_flow.observe()
