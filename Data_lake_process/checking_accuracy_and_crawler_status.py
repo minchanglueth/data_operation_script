@@ -20,7 +20,12 @@ from core.crud.sql.query_supporter import (
     get_crawling_result_cy_itunes,
 )
 from crawl_itune.functions import get_itune_id_region_from_itune_url
-from google_spreadsheet_api.function import update_value, update_value_at_last_column
+from google_spreadsheet_api.function import (
+    update_value,
+    update_value_at_last_column,
+    is_a_in_x,
+    get_gsheet_column,
+)
 from google_spreadsheet_api.gspread_utility import get_worksheet
 from colorama import Fore, Style
 import time
@@ -388,7 +393,6 @@ def checking_c11_crawler_status(original_df: object, pre_valid: str = None):
                         "similarity",
                     ]
                     print(data_merge[updated_columns])
-                    range_update = f"Z{data_merge.tail(1).index.item() + 2}"
                 else:
                     print(
                         Fore.LIGHTYELLOW_EX
@@ -396,13 +400,25 @@ def checking_c11_crawler_status(original_df: object, pre_valid: str = None):
                         + Style.RESET_ALL
                     )
                     updated_columns = ["06_id", "06_status", "e5_id", "e5_status"]
-                    range_update = f"W{data_merge.tail(1).index.item() + 2}"
                 # update data to gsheet
                 data_updated = np.array(data_merge[updated_columns])
                 # flatten
                 data_up = [i for j in data_updated for i in j]
                 sh = get_worksheet(url, sheet_name)
-                sh.update_cells("T2", range_update, vals=data_up)
+                sh_columns = sh.sheet_to_df().columns.str.strip().str.lower().tolist()
+                # check if sheet columns contain the updated columns in the right order
+                if is_a_in_x(updated_columns, sh_columns):
+                    first_col = get_gsheet_column(updated_columns, sh_columns, "first")
+                    last_col = get_gsheet_column(updated_columns, sh_columns, "last")
+                    first_cell = f"{first_col}2"
+                    last_cell = f"{last_col}{data_merge.tail(1).index.item() + 2}"
+                    sh.update_cells(first_cell, last_cell, vals=data_up)
+                else:
+                    print(
+                        Fore.LIGHTYELLOW_EX
+                        + f"list of columns to be updated does not match sheet columns"
+                        + Style.RESET_ALL
+                    )
                 break
             else:
                 count += 1
@@ -485,16 +501,24 @@ def result_d9(df: object, pre_valid: str):
 
                 # update data to gsheet
                 updated_columns = ["d9_id", "d9_status"]
-                data_updated = data_merge[updated_columns]
-                grid_range_to_update = f"{sheet_name}!AB2"
-                list_result = (
-                    data_updated.values.tolist()
-                )  # transfer data_frame to 2D list
-                update_value(
-                    list_result=list_result,
-                    grid_range_to_update=grid_range_to_update,
-                    gsheet_id=get_gsheet_id_from_url(url=url),
-                )
+                data_updated = np.array(data_merge[updated_columns])
+                # flatten data
+                data_up = [i for j in data_updated for i in j]
+                sh = get_worksheet(url, sheet_name)
+                sh_columns = sh.sheet_to_df().columns.str.strip().str.lower().tolist()
+                # check if sheet columns contain the updated columns in the right order
+                if is_a_in_x(updated_columns, sh_columns):
+                    first_col = get_gsheet_column(updated_columns, sh_columns, "first")
+                    last_col = get_gsheet_column(updated_columns, sh_columns, "last")
+                    first_cell = f"{first_col}2"
+                    last_cell = f"{last_col}{data_merge.tail(1).index.item() + 2}"
+                    sh.update_cells(first_cell, last_cell, vals=data_up)
+                else:
+                    print(
+                        Fore.LIGHTYELLOW_EX
+                        + f"list of columns to be updated does not match sheet columns"
+                        + Style.RESET_ALL
+                    )
                 break
             else:
                 count += 1

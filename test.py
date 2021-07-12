@@ -5,6 +5,9 @@
 # def multiply(a, b):
 #     return a * b
 
+import string
+from google_spreadsheet_api.function import get_gsheet_column
+
 
 class i:
     def __init__(self, j: int, a_variable: int, b_variable: int):
@@ -88,4 +91,4 @@ if __name__ == "__main__":
         "the",
         "couch",
     ]
-    print(is_a_in_x(update_column_list, sheet_column_list))
+    print(get_gsheet_column(update_column_list, sheet_column_list, "first"))

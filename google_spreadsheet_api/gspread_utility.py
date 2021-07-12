@@ -45,10 +45,23 @@ def create_new_sheet_and_update_date(df: object, gsheet_url: str, new_sheet_name
     pass
 
 
-def check_column_name(sheet: object, column_name: list):
-    # sheet_columns =
-    pass
+def get_gsheet_column(columns_to_update, worksheet_columns, position):
+    """
+    Get the corresponding gsheet column (A, B, C) from dataframe column name
+    """
+    if position == "first":
+        column = columns_to_update[0]
+    elif position == "last":
+        column = columns_to_update[-1]
+
+    column_index = worksheet_columns.index(column)
+    if column_index <= 25:
+        return string.ascii_uppercase[(column_index + 1)]
+    elif column_index <= 51:
+        return f"A{string.ascii_uppercase[(column_index - 25)]}"
+    else:
+        return f"B{string.ascii_uppercase[(column_index - 51)]}"
 
 
 if __name__ == "__main__":
-    print(string.ascii_uppercase[5])
+    print(string.ascii_uppercase[25])

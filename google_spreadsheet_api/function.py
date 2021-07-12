@@ -1,3 +1,4 @@
+import string
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
@@ -282,6 +283,24 @@ def is_a_in_x(A, X):
         if A == X[i : i + len(A)]:
             return True
     return False
+
+
+def get_gsheet_column(columns_to_update, worksheet_columns, position):
+    """
+    Get the corresponding gsheet column (A, B, C) from dataframe column name
+    """
+    if position == "first":
+        column = columns_to_update[0]
+    elif position == "last":
+        column = columns_to_update[-1]
+
+    column_index = worksheet_columns.index(column)
+    if column_index <= 25:
+        return string.ascii_uppercase[(column_index + 1)]
+    elif column_index <= 51:
+        return f"A{string.ascii_uppercase[(column_index - 25)]}"
+    else:
+        return f"B{string.ascii_uppercase[(column_index - 51)]}"
 
 
 if __name__ == "__main__":
