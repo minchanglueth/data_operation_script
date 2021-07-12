@@ -37,6 +37,7 @@ def service():
 
     return service
 
+
 def gspread_values(gsheet_id, sheet_name):
     # Call the Sheets API
     sheet = service().spreadsheets()
@@ -135,6 +136,7 @@ def get_df_from_speadsheet(gsheet_id: str, sheet_name: str):
     )
     # df.apply(lambda x: x.str.strip()).fillna(value='').astype(str)
     return df
+
 
 def get_list_of_sheet_title(gsheet_id: str):
     sheet_metadata = service().spreadsheets().get(spreadsheetId=gsheet_id).execute()
@@ -269,6 +271,17 @@ def update_value_at_last_column(
         grid_range_to_update=grid_range_to_update,
         list_result=list_result,
     )
+
+
+def is_a_in_x(A, X):
+    """
+    A and X are lists
+    A small list and X big list
+    """
+    for i in range(len(X) - len(A) + 1):
+        if A == X[i : i + len(A)]:
+            return True
+    return False
 
 
 if __name__ == "__main__":
