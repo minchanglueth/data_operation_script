@@ -405,7 +405,9 @@ def checking_c11_crawler_status(original_df: object, pre_valid: str = None):
                 # flatten
                 data_up = [i for j in data_updated for i in j]
                 sh = get_worksheet(url, sheet_name)
-                sh_columns = sh.sheet_to_df().columns.str.strip().str.lower().tolist()
+                sh_columns = (
+                    sh.sheet_to_df(index=None).columns.str.strip().str.lower().tolist()
+                )
                 # check if sheet columns contain the updated columns in the right order
                 if is_a_in_x(updated_columns, sh_columns):
                     first_col = get_gsheet_column(updated_columns, sh_columns, "first")
@@ -505,7 +507,9 @@ def result_d9(df: object, pre_valid: str):
                 # flatten data
                 data_up = [i for j in data_updated for i in j]
                 sh = get_worksheet(url, sheet_name)
-                sh_columns = sh.sheet_to_df().columns.str.strip().str.lower().tolist()
+                sh_columns = (
+                    sh.sheet_to_df(index=None).columns.str.strip().str.lower().tolist()
+                )
                 # check if sheet columns contain the updated columns in the right order
                 if is_a_in_x(updated_columns, sh_columns):
                     first_col = get_gsheet_column(updated_columns, sh_columns, "first")

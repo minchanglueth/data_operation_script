@@ -1,5 +1,6 @@
 from sqlalchemy.sql.functions import current_date
 import gspread
+import string
 from google_spreadsheet_api.function import (
     get_df_from_speadsheet,
     creat_new_sheet_and_update_data_from_df,
@@ -205,7 +206,8 @@ class ImageWorking:
         checking_accuracy_result = checking_image_youtube_accuracy(
             df=df, actionid=V4CrawlingTaskActionMaster.ARTIST_ALBUM_IMAGE
         )
-        accuracy_checking = list(set(checking_accuracy_result["check"].tolist()))
+        # accuracy_checking = list(set(checking_accuracy_result["check"].tolist()))
+        accuracy_checking = checking_accuracy_result["check"].unique()
 
         if accuracy_checking != [True]:
             print(
@@ -451,9 +453,11 @@ class C11Working:
         for gsheet_info in gsheet_infos:
             url = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key="url")
             sheet_name = get_key_value_from_gsheet_info(gsheet_info, "sheet_name")
+            print(sheet_name)
             sheet = get_worksheet(url, sheet_name)
-            original_df_split = sheet.sheet_to_df()
+            original_df_split = sheet.sheet_to_df(index=None)
             original_df_split.columns = original_df_split.columns.str.lower()
+            print(original_df_split.columns)
             pointlogids = original_df_split[original_df_split["pointlogsid"] != ""][
                 "pointlogsid"
             ].tolist()
@@ -476,9 +480,15 @@ class C11Working:
                 pass
 
             data_merge["pre_valid"] = data_merge["valid"].apply(replace_prevalid)
-            range = f"A{data_merge.tail(1).index.item() + 2}"
-            values = np.array(data_merge["pre_valid"]).T
-            sheet.update_cells("A2", range, vals=values)
+            if "pre_valid" in original_df_split.columns:
+                col_index = original_df_split.columns.tolist().index("pre_valid")
+                col_letter = string.ascii_uppercase[col_index]
+                first_cell = f"{col_letter}2"
+                last_cell = f"{col_letter}{data_merge.tail(1).index.item() + 2}"
+                values = np.array(data_merge["pre_valid"]).T
+                sheet.update_cells(first_cell, last_cell, vals=values)
+            else:
+                print("there is no pre_valid column")
 
     def check_box(self):
         df = self.original_file
@@ -843,7 +853,7 @@ if __name__ == "__main__":
     ]
     sheet_name_ = SheetNames.C_11
     page_type_ = PageType.Contribution
-    pre_valid = "2021-07-06"
+    pre_valid = ""
 
     # control_flow = ControlFlow(
     #     sheet_name=sheet_name_, urls=urls, page_type=page_type_)
@@ -853,7 +863,7 @@ if __name__ == "__main__":
     )
 
     # Contribution: pre_valid
-    # control_flow.pre_valid_()
+    control_flow.pre_valid_()
 
     # check_box:
     # control_flow.check_box()
@@ -869,7 +879,7 @@ if __name__ == "__main__":
     # control_flow.crawl()
 
     # checking
-    control_flow.checking()
+    # control_flow.checking()
 
     # update d9
     # control_flow.update_d9()

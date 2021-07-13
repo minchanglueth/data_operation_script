@@ -23,7 +23,7 @@ def get_worksheet(url, sheet_name):
 def get_df_from_gsheet(url, sheet_name):
     gsheet_file = Spread(spread=url, sheet=sheet_name)
     df = (
-        gsheet_file.sheet_to_df()
+        gsheet_file.sheet_to_df(index=None)
         .apply(lambda x: x.str.strip())
         .fillna(value="")
         .astype(str)
@@ -45,7 +45,7 @@ def create_new_sheet_and_update_date(df: object, gsheet_url: str, new_sheet_name
     pass
 
 
-def get_gsheet_column(columns_to_update, worksheet_columns, position):
+def get_gsheet_column(columns_to_update: list, worksheet_columns: list, position: str):
     """
     Get the corresponding gsheet column (A, B, C) from dataframe column name
     """

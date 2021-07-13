@@ -296,11 +296,11 @@ def get_gsheet_column(columns_to_update, worksheet_columns, position):
 
     column_index = worksheet_columns.index(column)
     if column_index <= 25:
-        return string.ascii_uppercase[(column_index + 1)]
+        return string.ascii_uppercase[(column_index)]
     elif column_index <= 51:
-        return f"A{string.ascii_uppercase[(column_index - 25)]}"
+        return f"A{string.ascii_uppercase[(column_index - 26)]}"
     else:
-        return f"B{string.ascii_uppercase[(column_index - 51)]}"
+        return f"B{string.ascii_uppercase[(column_index - 52)]}"
 
 
 if __name__ == "__main__":
