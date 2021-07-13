@@ -547,7 +547,12 @@ class C11Working:
         # send_message_slack("missing songs found from itunes",len(self.original_file[self.original_file['d9_status'] == 'complete']),cy_Itunes_plupdate,self.pre_valid).msg_slack()
         send_message_slack(
             "missing songs found from itunes",
-            len(self.original_file[self.original_file["d9_status"] == "complete"]),
+            len(
+                self.original_file[
+                    (self.original_file["d9_status"] == "complete")
+                    & (self.original_file["pre_valid"] == self.pre_valid)
+                ]
+            ),
             cy_Itunes_plupdate,
             self.pre_valid,
         ).send_to_slack()
@@ -882,7 +887,7 @@ if __name__ == "__main__":
     # control_flow.checking()
 
     # update d9
-    # control_flow.update_d9()
+    control_flow.update_d9()
 
     # check d9_result
     # control_flow.result_d9()
