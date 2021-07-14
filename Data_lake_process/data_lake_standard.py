@@ -233,8 +233,8 @@ class ImageWorking:
             )
 
 
-crawl_image_datalake = ImageWorking.crawl_image_datalake
-checking_image_crawler_status = ImageWorking.checking_image_crawler_status
+# crawl_image_datalake = ImageWorking.crawl_image_datalake
+# checking_image_crawler_status = ImageWorking.checking_image_crawler_status
 
 
 class YoutubeWorking:

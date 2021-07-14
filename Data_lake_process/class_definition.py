@@ -154,22 +154,20 @@ class Page(object):
                 if get_df_from_speadsheet(
                     gsheet_id, f"{SheetNames.ARTIST_IMAGE} cant upload"
                 ).values.tolist() == [["Upload thành công 100% nhé các em ^ - ^"]]:
-                    print("pass upload thanh cong")
                     pass
                 else:
-                    print("no upload thanh cong")
                     self.ARTIST_IMAGE = {
                         "sheet_name": f"{SheetNames.ARTIST_IMAGE} cant upload",
                         "column_name": ["uuid", "memo", "url_to_add"],
                         "object_type": ObjectType.ARTIST,
                     }
-            if "image" in sheet_names:
+            elif "image" in sheet_names:
                 self.ARTIST_IMAGE = {
                     "sheet_name": "image",
                     "column_name": ["uuid", "memo", "url_to_add"],
                     "object_type": ObjectType.ARTIST,
                 }
-            if "Artist_image" in sheet_names:
+            elif "Artist_image" in sheet_names:
                 self.ARTIST_IMAGE = {
                     "sheet_name": "Artist_image",
                     "column_name": ["uuid", "memo", "url_to_add"],
@@ -304,8 +302,8 @@ class Page(object):
         return df
 
 
-media_file = Page.media_file
-SheetNameType = Page.SheetNameType
+# media_file = Page.media_file
+# SheetNameType = Page.SheetNameType
 
 
 def merge_file(sheet_name: str, urls: list, page_type: object = None):
