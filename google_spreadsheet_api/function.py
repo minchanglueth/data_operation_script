@@ -308,13 +308,13 @@ if __name__ == "__main__":
         "display.max_rows", None, "display.max_columns", 50, "display.width", 1000
     )
 
-    # gsheet_id = "18kMfBz4XaHG8jjJ3E8lhHi-mw501_zJl39rRz95bcqU"
-    # sheet_name = "Youtube collect_experiment"
+    gsheet_id = "1j_iM9uf_Ao4qgyXZ7-_3BcNnMiY58PrS-Qm57Mkl08g"
+    sheet_name = "Artist_image"
 
-    # service()
+    service()
 
-    # k = get_df_from_speadsheet(gsheet_id=gsheet_id, sheet_name=sheet_name)
-    # print(k.head(10))
+    k = get_df_from_speadsheet(gsheet_id=gsheet_id, sheet_name=sheet_name)
+    print(k.head(10))
 
     # d = {'col1': [1, 2, 0, 0], 'col2': [3, 4, 0, 0]}
     # df_to_update = pd.DataFrame(data=d)
