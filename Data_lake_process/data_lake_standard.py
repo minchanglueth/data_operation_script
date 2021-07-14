@@ -61,10 +61,10 @@ from Data_lake_process.class_definition import get_gsheet_id_from_url
 from datetime import date
 from Data_lake_process.youtube_similarity import similarity
 from google_spreadsheet_api.gspread_utility import get_df_from_gsheet, get_worksheet
-from support_function.slack_function.slack_message import (
-    send_message_slack,
-    cy_Itunes_plupdate,
-)
+# from support_function.slack_function.slack_message import (
+#     send_message_slack,
+#     cy_Itunes_plupdate,
+# )
 
 # gc = gspread.oauth()
 
@@ -545,17 +545,12 @@ class C11Working:
     def result_d9(self):
         result_d9(df=self.original_file, pre_valid=self.pre_valid)
         # send_message_slack("missing songs found from itunes",len(self.original_file[self.original_file['d9_status'] == 'complete']),cy_Itunes_plupdate,self.pre_valid).msg_slack()
-        send_message_slack(
-            "missing songs found from itunes",
-            len(
-                self.original_file[
-                    (self.original_file["d9_status"] == "complete")
-                    & (self.original_file["pre_valid"] == self.pre_valid)
-                ]
-            ),
-            cy_Itunes_plupdate,
-            self.pre_valid,
-        ).send_to_slack()
+        # send_message_slack(
+        #     "missing songs found from itunes",
+        #     len(self.original_file[(self.original_file["d9_status"] == "complete") & (self.original_file["pre_valid"] == self.pre_valid)]),
+        #     cy_Itunes_plupdate,
+        #     self.pre_valid,
+        # ).send_to_slack()
 
     def update_d9(self):
         filter_df = self.original_file
@@ -891,6 +886,6 @@ if __name__ == "__main__":
     # control_flow.update_d9()
 
     # check d9_result
-    # control_flow.result_d9()
+    control_flow.result_d9()
 
     print("\n --- total time to process %s seconds ---" % (time.time() - start_time))
