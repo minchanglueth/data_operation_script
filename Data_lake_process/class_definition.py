@@ -101,11 +101,8 @@ class Page(object):
     class SheetNameType:
         def __init__(self, url: str):
             gsheet_id = get_gsheet_id_from_url(url=url)
-            list_of_sheet_title = get_list_of_sheet_title(gsheet_id=gsheet_id)
             sheet_names = get_list_of_sheet_title(gsheet_id=gsheet_id)
-            print(sheet_names)
             if "MP_3" in sheet_names:
-                print("pass MP3")
                 self.MP3_SHEET_NAME = {
                     "sheet_name": "MP_3",
                     "fomatid": DataSourceFormatMaster.FORMAT_ID_MP3_FULL,
@@ -122,7 +119,6 @@ class Page(object):
                     ],
                 }
             if "MP_4" in sheet_names:
-                print("pass MP4")
                 self.MP4_SHEET_NAME = {
                     "sheet_name": "MP_4",
                     "fomatid": DataSourceFormatMaster.FORMAT_ID_MP4_FULL,
@@ -139,7 +135,6 @@ class Page(object):
                     ],
                 }
             if "Version_done" in sheet_names:
-                print("pass Version done")
                 self.VERSION_SHEET_NAME = {
                     "sheet_name": "Version_done",
                     "fomatid": [
@@ -155,7 +150,7 @@ class Page(object):
                         "live_year",
                     ],
                 }
-            if f"{SheetNames.ARTIST_IMAGE} cant upload" in list_of_sheet_title:
+            if f"{SheetNames.ARTIST_IMAGE} cant upload" in sheet_names:
                 if get_df_from_speadsheet(
                     gsheet_id, f"{SheetNames.ARTIST_IMAGE} cant upload"
                 ).values.tolist() == [["Upload thành công 100% nhé các em ^ - ^"]]:
@@ -168,15 +163,13 @@ class Page(object):
                         "column_name": ["uuid", "memo", "url_to_add"],
                         "object_type": ObjectType.ARTIST,
                     }
-            if "image" in list_of_sheet_title:
-                print("pass artist_image 1")
+            if "image" in sheet_names:
                 self.ARTIST_IMAGE = {
                     "sheet_name": "image",
                     "column_name": ["uuid", "memo", "url_to_add"],
                     "object_type": ObjectType.ARTIST,
                 }
-            if "Artist_image" in list_of_sheet_title:
-                print("pass artist image 2")
+            if "Artist_image" in sheet_names:
                 self.ARTIST_IMAGE = {
                     "sheet_name": "Artist_image",
                     "column_name": ["uuid", "memo", "url_to_add"],
@@ -311,8 +304,8 @@ class Page(object):
         return df
 
 
-# media_file = Page.media_file
-# SheetNameType = Page.SheetNameType
+media_file = Page.media_file
+SheetNameType = Page.SheetNameType
 
 
 def merge_file(sheet_name: str, urls: list, page_type: object = None):
