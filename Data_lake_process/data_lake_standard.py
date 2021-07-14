@@ -1,5 +1,6 @@
 from sqlalchemy.sql.functions import current_date
 import gspread
+import string
 from google_spreadsheet_api.function import (
     get_df_from_speadsheet,
     creat_new_sheet_and_update_data_from_df,
@@ -205,7 +206,8 @@ class ImageWorking:
         checking_accuracy_result = checking_image_youtube_accuracy(
             df=df, actionid=V4CrawlingTaskActionMaster.ARTIST_ALBUM_IMAGE
         )
-        accuracy_checking = list(set(checking_accuracy_result["check"].tolist()))
+        # accuracy_checking = list(set(checking_accuracy_result["check"].tolist()))
+        accuracy_checking = checking_accuracy_result["check"].unique()
 
         if accuracy_checking != [True]:
             print(
@@ -451,9 +453,11 @@ class C11Working:
         for gsheet_info in gsheet_infos:
             url = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key="url")
             sheet_name = get_key_value_from_gsheet_info(gsheet_info, "sheet_name")
+            print(sheet_name)
             sheet = get_worksheet(url, sheet_name)
-            original_df_split = sheet.sheet_to_df()
+            original_df_split = sheet.sheet_to_df(index=None)
             original_df_split.columns = original_df_split.columns.str.lower()
+            print(original_df_split.columns)
             pointlogids = original_df_split[original_df_split["pointlogsid"] != ""][
                 "pointlogsid"
             ].tolist()
@@ -476,9 +480,15 @@ class C11Working:
                 pass
 
             data_merge["pre_valid"] = data_merge["valid"].apply(replace_prevalid)
-            range = f"A{data_merge.tail(1).index.item() + 2}"
-            values = np.array(data_merge["pre_valid"]).T
-            sheet.update_cells("A2", range, vals=values)
+            if "pre_valid" in original_df_split.columns:
+                col_index = original_df_split.columns.tolist().index("pre_valid")
+                col_letter = string.ascii_uppercase[col_index]
+                first_cell = f"{col_letter}2"
+                last_cell = f"{col_letter}{data_merge.tail(1).index.item() + 2}"
+                values = np.array(data_merge["pre_valid"]).T
+                sheet.update_cells(first_cell, last_cell, vals=values)
+            else:
+                print("there is no pre_valid column")
 
     def check_box(self):
         df = self.original_file
@@ -537,7 +547,12 @@ class C11Working:
         # send_message_slack("missing songs found from itunes",len(self.original_file[self.original_file['d9_status'] == 'complete']),cy_Itunes_plupdate,self.pre_valid).msg_slack()
         send_message_slack(
             "missing songs found from itunes",
-            len(self.original_file[(self.original_file["d9_status"] == "complete") & (self.original_file["pre_valid"] == self.pre_valid)]),
+            len(
+                self.original_file[
+                    (self.original_file["d9_status"] == "complete")
+                    & (self.original_file["pre_valid"] == self.pre_valid)
+                ]
+            ),
             cy_Itunes_plupdate,
             self.pre_valid,
         ).send_to_slack()
@@ -708,24 +723,6 @@ class ControlFlow:
             )
             return c11_working.update_d9()
 
-    # def check_box(self):
-    #     if self.sheet_name in (SheetNames.ARTIST_IMAGE, SheetNames.ALBUM_IMAGE):
-    #         image_working = ImageWorking(
-    #             sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type)
-    #         return image_working.check_box()
-    #     elif self.sheet_name in (SheetNames.MP3_SHEET_NAME, SheetNames.MP4_SHEET_NAME):
-    #         youtube_working = YoutubeWorking(
-    #             sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type)
-    #         return youtube_working.check_box()
-    #     elif self.sheet_name == SheetNames.S_11:
-    #         s11_working = S11Working(
-    #             sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type)
-    #         return s11_working.check_box()
-    #     elif self.sheet_name == SheetNames.C_11:
-    #         c11_working = C11Working(sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type,
-    #                                  pre_valid=self.pre_valid)
-    #         return c11_working.check_box()
-
     def check_box(self):
         switcher = {
             SheetNames.ARTIST_IMAGE: ImageWorking,
@@ -853,13 +850,15 @@ if __name__ == "__main__":
     urls = [
         # "https://docs.google.com/spreadsheets/d/1SAgurpVss13lTtveFtWWISSVmYiMhRZsfnJvoe1VJv0/edit#gid=13902732"
         # "https://docs.google.com/spreadsheets/d/1ZUzx1smeyIKD4PtQ-hhT1kbPSTGRdu8I8NG1uvzcWr4"  # NC
-        "https://docs.google.com/spreadsheets/d/1pkS4-0i5zGp1gYpvfdTODFtAszmBr1QjXVLUbyzi58Y/edit#gid=1110031260"
+        # "https://docs.google.com/spreadsheets/d/1pkS4-0i5zGp1gYpvfdTODFtAszmBr1QjXVLUbyzi58Y/edit#gid=1110031260"
         # "https://docs.google.com/spreadsheets/d/1ZUzx1smeyIKD4PtQ-hhT1kbPSTGRdu8I8NG1uvzcWr4/edit#gid=218846379"
-        # "https://docs.google.com/spreadsheets/d/1cX5azNWbmAP4Qy2uM3Ji0D5TxikwDtpsU1rmUkFmsLA/edit#gid=1110031260"
+        # "https://docs.google.com/spreadsheets/d/1cX5azNWbmAP4Qy2uM3Ji0D5TxikwDtpsU1rmUkFmsLA/edit#gid=1110031260",
+        # "https://docs.google.com/spreadsheets/d/1beE8dvMIl7xeuvmwWiV0Il7o8vU1aIjreQq7D67W7kk/edit#gid=1082486607",
+        "https://docs.google.com/spreadsheets/d/1ExsBZA3043PKySiG1T4U9domUeUyn3j9bLi29XjgThY/edit#gid=218846379"
     ]
     sheet_name_ = SheetNames.C_11
     page_type_ = PageType.Contribution
-    pre_valid = "2021-07-07"
+    pre_valid = ""
 
     # control_flow = ControlFlow(
     #     sheet_name=sheet_name_, urls=urls, page_type=page_type_)
@@ -869,7 +868,7 @@ if __name__ == "__main__":
     )
 
     # Contribution: pre_valid
-    # control_flow.pre_valid_()
+    control_flow.pre_valid_()
 
     # check_box:
     # control_flow.check_box()

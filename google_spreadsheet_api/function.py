@@ -1,3 +1,4 @@
+import string
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
@@ -36,6 +37,7 @@ def service():
     service = build("sheets", "v4", credentials=creds)
 
     return service
+
 
 def gspread_values(gsheet_id, sheet_name):
     # Call the Sheets API
@@ -135,6 +137,7 @@ def get_df_from_speadsheet(gsheet_id: str, sheet_name: str):
     )
     # df.apply(lambda x: x.str.strip()).fillna(value='').astype(str)
     return df
+
 
 def get_list_of_sheet_title(gsheet_id: str):
     sheet_metadata = service().spreadsheets().get(spreadsheetId=gsheet_id).execute()
@@ -269,6 +272,35 @@ def update_value_at_last_column(
         grid_range_to_update=grid_range_to_update,
         list_result=list_result,
     )
+
+
+def is_a_in_x(A, X):
+    """
+    A and X are lists
+    A small list and X big list
+    """
+    for i in range(len(X) - len(A) + 1):
+        if A == X[i : i + len(A)]:
+            return True
+    return False
+
+
+def get_gsheet_column(columns_to_update, worksheet_columns, position):
+    """
+    Get the corresponding gsheet column (A, B, C) from dataframe column name
+    """
+    if position == "first":
+        column = columns_to_update[0]
+    elif position == "last":
+        column = columns_to_update[-1]
+
+    column_index = worksheet_columns.index(column)
+    if column_index <= 25:
+        return string.ascii_uppercase[(column_index)]
+    elif column_index <= 51:
+        return f"A{string.ascii_uppercase[(column_index - 26)]}"
+    else:
+        return f"B{string.ascii_uppercase[(column_index - 52)]}"
 
 
 if __name__ == "__main__":

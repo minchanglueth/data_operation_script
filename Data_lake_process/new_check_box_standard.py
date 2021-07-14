@@ -1,5 +1,5 @@
 from colorama import Fore, Style
-
+import numpy as np
 from Data_lake_process.class_definition import (
     WhenExist,
     PageType,
@@ -17,7 +17,13 @@ from crawl_itune.functions import (
     check_validate_itune,
     get_itune_id_region_from_itune_url,
 )
-from google_spreadsheet_api.function import update_value, update_value_at_last_column
+from google_spreadsheet_api.function import (
+    update_value,
+    update_value_at_last_column,
+    is_a_in_x,
+    get_gsheet_column,
+)
+from google_spreadsheet_api.gspread_utility import get_worksheet
 
 
 def youtube_check_box(page_name: str, df: object, sheet_name: str):
@@ -351,17 +357,25 @@ def update_c11_check_box(original_df: object, pre_valid: str):
         axis=1,
     )
 
-    gsheet_infos = list(set(original_df.gsheet_info.tolist()))
+    gsheet_infos = original_df.gsheet_info.unique()
     sheet_name = get_key_value_from_gsheet_info(
         gsheet_info=gsheet_infos[0], key="sheet_name"
     )
     url = get_key_value_from_gsheet_info(gsheet_info=gsheet_infos[0], key="url")
-    grid_range_to_update = f"{sheet_name}!Q2"
-    list_result = original_df[
-        ["itune_id", "region", "checking_validate_itune"]
-    ].values.tolist()  # transfer data_frame to 2D list
-    update_value(
-        list_result=list_result,
-        grid_range_to_update=grid_range_to_update,
-        gsheet_id=get_gsheet_id_from_url(url=url),
-    )
+    updated_columns = ["itune_id", "region", "checking_validate_itune"]
+    data_updated = np.array(original_df[updated_columns])
+    data_up = [i for j in data_updated for i in j]
+    sh = get_worksheet(url, sheet_name)
+    sh_columns = sh.sheet_to_df(index=None).columns.str.strip().str.lower().tolist()
+    if is_a_in_x(updated_columns, sh_columns):
+        first_col = get_gsheet_column(updated_columns, sh_columns, "first")
+        last_col = get_gsheet_column(updated_columns, sh_columns, "last")
+        first_cell = f"{first_col}2"
+        last_cell = f"{last_col}{original_df.tail(1).index.item() + 2}"
+        sh.update_cells(first_cell, last_cell, vals=data_up)
+    else:
+        print(
+            Fore.LIGHTYELLOW_EX
+            + f"list of columns to be updated does not match sheet columns"
+            + Style.RESET_ALL
+        )

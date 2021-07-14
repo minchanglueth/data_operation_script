@@ -3,6 +3,7 @@
 data/
 *.pyc
 support_function/slack_function/slack_connect.py
+support_function/slack_function/slack_message.py
 core/mysql_database_connection/mysql_connector.py
 core/mysql_database_connection/sqlalchemy_create_engine.py
 sources/token.pickle
