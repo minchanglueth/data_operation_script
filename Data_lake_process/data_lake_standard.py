@@ -854,10 +854,11 @@ if __name__ == "__main__":
         # "https://docs.google.com/spreadsheets/d/1ZUzx1smeyIKD4PtQ-hhT1kbPSTGRdu8I8NG1uvzcWr4/edit#gid=218846379"
         # "https://docs.google.com/spreadsheets/d/1cX5azNWbmAP4Qy2uM3Ji0D5TxikwDtpsU1rmUkFmsLA/edit#gid=1110031260",
         # "https://docs.google.com/spreadsheets/d/1beE8dvMIl7xeuvmwWiV0Il7o8vU1aIjreQq7D67W7kk/edit#gid=1082486607",
-        "https://docs.google.com/spreadsheets/d/1ExsBZA3043PKySiG1T4U9domUeUyn3j9bLi29XjgThY/edit#gid=218846379"
+        # "https://docs.google.com/spreadsheets/d/1ExsBZA3043PKySiG1T4U9domUeUyn3j9bLi29XjgThY/edit#gid=218846379",
+        "https://docs.google.com/spreadsheets/d/1zAgHdr0DaHjfNdf8_IkmogQF69vKKBQv51Ay2hPy-D4/edit#gid=472445320"
     ]
-    sheet_name_ = SheetNames.C_11
-    page_type_ = PageType.Contribution
+    sheet_name_ = SheetNames.ARTIST_IMAGE
+    page_type_ = PageType.ArtistPage
     pre_valid = ""
 
     # control_flow = ControlFlow(
@@ -868,14 +869,14 @@ if __name__ == "__main__":
     )
 
     # Contribution: pre_valid
-    control_flow.pre_valid_()
+    # control_flow.pre_valid_()
 
     # check_box:
     # control_flow.check_box()
 
     # observe:
-    # k = control_flow.observe()
-    # print(k)
+    k = control_flow.observe()
+    print(k)
 
     # similarity:
     # control_flow.similarity()
@@ -887,7 +888,7 @@ if __name__ == "__main__":
     # control_flow.checking()
 
     # update d9
-    control_flow.update_d9()
+    # control_flow.update_d9()
 
     # check d9_result
     # control_flow.result_d9()

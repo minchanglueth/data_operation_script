@@ -103,7 +103,9 @@ class Page(object):
             gsheet_id = get_gsheet_id_from_url(url=url)
             list_of_sheet_title = get_list_of_sheet_title(gsheet_id=gsheet_id)
             sheet_names = get_list_of_sheet_title(gsheet_id=gsheet_id)
+            print(sheet_names)
             if "MP_3" in sheet_names:
+                print("pass MP3")
                 self.MP3_SHEET_NAME = {
                     "sheet_name": "MP_3",
                     "fomatid": DataSourceFormatMaster.FORMAT_ID_MP3_FULL,
@@ -120,6 +122,7 @@ class Page(object):
                     ],
                 }
             if "MP_4" in sheet_names:
+                print("pass MP4")
                 self.MP4_SHEET_NAME = {
                     "sheet_name": "MP_4",
                     "fomatid": DataSourceFormatMaster.FORMAT_ID_MP4_FULL,
@@ -136,6 +139,7 @@ class Page(object):
                     ],
                 }
             if "Version_done" in sheet_names:
+                print("pass Version done")
                 self.VERSION_SHEET_NAME = {
                     "sheet_name": "Version_done",
                     "fomatid": [
@@ -155,25 +159,26 @@ class Page(object):
                 if get_df_from_speadsheet(
                     gsheet_id, f"{SheetNames.ARTIST_IMAGE} cant upload"
                 ).values.tolist() == [["Upload thành công 100% nhé các em ^ - ^"]]:
+                    print("pass upload thanh cong")
                     pass
                 else:
-                    sheet_name = f"{SheetNames.ARTIST_IMAGE} cant upload"
+                    print("no upload thanh cong")
                     self.ARTIST_IMAGE = {
-                        "sheet_name": f"{sheet_name}",
+                        "sheet_name": f"{SheetNames.ARTIST_IMAGE} cant upload",
                         "column_name": ["uuid", "memo", "url_to_add"],
                         "object_type": ObjectType.ARTIST,
                     }
-            elif "image" in list_of_sheet_title:
-                sheet_name = "image"
+            if "image" in list_of_sheet_title:
+                print("pass artist_image 1")
                 self.ARTIST_IMAGE = {
-                    "sheet_name": f"{sheet_name}",
+                    "sheet_name": "image",
                     "column_name": ["uuid", "memo", "url_to_add"],
                     "object_type": ObjectType.ARTIST,
                 }
-            elif "Artist_image" in list_of_sheet_title:
-                sheet_name = "Artist_image"
+            if "Artist_image" in list_of_sheet_title:
+                print("pass artist image 2")
                 self.ARTIST_IMAGE = {
-                    "sheet_name": f"{sheet_name}",
+                    "sheet_name": "Artist_image",
                     "column_name": ["uuid", "memo", "url_to_add"],
                     "object_type": ObjectType.ARTIST,
                 }
@@ -307,7 +312,7 @@ class Page(object):
 
 
 # media_file = Page.media_file
-SheetNameType = Page.SheetNameType
+# SheetNameType = Page.SheetNameType
 
 
 def merge_file(sheet_name: str, urls: list, page_type: object = None):
@@ -346,11 +351,12 @@ if __name__ == "__main__":
         "display.max_rows", None, "display.max_columns", 50, "display.width", 1000
     )
     urls = [
-        "https://docs.google.com/spreadsheets/d/1byh3LFm1NhzFPLfROyS9kwgqKKG2P8k7aTnGQXAXr-o/edit#gid=1962142102"
+        # "https://docs.google.com/spreadsheets/d/1byh3LFm1NhzFPLfROyS9kwgqKKG2P8k7aTnGQXAXr-o/edit#gid=1962142102",
+        "https://docs.google.com/spreadsheets/d/1zAgHdr0DaHjfNdf8_IkmogQF69vKKBQv51Ay2hPy-D4/edit#gid=472445320",
     ]
 
-    sheet_name = SheetNames.C_11
-    page_type = PageType.Contribution
+    sheet_name = SheetNames.ARTIST_IMAGE
+    page_type = PageType.ArtistPage
     k = merge_file(sheet_name=sheet_name, urls=urls, page_type=page_type)
     print(k.head(10))
 
