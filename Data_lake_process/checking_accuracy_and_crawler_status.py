@@ -19,6 +19,10 @@ from core.crud.sql.query_supporter import (
     get_youtube_crawlingtask_info,
     get_crawling_result_cy_itunes,
 )
+from support_function.slack_function.slack_message import (
+    send_message_slack,
+    cy_Itunes_plupdate,
+)
 from crawl_itune.functions import get_itune_id_region_from_itune_url
 from google_spreadsheet_api.function import (
     update_value,
@@ -517,6 +521,12 @@ def result_d9(df: object, pre_valid: str):
                     first_cell = f"{first_col}2"
                     last_cell = f"{last_col}{data_merge.tail(1).index.item() + 2}"
                     sh.update_cells(first_cell, last_cell, vals=data_up)
+                    send_message_slack(
+                        "missing songs found from itunes",
+                        len(data_merge[(data_merge["d9_status"] == "complete") & (data_merge["pre_valid"] == pre_valid)]),
+                        cy_Itunes_plupdate,
+                        pre_valid,
+                    ).send_to_slack()
                 else:
                     print(
                         Fore.LIGHTYELLOW_EX
