@@ -175,12 +175,25 @@ class Page(object):
                 }
             else:
                 pass
-            if "Album_image" in sheet_names:
+            if f"{SheetNames.ALBUM_IMAGE} cant upload" in sheet_names:
+                if get_df_from_speadsheet(
+                    gsheet_id, f"{SheetNames.ALBUM_IMAGE} cant upload"
+                ).values.tolist() == [["Upload thành công 100% nhé các em ^ - ^"]]:
+                    pass
+                else:
+                    self.ALBUM_IMAGE = {
+                        "sheet_name": f"{SheetNames.ALBUM_IMAGE} cant upload",
+                        "column_name": ["uuid", "memo", "url_to_add"],
+                        "object_type": ObjectType.ALBUM,
+                    }
+            elif "Album_image" in sheet_names:
                 self.ALBUM_IMAGE = {
                     "sheet_name": "Album_image",
                     "column_name": ["uuid", "memo", "url_to_add"],
                     "object_type": ObjectType.ALBUM,
                 }
+            else:
+                pass
             if "Artist_wiki" in sheet_names:
                 self.ARTIST_WIKI = {
                     "sheet_name": "Artist_wiki",
