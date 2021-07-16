@@ -523,7 +523,12 @@ def result_d9(df: object, pre_valid: str):
                     sh.update_cells(first_cell, last_cell, vals=data_up)
                     send_message_slack(
                         "missing songs found from itunes",
-                        len(data_merge[(data_merge["d9_status"] == "complete") & (data_merge["pre_valid"] == pre_valid)]),
+                        len(
+                            data_merge[
+                                (data_merge["d9_status"] == "complete")
+                                & (data_merge["pre_valid"] == pre_valid)
+                            ]
+                        ),
                         cy_Itunes_plupdate,
                         pre_valid,
                     ).send_to_slack()

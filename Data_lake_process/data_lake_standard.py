@@ -61,6 +61,7 @@ from Data_lake_process.class_definition import get_gsheet_id_from_url
 from datetime import date
 from Data_lake_process.youtube_similarity import similarity
 from google_spreadsheet_api.gspread_utility import get_df_from_gsheet, get_worksheet
+
 # from support_function.slack_function.slack_message import (
 #     send_message_slack,
 #     cy_Itunes_plupdate,
@@ -85,17 +86,32 @@ def upload_image_cant_crawl(checking_accuracy_result: object, sheet_name: str):
         df_incomplete["name"] = df_incomplete["uuid"].apply(
             lambda x: artist.get_one_by_id(artist_uuid=x).name
         )
+        df_incomplete = df_incomplete[
+            ["uuid", "name", "status", "crawlingtask_id", "url", "memo", "url_to_add"]
+        ]
     else:
         df_incomplete["title"] = df_incomplete["uuid"].apply(
-            lambda x: artist.get_one_by_id(artist_uuid=x).title
+            lambda x: album.get_one_by_id(album_uuid=x).title
         )
         df_incomplete["artist"] = df_incomplete["uuid"].apply(
             lambda x: album.get_one_by_id(album_uuid=x).artist
         )
-
-    df_incomplete = df_incomplete[
-        ["uuid", "name", "status", "crawlingtask_id", "url", "memo", "url_to_add"]
-    ]
+        df_incomplete["itunes_url"] = df_incomplete["uuid"].apply(
+            lambda x: album.get_itunes_url(album_uuid=x).itunes_url
+        )
+        df_incomplete = df_incomplete[
+            [
+                "uuid",
+                "title",
+                "artist",
+                "itunes_url",
+                "status",
+                "crawlingtask_id",
+                "url",
+                "memo",
+                "url_to_add",
+            ]
+        ]
 
     for gsheet_info in gsheet_infos:
         url = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key="url")
@@ -206,8 +222,7 @@ class ImageWorking:
         checking_accuracy_result = checking_image_youtube_accuracy(
             df=df, actionid=V4CrawlingTaskActionMaster.ARTIST_ALBUM_IMAGE
         )
-        # accuracy_checking = list(set(checking_accuracy_result["check"].tolist()))
-        accuracy_checking = checking_accuracy_result["check"].unique()
+        accuracy_checking = list(set(checking_accuracy_result["check"].tolist()))
 
         if accuracy_checking != [True]:
             print(
@@ -843,16 +858,10 @@ if __name__ == "__main__":
     with open(query_path, "w") as f:
         f.truncate()
     urls = [
-        # "https://docs.google.com/spreadsheets/d/1SAgurpVss13lTtveFtWWISSVmYiMhRZsfnJvoe1VJv0/edit#gid=13902732"
-        # "https://docs.google.com/spreadsheets/d/1ZUzx1smeyIKD4PtQ-hhT1kbPSTGRdu8I8NG1uvzcWr4"  # NC
-        # "https://docs.google.com/spreadsheets/d/1pkS4-0i5zGp1gYpvfdTODFtAszmBr1QjXVLUbyzi58Y/edit#gid=1110031260"
-        # "https://docs.google.com/spreadsheets/d/1ZUzx1smeyIKD4PtQ-hhT1kbPSTGRdu8I8NG1uvzcWr4/edit#gid=218846379"
-        # "https://docs.google.com/spreadsheets/d/1cX5azNWbmAP4Qy2uM3Ji0D5TxikwDtpsU1rmUkFmsLA/edit#gid=1110031260",
-        # "https://docs.google.com/spreadsheets/d/1beE8dvMIl7xeuvmwWiV0Il7o8vU1aIjreQq7D67W7kk/edit#gid=1082486607",
-        # "https://docs.google.com/spreadsheets/d/1ExsBZA3043PKySiG1T4U9domUeUyn3j9bLi29XjgThY/edit#gid=218846379",
-        "https://docs.google.com/spreadsheets/d/1zAgHdr0DaHjfNdf8_IkmogQF69vKKBQv51Ay2hPy-D4/edit#gid=472445320"
+        # "https://docs.google.com/spreadsheets/d/1XCtbHzP15FRduJzf_ena4tdye6oHwzpD-IRNdPV9jpM/edit#gid=328295841",
+        "https://docs.google.com/spreadsheets/d/1pEZBzBwmduhZYN9k5doNbuYW75NSSx-dEb_EHqu8Ysw/edit#gid=574925011"
     ]
-    sheet_name_ = SheetNames.ARTIST_IMAGE
+    sheet_name_ = SheetNames.ALBUM_IMAGE
     page_type_ = PageType.ArtistPage
     pre_valid = ""
 
@@ -886,6 +895,6 @@ if __name__ == "__main__":
     # control_flow.update_d9()
 
     # check d9_result
-    control_flow.result_d9()
+    # control_flow.result_d9()
 
     print("\n --- total time to process %s seconds ---" % (time.time() - start_time))
