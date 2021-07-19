@@ -1,8 +1,9 @@
 from gspread_dataframe import get_as_dataframe, set_with_dataframe
 from gspread_formatting.dataframe import format_with_dataframe
-from support_function.slack_function.slack_message import (
+from support_function.slack_function.slack_message_trackcountlog import (
     trackcountlog_error_message,
-    trackcountlog_error,
+    trackcountlog_error_datasource,
+    trackcountlog_error_crawlingtask,
 )
 from core.models.crawlingtask import Crawlingtask
 from core.models.datasource import DataSource
@@ -47,9 +48,8 @@ def query_datasource():
         .order_by(DataSource.updated_at.desc())
     )
     # date = datetime.now().date()
-    sh = gc.open_by_url(
-        "https://docs.google.com/spreadsheets/d/1yJS1JjkaoNy2akdEbpTeQnKJgjji-1h9BHnFbyQ6XQc/edit#gid=0"
-    )
+    gsheet_url = "https://docs.google.com/spreadsheets/d/1yJS1JjkaoNy2akdEbpTeQnKJgjji-1h9BHnFbyQ6XQc/edit#gid=0"
+    sh = gc.open_by_url(gsheet_url)
     df_ = get_df_from_query(query)
     df_["script_date"] = datetime.now().date()
     worksheet = sh.get_worksheet(0)
@@ -57,7 +57,12 @@ def query_datasource():
     df = pd.concat([df_, dff])
     set_with_dataframe(worksheet, df)
     format_with_dataframe(worksheet, df, include_column_header=True)
-    return df
+    slack = trackcountlog_error_message(
+        trackcountlog_error_datasource, datetime.now().date(), gsheet_url, len(df_)
+    )
+    slack.send_slack_report()
+    if len(df_) > 0:
+        slack.send_slack_error()
 
 
 def query_crawlingtask():
@@ -79,9 +84,8 @@ def query_crawlingtask():
         .order_by(Crawlingtask.updated_at.desc())
     )
     date = datetime.now().date()
-    sh = gc.open_by_url(
-        "https://docs.google.com/spreadsheets/d/1yJS1JjkaoNy2akdEbpTeQnKJgjji-1h9BHnFbyQ6XQc/edit#gid=0"
-    )
+    gsheet_url = "https://docs.google.com/spreadsheets/d/1yJS1JjkaoNy2akdEbpTeQnKJgjji-1h9BHnFbyQ6XQc/edit#gid=0"
+    sh = gc.open_by_url(gsheet_url)
     df_ = get_df_from_query(query)
     df_["script_date"] = datetime.now().date()
     worksheet = sh.get_worksheet(1)
@@ -89,10 +93,15 @@ def query_crawlingtask():
     df = pd.concat([df_, dff])
     set_with_dataframe(worksheet, df)
     format_with_dataframe(worksheet, df, include_column_header=True)
-    return df
+    slack = trackcountlog_error_message(
+        trackcountlog_error_crawlingtask, datetime.now().date(), gsheet_url, len(df_)
+    )
+    slack.send_slack_report()
+    if len(df_) > 0:
+        slack.send_slack_error()
 
 
 if __name__ == "__main__":
-    df = query_datasource()
-    dff = query_crawlingtask()
-    print(df.head())
+    query_datasource()
+    # dff = query_crawlingtask()
+    # print(df.head())
