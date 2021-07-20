@@ -2,8 +2,7 @@ from gspread_dataframe import get_as_dataframe, set_with_dataframe
 from gspread_formatting.dataframe import format_with_dataframe
 from support_function.slack_function.slack_message_trackcountlog import (
     trackcountlog_error_message,
-    trackcountlog_error_datasource,
-    trackcountlog_error_crawlingtask,
+    trackcountlog_error,
 )
 from core.models.crawlingtask import Crawlingtask
 from core.models.datasource import DataSource
@@ -12,7 +11,6 @@ from core.models.track import Track
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker, aliased
 from sqlalchemy import func, union, distinct, desc, and_, or_, tuple_, extract
-from sqlalchemy import text, literal
 from core.mysql_database_connection.sqlalchemy_create_engine import (
     SQLALCHEMY_DATABASE_URI,
 )
@@ -48,7 +46,7 @@ def query_datasource():
         .order_by(DataSource.updated_at.desc())
     )
     # date = datetime.now().date()
-    gsheet_url = "https://docs.google.com/spreadsheets/d/1yJS1JjkaoNy2akdEbpTeQnKJgjji-1h9BHnFbyQ6XQc/edit#gid=0"
+    gsheet_url = "https://docs.google.com/spreadsheets/d/1yJS1JjkaoNy2akdEbpTeQnKJgjji-1h9BHnFbyQ6XQc/edit#gid=133198295"
     sh = gc.open_by_url(gsheet_url)
     df_ = get_df_from_query(query)
     df_["script_date"] = datetime.now().date()
@@ -57,12 +55,7 @@ def query_datasource():
     df = pd.concat([df_, dff])
     set_with_dataframe(worksheet, df)
     format_with_dataframe(worksheet, df, include_column_header=True)
-    slack = trackcountlog_error_message(
-        trackcountlog_error_datasource, datetime.now().date(), gsheet_url, len(df_)
-    )
-    slack.send_slack_report()
-    if len(df_) > 0:
-        slack.send_slack_error()
+    return len(df_)
 
 
 def query_crawlingtask():
@@ -80,11 +73,17 @@ def query_crawlingtask():
         .filter(
             TrackCountLog.updated_at < Crawlingtask.updated_at,
             Crawlingtask.updated_at > (datetime.now() - timedelta(hours=24)),
+            Crawlingtask.actionid.in_(
+                [
+                    "1BB6B994C60F4216998282F92D27EDD9",
+                    "A3AWQBJ8S5KAUSFX527JWMAHGKWZX2P0",
+                    "F91244676ACD47BD9A9048CF2BA3FFC1",
+                ]
+            ),
         )
         .order_by(Crawlingtask.updated_at.desc())
     )
-    date = datetime.now().date()
-    gsheet_url = "https://docs.google.com/spreadsheets/d/1yJS1JjkaoNy2akdEbpTeQnKJgjji-1h9BHnFbyQ6XQc/edit#gid=0"
+    gsheet_url = "https://docs.google.com/spreadsheets/d/1yJS1JjkaoNy2akdEbpTeQnKJgjji-1h9BHnFbyQ6XQc/edit#gid=1297210613"
     sh = gc.open_by_url(gsheet_url)
     df_ = get_df_from_query(query)
     df_["script_date"] = datetime.now().date()
@@ -93,15 +92,28 @@ def query_crawlingtask():
     df = pd.concat([df_, dff])
     set_with_dataframe(worksheet, df)
     format_with_dataframe(worksheet, df, include_column_header=True)
+    return len(df_)
+
+
+def send_slack_report():
+    track_error_datasource = query_datasource()
+    track_error_crawler = query_crawlingtask()
+    track_error_count = track_error_datasource + track_error_crawler
+    gsheet_url = "https://docs.google.com/spreadsheets/d/1yJS1JjkaoNy2akdEbpTeQnKJgjji-1h9BHnFbyQ6XQc/edit#gid=133198295"
     slack = trackcountlog_error_message(
-        trackcountlog_error_crawlingtask, datetime.now().date(), gsheet_url, len(df_)
+        trackcountlog_error,
+        datetime.now().date(),
+        gsheet_url,
+        track_error_datasource,
+        track_error_crawler,
     )
-    slack.send_slack_report()
-    if len(df_) > 0:
+    if track_error_count > 0:
         slack.send_slack_error()
+    else:
+        slack.send_slack_report()
 
 
 if __name__ == "__main__":
     query_datasource()
-    # dff = query_crawlingtask()
-    # print(df.head())
+    # query_crawlingtask()
+    # send_slack_report()

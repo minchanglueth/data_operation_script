@@ -1,26 +1,25 @@
 from slack_sdk.errors import SlackApiError
 from support_function.slack_function.slack_connect import client_slack
 
-trackcountlog_error_datasource = """Hi <@U01E6SP58HK|cal> !
+trackcountlog_error = """Hi <@U024GLE8SJ0cal> !
 CC: <@UDW03RVGR|cal>
-The datasource trackcountlog error report for {} is ready here {}.
-{} songs were not updated successfully into trackcountlog."""
-
-trackcountlog_error_crawlingtask = """Hi <@U01E6SP58HK|cal> !
-CC: <@UDW03RVGR|cal>
-The crawlingtask trackcountlog error report for {} is ready here {}.
-{} songs were not updated successfully into trackcountlog."""
+The trackcountlog error report for {} is ready here {}.
+{} songs were not updated successfully into trackcountlog from datasource.
+{} songs were not updated successfully into trackcountlog from crawler."""
 
 
 class trackcountlog_error_message:
-    def __init__(self, message_type, date, gsheet_url, count):
+    def __init__(self, message_type, date, gsheet_url, count_datasource, count_crawler):
         self.message_type = message_type
         self.date = date
         self.gsheet_url = gsheet_url
-        self.count = count
+        self.count_datasource = count_datasource
+        self.count_crawler = count_crawler
 
     def slack_message(self):
-        message = self.message_type.format(self.date, self.gsheet_url, self.count)
+        message = self.message_type.format(
+            self.date, self.gsheet_url, self.count_datasource, self.count_crawler
+        )
         return message
 
     def send_slack_error(self):
