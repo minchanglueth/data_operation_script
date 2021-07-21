@@ -859,7 +859,8 @@ if __name__ == "__main__":
         f.truncate()
     urls = [
         # "https://docs.google.com/spreadsheets/d/1XCtbHzP15FRduJzf_ena4tdye6oHwzpD-IRNdPV9jpM/edit#gid=328295841",
-        "https://docs.google.com/spreadsheets/d/1pEZBzBwmduhZYN9k5doNbuYW75NSSx-dEb_EHqu8Ysw/edit#gid=574925011"
+        # "https://docs.google.com/spreadsheets/d/1pEZBzBwmduhZYN9k5doNbuYW75NSSx-dEb_EHqu8Ysw/edit#gid=574925011",
+        "https://docs.google.com/spreadsheets/d/1Qinw5DaClvGLXGe22iw9_pRDuN2-zpxp5WD_c5-Lltg/edit#gid=1403431564"
     ]
     sheet_name_ = SheetNames.ALBUM_IMAGE
     page_type_ = PageType.ArtistPage

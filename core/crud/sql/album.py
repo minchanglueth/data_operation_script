@@ -49,9 +49,13 @@ def get_one_by_id(album_uuid: str):
 
 
 def get_itunes_url(album_uuid: str):
-    return (
-        db_session.query(ItunesRelease)
-        .filter((ItunesRelease.valid == 1), ItunesRelease.album_uuid == album_uuid)
-        .order_by(ItunesRelease.created_at.desc())
+    query = (
+        db_session.query(Album)
+        .filter((Album.valid == 1), Album.uuid == album_uuid)
+        .order_by(Album.created_at.desc())
         .first()
     )
+    if query is not None:
+        return query
+    else:
+        print(album_uuid)
