@@ -886,6 +886,7 @@ if __name__ == "__main__":
     with open(query_path, "w") as f:
         f.truncate()
     urls = [
+<<<<<<< HEAD
         # "https://docs.google.com/spreadsheets/d/1XCtbHzP15FRduJzf_ena4tdye6oHwzpD-IRNdPV9jpM/edit#gid=328295841",
         # "https://docs.google.com/spreadsheets/d/1pEZBzBwmduhZYN9k5doNbuYW75NSSx-dEb_EHqu8Ysw/edit#gid=574925011",
         # "https://docs.google.com/spreadsheets/d/1Qinw5DaClvGLXGe22iw9_pRDuN2-zpxp5WD_c5-Lltg/edit#gid=1403431564",
@@ -894,6 +895,13 @@ if __name__ == "__main__":
     sheet_name_ = SheetNames.C_11
     page_type_ = PageType.Contribution
     pre_valid = "2021-07-06"
+=======
+    "https://docs.google.com/spreadsheets/d/1s1FTTguiLhJuMAJltMeolqx9eoA-nDKpIUqgsVJ3-eY/edit#gid=1284011554"
+    ]
+    sheet_name_ = SheetNames.MP4_SHEET_NAME
+    page_type_ = PageType.NewClassic
+    pre_valid = ""
+>>>>>>> need sleep timer
 
     # control_flow = ControlFlow(
     #     sheet_name=sheet_name_, urls=urls, page_type=page_type_)
@@ -913,7 +921,7 @@ if __name__ == "__main__":
     # print(k)
 
     # similarity:
-    # control_flow.similarity()
+    control_flow.similarity()
 
     # crawl:
     control_flow.crawl()
