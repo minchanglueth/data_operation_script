@@ -1,24 +1,23 @@
 from slack_sdk.errors import SlackApiError
+from sqlalchemy.sql.functions import count
 from support_function.slack_function.slack_connect import client_slack
 
 trackcountlog_error = """Hi <@U024GLE8SJ0cal> !
 CC: <@UDW03RVGR|cal>
 The trackcountlog error report for {} is ready here {}.
-{} songs were not updated successfully into trackcountlog from datasource.
-{} songs were not updated successfully into trackcountlog from crawler."""
+{} songs were not updated successfully into trackcountlog"""
 
 
 class trackcountlog_error_message:
-    def __init__(self, message_type, date, gsheet_url, count_datasource, count_crawler):
+    def __init__(self, message_type, date, gsheet_url, count):
         self.message_type = message_type
         self.date = date
         self.gsheet_url = gsheet_url
-        self.count_datasource = count_datasource
-        self.count_crawler = count_crawler
+        self.count = count
 
     def slack_message(self):
         message = self.message_type.format(
-            self.date, self.gsheet_url, self.count_datasource, self.count_crawler
+            self.date, self.gsheet_url, self.count
         )
         return message
 
