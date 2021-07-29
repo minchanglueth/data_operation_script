@@ -2,7 +2,7 @@ from slack_sdk.errors import SlackApiError
 from sqlalchemy.sql.functions import count
 from support_function.slack_function.slack_connect import client_slack
 
-trackcountlog_error = """Hi <@U024GLE8SJ0cal> !
+trackcountlog_error = """Hi <@U024GLE8SJ0> !
 CC: <@UDW03RVGR|cal>
 The trackcountlog error report for {} is ready here {}.
 {} songs were not updated successfully into trackcountlog"""
