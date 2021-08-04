@@ -98,12 +98,19 @@ def query_datasource():
     return df_
 
 
-def update_sheet(df, gsheet_url):
+def update_sheet(df, gsheet_url, sheet_index):
     sh = gc.open_by_url(gsheet_url)
-    worksheet = sh.get_worksheet(0)
-    worksheet.clear()
-    set_with_dataframe(worksheet, df)
-    format_with_dataframe(worksheet, df, include_column_header=True)
+    worksheet = sh.get_worksheet(sheet_index)
+    if sheet_index == 0:
+        worksheet.clear()
+        set_with_dataframe(worksheet, df)
+        format_with_dataframe(worksheet, df, include_column_header=True)
+        return True
+    else:
+        worksheet.add_rows(df.shape[0])
+        set_with_dataframe(worksheet, df, include_column_header=False, row=worksheet.row_count+1)
+        return True
+
 
 
 def send_slack(df, gsheet_url):
@@ -141,14 +148,15 @@ if __name__ == "__main__":
     gsheet_url = "https://docs.google.com/spreadsheets/d/1yJS1JjkaoNy2akdEbpTeQnKJgjji-1h9BHnFbyQ6XQc/edit#gid=133198295"
     df = query_datasource()
     print(df.head())
-    update_sheet(df, gsheet_url)
+    update_sheet(df=df, gsheet_url=gsheet_url,sheet_index=0)
     if len(df) > 0:
+        update_sheet(df=df, gsheet_url=gsheet_url,sheet_index=1)
         change_valid_negative(df)
         time.sleep(1500)
         change_valid_positive(df)
         time.sleep(1500)
         dff = query_datasource()
-        update_sheet(dff, gsheet_url)
+        update_sheet(dff, gsheet_url, 0)
         send_slack(dff, gsheet_url)
     else:
         send_slack(df, gsheet_url)
