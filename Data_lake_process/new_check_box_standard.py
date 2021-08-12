@@ -56,6 +56,7 @@ def youtube_check_box(page_name: str, df: object, sheet_name: str):
                 | (
                     (df["track_id"] != "")
                     & (df["memo"] == "not found")
+                    % (df["type"] == "")
                     & (df["len"] == 0)
                     & (df["checking_mp3"] == "TRUE")
                     & (df["already_existed"] == "null")
@@ -98,6 +99,7 @@ def youtube_check_box(page_name: str, df: object, sheet_name: str):
                     (df["track_id"] != "")
                     & (df["memo"] == "not found")
                     & (df["len"] == 0)
+                    & (df["type"] == "")
                     & (df["checking_mp3"] == "TRUE")
                     & (df["is_released"] == "TRUE")
                 )
@@ -237,8 +239,8 @@ def youtube_check_box(page_name: str, df: object, sheet_name: str):
                 |(
                     (df["track_id"] != "")
                     & (df["mp3_link"] != "")
-                    & (df["url_to_add"] == "")
-                    & (df["type"] == "")
+                    & (df["url_to_add"] == "none")
+                    & (df["type"] == "none")
                     & (df["memo"] == "not ok")
                     & (df["assignee"] == "remove")
                 )
