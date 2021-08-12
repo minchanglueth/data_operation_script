@@ -234,7 +234,6 @@ def youtube_check_box(page_name: str, df: object, sheet_name: str):
                     & (df["len"] == 43)
                     & (df["type"].str.lower().isin(["c", "d", "z"]))
                     & (df["memo"] == "not ok")
-                    & (df["assignee"] == "replace")
                 )
                 |(
                     (df["track_id"] != "")
@@ -242,7 +241,6 @@ def youtube_check_box(page_name: str, df: object, sheet_name: str):
                     & (df["url_to_add"] == "none")
                     & (df["type"] == "none")
                     & (df["memo"] == "not ok")
-                    & (df["assignee"] == "remove")
                 )
             )
         ]
