@@ -56,9 +56,24 @@ def youtube_check_box(page_name: str, df: object, sheet_name: str):
                 | (
                     (df["track_id"] != "")
                     & (df["memo"] == "not found")
+                    & (df["type"] == "")
                     & (df["len"] == 0)
                     & (df["checking_mp3"] == "TRUE")
                     & (df["already_existed"] == "null")
+                )
+                |(
+                    (df["track_id"] != "")
+                    & (df["memo"] == "not ok")
+                    & (df["type"].str.lower().isin(["c", "d", "z"]))
+                    & (df["len"] == 43)
+                    & (df["checking_mp3"] == "FALSE")
+                )
+                | (
+                    (df["track_id"] != "")
+                    & (df["checking_mp3"] == "FALSE")
+                    & (df["url_to_add"] == "")
+                    & (df["type"] == "")
+                    & (df["memo"] == "not ok")
                 )
             )
         ]
@@ -84,8 +99,23 @@ def youtube_check_box(page_name: str, df: object, sheet_name: str):
                     (df["track_id"] != "")
                     & (df["memo"] == "not found")
                     & (df["len"] == 0)
+                    & (df["type"] == "")
                     & (df["checking_mp3"] == "TRUE")
                     & (df["is_released"] == "TRUE")
+                )
+                | (
+                    (df["track_id"] != "")
+                    & (df["memo"] == "not ok")
+                    & (df["len"] == 43)
+                    & (df["type"].str.lower().isin(["c", "d", "z"]))
+                    & (df["checking_mp3"] == "FALSE")
+                )
+                | (
+                    (df["track_id"] != "")
+                    & (df["memo"] == "not ok")
+                    & (df["type"] == "")
+                    & (df["url_to_add"] == "")
+                    & (df["checking_mp3"] == "FALSE")
                 )
             )
         ]
@@ -191,6 +221,27 @@ def youtube_check_box(page_name: str, df: object, sheet_name: str):
                     & (df["type"] == "none")
                 )
                 | ((df["assignee"] == "no need to check"))
+                | (
+                    (df["track_id"] != "")
+                    & (df["mp3_link"] != "")
+                    & (df["url_to_add"] == "")
+                    & (df["type"] == "")
+                    & (df["memo"] == "ok")
+                )
+                | (
+                    (df["track_id"] != "")
+                    & (df["mp3_link"] != "")
+                    & (df["len"] == 43)
+                    & (df["type"].str.lower().isin(["c", "d", "z"]))
+                    & (df["memo"] == "not ok")
+                )
+                |(
+                    (df["track_id"] != "")
+                    & (df["mp3_link"] != "")
+                    & (df["url_to_add"] == "none")
+                    & (df["type"] == "none")
+                    & (df["memo"] == "not ok")
+                )
             )
         ]
     elif page_name == "ArtistPage" and sheet_name == SheetNames.MP4_SHEET_NAME:
