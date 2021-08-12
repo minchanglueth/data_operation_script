@@ -56,7 +56,7 @@ def youtube_check_box(page_name: str, df: object, sheet_name: str):
                 | (
                     (df["track_id"] != "")
                     & (df["memo"] == "not found")
-                    % (df["type"] == "")
+                    & (df["type"] == "")
                     & (df["len"] == 0)
                     & (df["checking_mp3"] == "TRUE")
                     & (df["already_existed"] == "null")
