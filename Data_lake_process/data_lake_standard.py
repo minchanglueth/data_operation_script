@@ -60,7 +60,8 @@ from google_spreadsheet_api.function import update_value, update_value_at_last_c
 from Data_lake_process.class_definition import get_gsheet_id_from_url
 from datetime import date
 from Data_lake_process.youtube_similarity import similarity
-from google_spreadsheet_api.gspread_utility import get_df_from_gsheet, get_worksheet
+from google_spreadsheet_api.gspread_utility import get_worksheet, gc
+from gspread_dataframe import set_with_dataframe, get_as_dataframe
 
 # from support_function.slack_function.slack_message import (
 #     send_message_slack,
@@ -141,6 +142,16 @@ def query_pandas_to_csv(df: object, column: str):
             f.write(line)
     f.close()
 
+def send_count_report(sheet_name: str, number_cols: int, data_to_insert):
+    gsheet_url = "https://docs.google.com/spreadsheets/d/1MHDksbs-RKXhZZ-LRgRhVy_ldAxK8lSzyoJK4sA_Uyo/edit#gid=209567714"
+    sheet = gc.open_by_url(gsheet_url)
+    sh = sheet.worksheet(sheet_name)
+    sheet_df = get_as_dataframe(sh, usecols=list(range(number_cols))).dropna(how="all")
+    df = pd.DataFrame([data_to_insert], columns=sheet_df.columns)
+    sheet_df = pd.concat([sheet_df, df])
+    set_with_dataframe(sh, sheet_df)
+
+        
 
 class ImageWorking:
     def __init__(self, sheet_name: str, urls: list, page_type: object):
@@ -551,6 +562,8 @@ class C11Working:
                 axis=1,
             )
         query_pandas_to_csv(df=df, column="query")
+        data = [str(date.today()), "CY", "itunes_crawlalbum", len(df)]
+        send_count_report(sheet_name="user_contribute", number_cols=4, data_to_insert=data)
 
     def checking_c11_crawler_status(self):
         checking_c11_crawler_status(
@@ -860,11 +873,12 @@ if __name__ == "__main__":
     urls = [
         # "https://docs.google.com/spreadsheets/d/1XCtbHzP15FRduJzf_ena4tdye6oHwzpD-IRNdPV9jpM/edit#gid=328295841",
         # "https://docs.google.com/spreadsheets/d/1pEZBzBwmduhZYN9k5doNbuYW75NSSx-dEb_EHqu8Ysw/edit#gid=574925011",
-        "https://docs.google.com/spreadsheets/d/1Qinw5DaClvGLXGe22iw9_pRDuN2-zpxp5WD_c5-Lltg/edit#gid=1403431564"
+        # "https://docs.google.com/spreadsheets/d/1Qinw5DaClvGLXGe22iw9_pRDuN2-zpxp5WD_c5-Lltg/edit#gid=1403431564",
+        "https://docs.google.com/spreadsheets/d/1ExsBZA3043PKySiG1T4U9domUeUyn3j9bLi29XjgThY/edit#gid=2003688570"
     ]
-    sheet_name_ = SheetNames.ALBUM_IMAGE
-    page_type_ = PageType.ArtistPage
-    pre_valid = ""
+    sheet_name_ = SheetNames.C_11
+    page_type_ = PageType.Contribution
+    pre_valid = "2021-07-06"
 
     # control_flow = ControlFlow(
     #     sheet_name=sheet_name_, urls=urls, page_type=page_type_)
@@ -887,10 +901,10 @@ if __name__ == "__main__":
     # control_flow.similarity()
 
     # crawl:
-    # control_flow.crawl()
+    control_flow.crawl()
 
     # checking
-    control_flow.checking()
+    # control_flow.checking()
 
     # update d9
     # control_flow.update_d9()
