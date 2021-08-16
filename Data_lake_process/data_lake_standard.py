@@ -142,6 +142,7 @@ def query_pandas_to_csv(df: object, column: str):
             f.write(line)
     f.close()
 
+
 def send_count_report(sheet_name: str, number_cols: int, data_to_insert):
     gsheet_url = "https://docs.google.com/spreadsheets/d/1MHDksbs-RKXhZZ-LRgRhVy_ldAxK8lSzyoJK4sA_Uyo/edit#gid=209567714"
     sheet = gc.open_by_url(gsheet_url)
@@ -151,7 +152,6 @@ def send_count_report(sheet_name: str, number_cols: int, data_to_insert):
     sheet_df = pd.concat([sheet_df, df])
     set_with_dataframe(sh, sheet_df)
 
-        
 
 class ImageWorking:
     def __init__(self, sheet_name: str, urls: list, page_type: object):
@@ -563,7 +563,9 @@ class C11Working:
             )
         query_pandas_to_csv(df=df, column="query")
         data = [str(date.today()), "CY", "itunes_crawlalbum", len(df)]
-        send_count_report(sheet_name="user_contribute", number_cols=4, data_to_insert=data)
+        send_count_report(
+            sheet_name="user_contribute", number_cols=4, data_to_insert=data
+        )
 
     def checking_c11_crawler_status(self):
         checking_c11_crawler_status(
@@ -653,6 +655,19 @@ class C11Working:
                     pointlogsid=x["pointlogsid"],
                 ),
                 axis=1,
+            )
+
+            count = len(
+                filter_df[
+                    ~filter_df["crawling_task"].isin(
+                        ["-- content_type not existed", "", np.nan, None]
+                    )
+                ]
+            )
+
+            data = [str(date.today()), "CY", "itunes_verifypl", count]
+            send_count_report(
+                sheet_name="user_contribute", number_cols=4, data_to_insert=data
             )
 
             print(
