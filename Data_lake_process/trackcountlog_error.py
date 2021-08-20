@@ -5,7 +5,6 @@ from support_function.slack_function.slack_message_trackcountlog import (
     trackcountlog_error_message,
     trackcountlog_error,
 )
-from core.models.crawlingtask import Crawlingtask
 from core.models.datasource import DataSource
 from core.models.trackcountlog import TrackCountLog
 from core.models.track import Track
