@@ -1,0 +1,29 @@
+{
+  "RECORDS": [
+    {
+      "Id": 36929938839311,
+      "UUID": "A8BAECAE7574470BB6C31EAF6BB4E97D",
+      "Valid": 1,
+      "UpdatedAt": "23/6/2020 12:46:03",
+      "CreatedAt": "26/1/2019 12:11:07",
+      "Title": "Aljawal",
+      "ReleaseDate": "26/11/2013 00:00:00",
+      "TotalTracks": 11,
+      "iTunesUrl": "https://www.allmusic.com/album/aljawal-mw0002584829",
+      "Cache": null,
+      "Ext": "{\"short_id\": \"eNXWbFez\", \"square_image\": {\"uri\": \"vibbidi-images/albums/img_A8BAECAE7574470BB6C31EAF6BB4E97D.jpg\", \"width\": 500, \"height\": 440, \"mime_type\": \"image/jpeg\"}}",
+      "Info": "{\"all_music\": {\"genres\": \"Electronic,International\", \"allmusic_uuid\": \"B9732B090A394BD1961E019B88BB4FE9\", \"record_location\": null}, \"fixed_genres\": [\"Electronic\", \"International\"]}",
+      "Collaboration": null,
+      "SearchIndex": null,
+      "popularity": 0,
+      "ViewCount": 2,
+      "square_image_url": "vibbidi-images/albums/img_A8BAECAE7574470BB6C31EAF6BB4E97D.jpg",
+      "Duplicate_iTunesUrl": 0,
+      "NumTrackId": 0,
+      "getiTunesUrl": 0,
+      "NumOfCrawliTunes": 0,
+      "ItuneAlbumId": null,
+      "Artist": "Débruit"
+    }
+  ]
+}
