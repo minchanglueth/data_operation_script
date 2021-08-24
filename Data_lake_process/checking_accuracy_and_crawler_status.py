@@ -554,7 +554,8 @@ def checking_youtube_crawler_status(df: object, format_id: str):
     df["check"] = ""
     df["status"] = ""
     df["crawlingtask_id"] = ""
-    gsheet_info = df.gsheet_info.loc[3]
+    gsheet_infos = list(set(df.gsheet_info.tolist()))
+    gsheet_info = gsheet_infos[0]
     gsheet_name = get_key_value_from_gsheet_info(
         gsheet_info=gsheet_info, key="gsheet_name"
     )
