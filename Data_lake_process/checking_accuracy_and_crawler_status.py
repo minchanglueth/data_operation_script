@@ -568,12 +568,58 @@ def checking_youtube_crawler_status(df: object, format_id: str):
             track_id=track_id_list, PIC=PIC_taskdetail, format_id=format_id
         )
     )
-    db_crawlingtask.columns = ["crawlingtask_id", "objectid", "db_url", "when_exists", "status"]
+    db_crawlingtask.columns = [
+        "crawlingtask_id",
+        "objectid",
+        "db_url",
+        "when_exists",
+        "status",
+    ]
     db_crawlingtask.db_url = db_crawlingtask.db_url.str.replace('"', "")
     dff = pd.merge(df, db_crawlingtask, left_on="track_id", right_on="objectid")
-    dff["check"] = np.where(dff["url_to_add"] == dff["db_url"], True, False)
-    dff = dff.fillna(value={"crawlingtask_id":"missing", "status": "missing", "check": "missing"})
-    print(dff[dff.check == False].tail())
+
+    def check(row):
+        if row["db_url"] not in (None, np.nan):
+            if row["url_to_add"] == row["db_url"]:
+                return True
+            else:
+                return False
+        else:
+            return "missing"
+
+    dff["check"] = dff.apply(check, axis=1)
+    dff = dff.fillna(value={"crawlingtask_id_y": "missing", "status_y": "missing"})
+    columns_to_get = [
+        "index",
+        "track_id",
+        "memo",
+        "mp3_link",
+        "url_to_add",
+        "type",
+        "checking_mp3",
+        "is_released",
+        "gsheet_info",
+        "len",
+        "check",
+        "status_y",
+        "crawlingtask_id_y",
+    ]
+    dff = dff[columns_to_get]
+    dff.columns = [
+        "index",
+        "track_id",
+        "memo",
+        "mp3_link",
+        "url_to_add",
+        "type",
+        "checking_mp3",
+        "is_released",
+        "gsheet_info",
+        "len",
+        "check",
+        "status",
+        "crawlingtask_id",
+    ]
 
     # row_index = df.index
     # for i in row_index:
@@ -606,15 +652,12 @@ def automate_checking_youtube_crawler_status(
         checking_accuracy_result = checking_youtube_crawler_status(
             df=filter_df, format_id=format_id
         )
-        result = (
-            checking_accuracy_result[
-                (checking_accuracy_result["status"] != "complete")
-                & (checking_accuracy_result["status"] != "incomplete")
-                & (checking_accuracy_result["status"] != "missing")
-            ].status.tolist()
-            == []
-        )
-        if result == 1:
+        result = checking_accuracy_result[
+            ~checking_accuracy_result["status"].isin(
+                ["complete", "incomplete", "missing"]
+            )
+        ].status
+        if len(result) == 0:
             for gsheet_info in gsheet_infos:
                 gsheet_name = get_key_value_from_gsheet_info(
                     gsheet_info=gsheet_info, key="gsheet_name"
