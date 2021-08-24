@@ -621,26 +621,6 @@ def checking_youtube_crawler_status(df: object, format_id: str):
         "status",
         "crawlingtask_id",
     ]
-
-    # row_index = df.index
-    # for i in row_index:
-    #     url = df.url_to_add.loc[i]
-    #     trackid = df.track_id.loc[i]
-    #     db_crawlingtask = get_youtube_crawlingtask_info(
-    #         track_id=trackid, PIC=PIC_taskdetail, format_id=format_id
-    #     )
-    #     if db_crawlingtask:
-    #         crawlingtask_id = db_crawlingtask.id
-    #         status = db_crawlingtask.status
-    #         db_url = db_crawlingtask.youtube_url.replace('"', "")
-    #         check = url == db_url
-    #     else:
-    #         crawlingtask_id = "missing"
-    #         status = "missing"
-    #         check = "missing"
-    #     df.loc[i, "check"] = check
-    #     df.loc[i, "status"] = status
-    #     df.loc[i, "crawlingtask_id"] = crawlingtask_id
     return dff
 
 
