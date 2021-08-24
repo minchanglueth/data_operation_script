@@ -886,14 +886,13 @@ if __name__ == "__main__":
     with open(query_path, "w") as f:
         f.truncate()
     urls = [
-        # "https://docs.google.com/spreadsheets/d/1XCtbHzP15FRduJzf_ena4tdye6oHwzpD-IRNdPV9jpM/edit#gid=328295841",
-        # "https://docs.google.com/spreadsheets/d/1pEZBzBwmduhZYN9k5doNbuYW75NSSx-dEb_EHqu8Ysw/edit#gid=574925011",
-        # "https://docs.google.com/spreadsheets/d/1Qinw5DaClvGLXGe22iw9_pRDuN2-zpxp5WD_c5-Lltg/edit#gid=1403431564",
-        "https://docs.google.com/spreadsheets/d/1ExsBZA3043PKySiG1T4U9domUeUyn3j9bLi29XjgThY/edit#gid=2003688570"
+        # "https://docs.google.com/spreadsheets/d/1ExsBZA3043PKySiG1T4U9domUeUyn3j9bLi29XjgThY/edit#gid=2003688570",
+        # "https://docs.google.com/spreadsheets/d/1ExsBZA3043PKySiG1T4U9domUeUyn3j9bLi29XjgThY/edit#gid=218846379",
+        "https://docs.google.com/spreadsheets/d/1Qw5zuuVKSbU-W3Pe0ORAhuNGrY2JmzyAudYFghFy6HU/edit#gid=1309472844"
     ]
-    sheet_name_ = SheetNames.C_11
-    page_type_ = PageType.Contribution
-    pre_valid = "2021-07-06"
+    sheet_name_ = SheetNames.MP3_SHEET_NAME
+    page_type_ = PageType.NewClassic
+    pre_valid = ""
 
     # control_flow = ControlFlow(
     #     sheet_name=sheet_name_, urls=urls, page_type=page_type_)
@@ -916,10 +915,10 @@ if __name__ == "__main__":
     # control_flow.similarity()
 
     # crawl:
-    control_flow.crawl()
+    # control_flow.crawl()
 
     # checking
-    # control_flow.checking()
+    control_flow.checking()
 
     # update d9
     # control_flow.update_d9()

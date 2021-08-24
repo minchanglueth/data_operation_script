@@ -300,29 +300,37 @@ def get_pointlogsid_valid_for_contribution(pointlogids: list):
 
 
 def get_youtube_crawlingtask_info(track_id: str, PIC: str, format_id: str):
-    get_crawlingtask_info = (
+    #get the rows with the most recent created_at
+    subq = (
         db_session.query(
-            Crawlingtask.id,
-            Crawlingtask.objectid,
-            func.json_extract(Crawlingtask.taskdetail, f"$.youtube_url").label(
-                "youtube_url"
-            ),
-            func.json_extract(Crawlingtask.taskdetail, "$.when_exists").label(
-                "when_exists"
-            ),
-            Crawlingtask.status,
+            Crawlingtask.id.label("id"), func.max(Crawlingtask.created_at).label("maxdate")
         )
-        .select_from(Crawlingtask)
         .filter(
-            Crawlingtask.objectid == track_id,
+            Crawlingtask.objectid.in_(track_id),
             Crawlingtask.actionid == V4CrawlingTaskActionMaster.DOWNLOAD_VIDEO_YOUTUBE,
             func.json_extract(Crawlingtask.taskdetail, "$.PIC") == PIC,
             func.json_extract(Crawlingtask.taskdetail, "$.data_source_format_id")
             == format_id,
             Crawlingtask.priority != 10000,
+            Crawlingtask.status.isnot(None),
         )
-        .order_by(Crawlingtask.created_at.desc())
-    ).first()
+        .group_by(Crawlingtask.id)
+        .subquery()
+    )
+    get_crawlingtask_info = db_session.query(
+        Crawlingtask.id,
+        Crawlingtask.objectid,
+        func.json_extract(Crawlingtask.taskdetail, f"$.youtube_url").label(
+            "youtube_url"
+        ),
+        func.json_extract(Crawlingtask.taskdetail, "$.when_exists").label(
+            "when_exists"
+        ),
+        Crawlingtask.status,
+    ).join(
+        subq, and_(Crawlingtask.id == subq.c.id, Crawlingtask.created_at == subq.c.maxdate)
+    )
+
     return get_crawlingtask_info
 
 
@@ -332,10 +340,7 @@ def get_crawling_result_cy_itunes(pointlogids: list):
         .select_from(PointLog)
         .filter(
             (PointLog.valid == 1),
-            (
-                PointLog.crawler_status
-                == "error"
-            ),
+            (PointLog.crawler_status == "error"),
             (PointLog.user_id == None),
             PointLog.id.in_(pointlogids),
         )
@@ -351,10 +356,7 @@ def get_crawling_result_cy_itunes(pointlogids: list):
         .select_from(PointLog)
         .filter(
             (PointLog.valid == 1),
-            (
-                PointLog.crawler_status
-                == "error"
-            ),
+            (PointLog.crawler_status == "error"),
             (PointLog.user_id == None),
             PointLog.id.in_(pointlogids),
         )

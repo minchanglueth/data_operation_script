@@ -554,35 +554,47 @@ def checking_youtube_crawler_status(df: object, format_id: str):
     df["check"] = ""
     df["status"] = ""
     df["crawlingtask_id"] = ""
-    row_index = df.index
-    for i in row_index:
-        url = df.url_to_add.loc[i]
-        gsheet_info = df.gsheet_info.loc[i]
-        gsheet_name = get_key_value_from_gsheet_info(
-            gsheet_info=gsheet_info, key="gsheet_name"
+    gsheet_info = df.gsheet_info.loc[3]
+    gsheet_name = get_key_value_from_gsheet_info(
+        gsheet_info=gsheet_info, key="gsheet_name"
+    )
+    sheet_name = get_key_value_from_gsheet_info(
+        gsheet_info=gsheet_info, key="sheet_name"
+    )
+    PIC_taskdetail = f"{gsheet_name}_{sheet_name}"
+    track_id_list = df[df.track_id.notnull()]["track_id"].values.tolist()
+    db_crawlingtask = get_df_from_query(
+        get_youtube_crawlingtask_info(
+            track_id=track_id_list, PIC=PIC_taskdetail, format_id=format_id
         )
-        sheet_name = get_key_value_from_gsheet_info(
-            gsheet_info=gsheet_info, key="sheet_name"
-        )
-        PIC_taskdetail = f"{gsheet_name}_{sheet_name}"
-        trackid = df.track_id.loc[i]
-        url = df.url_to_add.loc[i]
-        db_crawlingtask = get_youtube_crawlingtask_info(
-            track_id=trackid, PIC=PIC_taskdetail, format_id=format_id
-        )
-        if db_crawlingtask:
-            crawlingtask_id = db_crawlingtask.id
-            status = db_crawlingtask.status
-            db_url = db_crawlingtask.youtube_url.replace('"', "")
-            check = url == db_url
-        else:
-            crawlingtask_id = "missing"
-            status = "missing"
-            check = "missing"
-        df.loc[i, "check"] = check
-        df.loc[i, "status"] = status
-        df.loc[i, "crawlingtask_id"] = crawlingtask_id
-    return df
+    )
+    db_crawlingtask.columns = ["crawlingtask_id", "objectid", "db_url", "when_exists", "status"]
+    db_crawlingtask.db_url = db_crawlingtask.db_url.str.replace('"', "")
+    dff = pd.merge(df, db_crawlingtask, left_on="track_id", right_on="objectid")
+    dff["check"] = np.where(dff["url_to_add"] == dff["db_url"], True, False)
+    dff = dff.fillna(value={"crawlingtask_id":"missing", "status": "missing", "check": "missing"})
+    print(dff[dff.check == False].tail())
+
+    # row_index = df.index
+    # for i in row_index:
+    #     url = df.url_to_add.loc[i]
+    #     trackid = df.track_id.loc[i]
+    #     db_crawlingtask = get_youtube_crawlingtask_info(
+    #         track_id=trackid, PIC=PIC_taskdetail, format_id=format_id
+    #     )
+    #     if db_crawlingtask:
+    #         crawlingtask_id = db_crawlingtask.id
+    #         status = db_crawlingtask.status
+    #         db_url = db_crawlingtask.youtube_url.replace('"', "")
+    #         check = url == db_url
+    #     else:
+    #         crawlingtask_id = "missing"
+    #         status = "missing"
+    #         check = "missing"
+    #     df.loc[i, "check"] = check
+    #     df.loc[i, "status"] = status
+    #     df.loc[i, "crawlingtask_id"] = crawlingtask_id
+    return dff
 
 
 def automate_checking_youtube_crawler_status(
