@@ -619,7 +619,6 @@ def automate_checking_youtube_crawler_status(
         checking_accuracy_result = checking_youtube_crawler_status(
             df=filter_df, format_id=format_id
         )
-        checking_accuracy_result.to_csv("subq.csv")
         result = checking_accuracy_result[
             ~checking_accuracy_result["status"].isin(
                 ["complete", "incomplete", "missing"]

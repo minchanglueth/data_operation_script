@@ -892,7 +892,7 @@ if __name__ == "__main__":
         # "https://docs.google.com/spreadsheets/d/1NaNlovlGHg_NDyP6zcxH1eGxV7M6jxI4ZCdZX263_C8/edit#gid=1202991154",
         "https://docs.google.com/spreadsheets/d/1ZUzx1smeyIKD4PtQ-hhT1kbPSTGRdu8I8NG1uvzcWr4/edit#gid=1373813396"
     ]
-    sheet_name_ = SheetNames.MP3_SHEET_NAME
+    sheet_name_ = SheetNames.MP4_SHEET_NAME
     page_type_ = PageType.ArtistPage
     pre_valid = ""
 
