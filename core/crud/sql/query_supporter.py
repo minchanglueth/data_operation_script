@@ -300,10 +300,18 @@ def get_pointlogsid_valid_for_contribution(pointlogids: list):
 
 
 def get_youtube_crawlingtask_info(track_id: str, PIC: str, format_id: str):
-    #get the rows with the most recent created_at
+    # get the rows with the most recent created_at
     subq = (
         db_session.query(
-            Crawlingtask.id.label("id"), func.max(Crawlingtask.created_at).label("maxdate")
+            Crawlingtask.id.label("id"),
+            func.max(Crawlingtask.created_at).label("maxdate"),
+            func.json_extract(Crawlingtask.taskdetail, f"$.youtube_url").label(
+                "youtube_url"
+            ),
+            func.json_extract(Crawlingtask.taskdetail, "$.when_exists").label(
+                "when_exists"
+            ),
+            Crawlingtask.status,
         )
         .filter(
             Crawlingtask.objectid.in_(track_id),
@@ -327,8 +335,10 @@ def get_youtube_crawlingtask_info(track_id: str, PIC: str, format_id: str):
             "when_exists"
         ),
         Crawlingtask.status,
+        Crawlingtask.created_at,
     ).join(
-        subq, and_(Crawlingtask.id == subq.c.id, Crawlingtask.created_at == subq.c.maxdate)
+        subq,
+        and_(Crawlingtask.id == subq.c.id, Crawlingtask.created_at == subq.c.maxdate),
     )
 
     return get_crawlingtask_info

@@ -575,7 +575,11 @@ def checking_youtube_crawler_status(df: object, format_id: str):
         "db_url",
         "when_exists",
         "status",
+        "created_at",
     ]
+    db_crawlingtask = db_crawlingtask.sort_values(
+        "created_at", ascending=False
+    ).drop_duplicates(subset="objectid")
     db_crawlingtask.db_url = db_crawlingtask.db_url.str.replace('"', "")
     dff = pd.merge(df, db_crawlingtask, left_on="track_id", right_on="objectid")
 
@@ -615,6 +619,7 @@ def automate_checking_youtube_crawler_status(
         checking_accuracy_result = checking_youtube_crawler_status(
             df=filter_df, format_id=format_id
         )
+        checking_accuracy_result.to_csv("subq.csv")
         result = checking_accuracy_result[
             ~checking_accuracy_result["status"].isin(
                 ["complete", "incomplete", "missing"]
