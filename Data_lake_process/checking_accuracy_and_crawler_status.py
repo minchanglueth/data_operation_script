@@ -592,15 +592,6 @@ def checking_youtube_crawler_status(df: object, format_id: str):
     dff = dff.fillna(value={"crawlingtask_id_y": "missing", "status_y": "missing"})
     columns_to_get = [
         "index",
-        "track_id",
-        "memo",
-        "mp3_link",
-        "url_to_add",
-        "type",
-        "checking_mp3",
-        "is_released",
-        "gsheet_info",
-        "len",
         "check",
         "status_y",
         "crawlingtask_id_y",
@@ -608,15 +599,6 @@ def checking_youtube_crawler_status(df: object, format_id: str):
     dff = dff[columns_to_get]
     dff.columns = [
         "index",
-        "track_id",
-        "memo",
-        "mp3_link",
-        "url_to_add",
-        "type",
-        "checking_mp3",
-        "is_released",
-        "gsheet_info",
-        "len",
         "check",
         "status",
         "crawlingtask_id",
