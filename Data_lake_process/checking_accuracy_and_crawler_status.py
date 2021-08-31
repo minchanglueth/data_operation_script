@@ -554,35 +554,60 @@ def checking_youtube_crawler_status(df: object, format_id: str):
     df["check"] = ""
     df["status"] = ""
     df["crawlingtask_id"] = ""
-    row_index = df.index
-    for i in row_index:
-        url = df.url_to_add.loc[i]
-        gsheet_info = df.gsheet_info.loc[i]
-        gsheet_name = get_key_value_from_gsheet_info(
-            gsheet_info=gsheet_info, key="gsheet_name"
+    gsheet_infos = list(set(df.gsheet_info.tolist()))
+    gsheet_info = gsheet_infos[0]
+    gsheet_name = get_key_value_from_gsheet_info(
+        gsheet_info=gsheet_info, key="gsheet_name"
+    )
+    sheet_name = get_key_value_from_gsheet_info(
+        gsheet_info=gsheet_info, key="sheet_name"
+    )
+    PIC_taskdetail = f"{gsheet_name}_{sheet_name}"
+    track_id_list = df[df.track_id.notnull()]["track_id"].values.tolist()
+    db_crawlingtask = get_df_from_query(
+        get_youtube_crawlingtask_info(
+            track_id=track_id_list, PIC=PIC_taskdetail, format_id=format_id
         )
-        sheet_name = get_key_value_from_gsheet_info(
-            gsheet_info=gsheet_info, key="sheet_name"
-        )
-        PIC_taskdetail = f"{gsheet_name}_{sheet_name}"
-        trackid = df.track_id.loc[i]
-        url = df.url_to_add.loc[i]
-        db_crawlingtask = get_youtube_crawlingtask_info(
-            track_id=trackid, PIC=PIC_taskdetail, format_id=format_id
-        )
-        if db_crawlingtask:
-            crawlingtask_id = db_crawlingtask.id
-            status = db_crawlingtask.status
-            db_url = db_crawlingtask.youtube_url.replace('"', "")
-            check = url == db_url
+    )
+    db_crawlingtask.columns = [
+        "crawlingtask_id",
+        "objectid",
+        "db_url",
+        "when_exists",
+        "status",
+        "created_at",
+    ]
+    db_crawlingtask = db_crawlingtask.sort_values(
+        "created_at", ascending=False
+    ).drop_duplicates(subset="objectid")
+    db_crawlingtask.db_url = db_crawlingtask.db_url.str.replace('"', "")
+    dff = pd.merge(df, db_crawlingtask, left_on="track_id", right_on="objectid")
+
+    def check(row):
+        if row["db_url"] not in (None, np.nan):
+            if row["url_to_add"] == row["db_url"]:
+                return True
+            else:
+                return False
         else:
-            crawlingtask_id = "missing"
-            status = "missing"
-            check = "missing"
-        df.loc[i, "check"] = check
-        df.loc[i, "status"] = status
-        df.loc[i, "crawlingtask_id"] = crawlingtask_id
-    return df
+            return "missing"
+
+    dff["check"] = dff.apply(check, axis=1)
+    dff = dff.fillna(value={"crawlingtask_id_y": "missing", "status_y": "missing"})
+    columns_to_get = [
+        "index",
+        "check",
+        "status_y",
+        "crawlingtask_id_y",
+    ]
+    dff = dff[columns_to_get]
+    dff.columns = [
+        "index",
+        "check",
+        "status",
+        "crawlingtask_id",
+    ]
+    return dff
 
 
 def automate_checking_youtube_crawler_status(
@@ -594,15 +619,12 @@ def automate_checking_youtube_crawler_status(
         checking_accuracy_result = checking_youtube_crawler_status(
             df=filter_df, format_id=format_id
         )
-        result = (
-            checking_accuracy_result[
-                (checking_accuracy_result["status"] != "complete")
-                & (checking_accuracy_result["status"] != "incomplete")
-                & (checking_accuracy_result["status"] != "missing")
-            ].status.tolist()
-            == []
-        )
-        if result == 1:
+        result = checking_accuracy_result[
+            ~checking_accuracy_result["status"].isin(
+                ["complete", "incomplete", "missing"]
+            )
+        ].status
+        if len(result) == 0:
             for gsheet_info in gsheet_infos:
                 gsheet_name = get_key_value_from_gsheet_info(
                     gsheet_info=gsheet_info, key="gsheet_name"
