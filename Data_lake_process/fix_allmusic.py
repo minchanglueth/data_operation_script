@@ -5,7 +5,7 @@ from sqlalchemy.orm.session import Session
 from google_spreadsheet_api.gspread_utility import gc, get_df_from_gsheet
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
-from sqlalchemy import and_
+from sqlalchemy import and_, func
 from core.mysql_database_connection.sqlalchemy_create_engine import (
     SQLALCHEMY_DATABASE_URI,
 )
@@ -26,7 +26,6 @@ Session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 db_session = Session()
 
 
-
 def get_ituneid(gsheet_url: str):
     sheet = Spread(spread=gsheet_url, sheet="Allmusic_")
     df = sheet.sheet_to_df(index=None, header_rows=2)
@@ -34,7 +33,15 @@ def get_ituneid(gsheet_url: str):
     dff = df[(df["Apple ID_Apple ID"].notnull()) & (df["Apple ID_Apple ID"] != "")][
         ["albumuuid", "artistuuid", "Album Title", "Artist Name", "Apple ID_Apple ID"]
     ]
-    dff.columns = ["albumuuid", "artistuuid", "album_title", "artist_name", "apple_id"]
+    dff.columns = [
+        "albumuuid_old",
+        "artistuuid_old",
+        "album_title",
+        "artist_name",
+        "apple_id",
+    ]
+    dff = dff.dropna(subset=["apple_id"])
+    dff["apple_id"] = dff["apple_id"].astype(int)
     return dff
 
 
@@ -45,7 +52,7 @@ def run_crawler(df: object):
     insert_list = []
     for id in itunes_id_list:
         task_detail = {"PIC": "Maddie-allmusic", "region": "us", "album_id": str(id)}
-        crawler_id = str(uuid4()).upper().replace("-","")
+        crawler_id = str(uuid4()).upper().replace("-", "")
         c = Crawlingtask(
             id=crawler_id,
             priority=1205,
@@ -60,23 +67,54 @@ def run_crawler(df: object):
     return crawler_id_list
 
 
-
 def get_complete_crawl(id_list: list):
-    query = (
-        db_session.query(Crawlingtask.taskdetail, Crawlingtask.status)
+    query_crawler = (
+        db_session.query(
+            Crawlingtask.id,
+            func.json_extract(Crawlingtask.taskdetail, "$.album_id").label("itune_id"),
+        )
         .select_from(Crawlingtask)
-        .filter(Crawlingtask.id.in_(id_list))
+        .filter(Crawlingtask.id.in_(id_list), Crawlingtask.status == "complete")
     )
-    df = get_df_from_query(query)
-    print(df.head())
-    df.to_csv("complete_crawlers.csv", encoding="utf-8")
 
+    dfc = get_df_from_query(query_crawler)
+    print(dfc.info())
+    itunes_id_list = (
+        dfc[dfc["itune_id"].notnull()]["itune_id"]
+        .str.replace('"','')
+        .astype(float)
+        .astype(int)
+        .values.tolist()
+    )
+    query_itune_id = db_session.query(Album.id, Album.uuid, Album.external_id).filter(
+        Album.external_id.in_(itunes_id_list)
+    )
+    return query_itune_id
+
+
+def get_new_album_id(query):
+    df = get_df_from_query(query)
+    new_album_ids = df["id"].values.tolist()
+    return new_album_ids
+
+
+def get_new_album_uuid(query):
+    df = get_df_from_query(query)
+    new_album_uuids = df["uuid"].values.tolist()
+    return new_album_uuids
+
+
+def merge_new_old_ids(query, df):
+    new_df = get_df_from_query(query)
+    merged_df = pd.merge(df, new_df, left_on="apple_id", right_on="external_id")
+    return merged_df
 
 
 if __name__ == "__main__":
     gsheet_url = "https://docs.google.com/spreadsheets/d/1H0t9xq2vUesfpBQoieJP6TxHbWl8D43s5kiAZ7K3Cgc/edit#gid=978085935"
     df = get_ituneid(gsheet_url)
     id_list = run_crawler(df)
-    print(id_list)
-    time.sleep(180)
-    get_complete_crawl(id_list)
+    time.sleep(900)
+    query = get_complete_crawl(id_list)
+    merged_df = merge_new_old_ids(query=query, df=df)
+    print(merged_df.head())

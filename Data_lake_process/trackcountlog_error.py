@@ -158,8 +158,8 @@ if __name__ == "__main__":
         dff = query_datasource()
         update_sheet(dff, gsheet_url, 0)
         send_slack(dff, gsheet_url)
-    else:
-        send_slack(df, gsheet_url)
+    # else:
+    #     send_slack(df, gsheet_url)
     print(
         "\n --- total time to process %s seconds ---"
         % (time.time() - start)
