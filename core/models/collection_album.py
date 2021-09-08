@@ -7,7 +7,7 @@ from core.models.base_class import Base, TimestampMixin
 class CollectionAlbum(Base, TimestampMixin):
     __tablename__ = "collection_album"
     user_id = sa.Column("UserId", sa.BigInteger, primary_key=True)
-    album_id = sa.Column("AlbumId", sa.BigInteger)
+    album_id = sa.Column("AlbumId", sa.BigInteger, primary_key=True)
     prority = sa.Column("Priority", sa.SmallInteger)
     ext = sa.Column("Ext", MutableDict.as_mutable(sa.JSON))
 

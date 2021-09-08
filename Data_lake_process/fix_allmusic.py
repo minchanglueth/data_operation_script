@@ -10,12 +10,22 @@ from core.mysql_database_connection.sqlalchemy_create_engine import (
     SQLALCHEMY_DATABASE_URI,
 )
 from core.models.crawlingtask import Crawlingtask
+from core.models.chart_album import ChartAlbum
 from core.models.album_track import Album_Track
 from core.models.album import Album
 from core.models.artist_album import Artist_album
 from core.models.external_identity import ExternalIdentity
 from core.models.itunes_album_tracks_release import ItunesRelease
 from core.models.pointlog import PointLog
+from core.models.collection_album import CollectionAlbum
+from core.models.related_album import RelatedAlbum
+from core.models.theme_album import ThemeAlbum
+from core.models.urimapper import URIMapper
+from core.models.reportautocrawler_top100albums import ReportAutoCrawlerTop100Album
+from core.models.sg_likes import SgLikes
+from core.models.album_contributor import AlbumContributor
+from core.models.usernarrative import UserNarrative
+from core.models.albumcountlog import AlbumCountLog
 from core.crud.get_df_from_query import get_df_from_query
 import pandas as pd
 from uuid import uuid4
@@ -42,7 +52,31 @@ def get_ituneid(gsheet_url: str):
     ]
     dff = dff.dropna(subset=["apple_id"])
     dff["apple_id"] = dff["apple_id"].astype(int)
-    return dff
+    old_album_uuids = dff.albumuuid_old.values.tolist()
+    query_album_id = db_session.query(Album.id, Album.uuid).filter(
+        Album.uuid.in_(old_album_uuids)
+    )
+    df_old_id = get_df_from_query(query_album_id)
+    dff_merged = pd.merge(dff, df_old_id, left_on="albumuuid_old", right_on="uuid")
+    dff_merged = dff_merged[
+        [
+            "albumuuid_old",
+            "artistuuid_old",
+            "album_title",
+            "artist_name",
+            "apple_id",
+            "id",
+        ]
+    ]
+    dff_merged.columns = [
+        "albumuuid_old",
+        "artistuuid_old",
+        "album_title",
+        "artist_name",
+        "apple_id",
+        "albumid_old",
+    ]
+    return dff_merged
 
 
 def run_crawler(df: object):
@@ -78,10 +112,9 @@ def get_complete_crawl(id_list: list):
     )
 
     dfc = get_df_from_query(query_crawler)
-    print(dfc.info())
     itunes_id_list = (
         dfc[dfc["itune_id"].notnull()]["itune_id"]
-        .str.replace('"','')
+        .str.replace('"', "")
         .astype(float)
         .astype(int)
         .values.tolist()
@@ -107,14 +140,60 @@ def get_new_album_uuid(query):
 def merge_new_old_ids(query, df):
     new_df = get_df_from_query(query)
     merged_df = pd.merge(df, new_df, left_on="apple_id", right_on="external_id")
+    merged_df = merged_df[
+        [
+            "albumuuid_old",
+            "albumid_old",
+            "artistuuid_old",
+            "album_title",
+            "artist_name",
+            "apple_id",
+            "id",
+            "uuid",
+        ]
+    ]
+    merged_df.columns = [
+        "albumuuid_old",
+        "albumid_old",
+        "artistuuid_old",
+        "album_title",
+        "artist_name",
+        "apple_id",
+        "albumid_new",
+        "uuid_new",
+    ]
     return merged_df
 
 
-if __name__ == "__main__":
-    gsheet_url = "https://docs.google.com/spreadsheets/d/1H0t9xq2vUesfpBQoieJP6TxHbWl8D43s5kiAZ7K3Cgc/edit#gid=978085935"
+def update_albums(gsheet_url):
     df = get_ituneid(gsheet_url)
     id_list = run_crawler(df)
     time.sleep(900)
     query = get_complete_crawl(id_list)
     merged_df = merge_new_old_ids(query=query, df=df)
-    print(merged_df.head())
+    for row in merged_df.index:
+        old_uuid = merged_df.loc[row, "albumuuid_old"]
+        old_id = merged_df.loc[row, "albumid_old"]
+        new_uuid = merged_df.loc[row, "uuid_new"]
+        new_id = merged_df.loc[row, "albumid_new"]
+
+        # set valid artist album
+        db_session.query(Artist_album).filter(Artist_album.album_id == old_id).update(
+            {"valid": int(-94)}, synchronize_session="fetch"
+        )
+
+        # update album_id in chart_album
+        db_session.query(ChartAlbum).filter(ChartAlbum.album_id == old_id).update(
+            {ChartAlbum.album_id: new_id}, synchronize_session="fetch"
+        )
+        c = db_session.query(ChartAlbum).filter(ChartAlbum.album_id==old_id).get()
+        db_session.delete(c)
+
+        db_session.commit()
+
+
+
+if __name__ == "__main__":
+    gsheet_url = "https://docs.google.com/spreadsheets/d/1H0t9xq2vUesfpBQoieJP6TxHbWl8D43s5kiAZ7K3Cgc/edit#gid=978085935"
+    df = get_ituneid(gsheet_url)
+    update_albums(gsheet_url)
