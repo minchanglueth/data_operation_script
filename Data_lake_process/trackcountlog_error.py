@@ -107,8 +107,9 @@ def update_sheet(df, gsheet_url, sheet_index):
         format_with_dataframe(worksheet, df, include_column_header=True)
         return True
     else:
-        worksheet.add_rows(df.shape[0])
-        set_with_dataframe(worksheet, df, include_column_header=False, row=worksheet.row_count+1)
+        dff = get_as_dataframe(worksheet)
+        df_ = pd.concat([df, dff])
+        set_with_dataframe(worksheet, df_, include_column_header=True)
         return True
 
 
@@ -147,7 +148,6 @@ if __name__ == "__main__":
     start = time.time()
     gsheet_url = "https://docs.google.com/spreadsheets/d/1yJS1JjkaoNy2akdEbpTeQnKJgjji-1h9BHnFbyQ6XQc/edit#gid=133198295"
     df = query_datasource()
-    print(df.head())
     update_sheet(df=df, gsheet_url=gsheet_url,sheet_index=0)
     if len(df) > 0:
         update_sheet(df=df, gsheet_url=gsheet_url,sheet_index=1)
@@ -158,8 +158,8 @@ if __name__ == "__main__":
         dff = query_datasource()
         update_sheet(dff, gsheet_url, 0)
         send_slack(dff, gsheet_url)
-    else:
-        send_slack(df, gsheet_url)
+    # else:
+    #     send_slack(df, gsheet_url)
     print(
         "\n --- total time to process %s seconds ---"
         % (time.time() - start)
