@@ -1,7 +1,10 @@
+from functools import update_wrapper
 from gspread_dataframe import get_as_dataframe, set_with_dataframe
+import numpy as np
 from gspread_pandas import Spread, Client
 from gspread_formatting.dataframe import format_with_dataframe
 from sqlalchemy.orm.session import Session
+from sqlalchemy.sql.expression import update
 from google_spreadsheet_api.gspread_utility import gc, get_df_from_gsheet
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
@@ -9,6 +12,7 @@ from sqlalchemy import and_, func
 from core.mysql_database_connection.sqlalchemy_create_engine import (
     SQLALCHEMY_DATABASE_URI,
 )
+from core.crud.sql import insert_ignore
 from core.models.crawlingtask import Crawlingtask
 from core.models.chart_album import ChartAlbum
 from core.models.album_track import Album_Track
@@ -37,7 +41,7 @@ db_session = Session()
 
 
 def get_ituneid(gsheet_url: str):
-    sheet = Spread(spread=gsheet_url, sheet="Allmusic_")
+    sheet = Spread(spread=gsheet_url, sheet="Allmusic")
     df = sheet.sheet_to_df(index=None, header_rows=2)
     df.columns = ["_".join(tup).rstrip("_") for tup in df.columns.values]
     dff = df[(df["Apple ID_Apple ID"].notnull()) & (df["Apple ID_Apple ID"] != "")][
@@ -162,6 +166,7 @@ def merge_new_old_ids(query, df):
         "albumid_new",
         "uuid_new",
     ]
+    merged_df.to_csv("merged_df.csv")
     return merged_df
 
 
@@ -172,28 +177,124 @@ def update_albums(gsheet_url):
     query = get_complete_crawl(id_list)
     merged_df = merge_new_old_ids(query=query, df=df)
     for row in merged_df.index:
-        old_uuid = merged_df.loc[row, "albumuuid_old"]
-        old_id = merged_df.loc[row, "albumid_old"]
-        new_uuid = merged_df.loc[row, "uuid_new"]
-        new_id = merged_df.loc[row, "albumid_new"]
+        old_uuid = str(merged_df.at[row, "albumuuid_old"])
+        old_id = int(merged_df["albumid_old"].loc[row])
+        new_uuid = str(merged_df.at[row, "uuid_new"])
+        new_id = int(merged_df.at[row, "albumid_new"])
 
         # set valid artist album
-        db_session.query(Artist_album).filter(Artist_album.album_id == old_id).update(
-            {"valid": int(-94)}, synchronize_session="fetch"
+        aa = (
+            db_session.query(Artist_album)
+            .filter(Artist_album.album_id == old_id)
+            .update({"valid": -94}, synchronize_session="fetch")
         )
 
         # update album_id in chart_album
         db_session.query(ChartAlbum).filter(ChartAlbum.album_id == old_id).update(
             {ChartAlbum.album_id: new_id}, synchronize_session="fetch"
         )
-        c = db_session.query(ChartAlbum).filter(ChartAlbum.album_id==old_id).get()
-        db_session.delete(c)
+        c_list = (
+            db_session.query(ChartAlbum).filter(ChartAlbum.album_id == old_id).all()
+        )
+        for c in c_list:
+            db_session.delete(c)
 
-        db_session.commit()
+        # update collection_album
+        db_session.query(CollectionAlbum).filter(
+            CollectionAlbum.album_id == old_uuid
+        ).update({CollectionAlbum.album_id: new_uuid}, synchronize_session="fetch")
+        ca_list = (
+            db_session.query(CollectionAlbum)
+            .filter(CollectionAlbum.album_id == old_uuid)
+            .all()
+        )
+        for ca in ca_list:
+            db_session.delete(ca)
 
+        # update related_albums
+        db_session.query(RelatedAlbum).filter(RelatedAlbum.album_id == old_uuid).update(
+            {RelatedAlbum.album_id: new_uuid}, synchronize_session="fetch"
+        )
+        ra_list = (
+            db_session.query(RelatedAlbum)
+            .filter(RelatedAlbum.album_id == old_uuid)
+            .all()
+        )
+        for ra in ra_list:
+            db_session.delete(ra)
+
+        db_session.query(RelatedAlbum).filter(
+            RelatedAlbum.related_album_id == old_uuid
+        ).update({RelatedAlbum.related_album_id: new_uuid}, synchronize_session="fetch")
+        raa_list = (
+            db_session.query(RelatedAlbum)
+            .filter(RelatedAlbum.related_album_id == old_uuid)
+            .all()
+        )
+        for raa in raa_list:
+            db_session.delete(raa)
+
+        # update theme_album
+        db_session.query(ThemeAlbum).filter(ThemeAlbum.album_id == old_id).update(
+            {"album_id": new_uuid, "valid": -94}, synchronize_session="fetch"
+        )
+
+        # update urimapper
+        db_session.query(URIMapper).filter(URIMapper.entity_id == old_uuid).update(
+            {"entity_id": new_uuid}, synchronize_session=False
+        )
+
+        # update report autocrawler top 100
+        update_report = (
+            db_session.query(ReportAutoCrawlerTop100Album.ext)
+            .filter(
+                func.json_extract(ReportAutoCrawlerTop100Album.ext, "$.album_uuid")
+                == old_uuid
+            ).all()
+        )
+        for u in update_report:
+            u.ext["album_uuid"] = new_uuid
+
+        # update sg_likes
+        db_session.query(SgLikes).filter(SgLikes.entity_uuid == old_uuid).update(
+            {SgLikes.entity_uuid: new_uuid}, synchronize_session="fetch"
+        )
+
+        # update album_contributors
+        db_session.query(AlbumContributor).filter(
+            AlbumContributor.album_id == old_uuid
+        ).update({AlbumContributor.album_id: new_uuid}, synchronize_session="fetch")
+
+        # update user_narratives
+        db_session.query(UserNarrative).filter(
+            UserNarrative.entity_uuid == old_uuid
+        ).update({UserNarrative.entity_uuid: new_uuid}, synchronize_session="fetch")
+
+        # update albums
+        info = (
+            db_session.query(Album.info)
+            .filter(Album.id == old_uuid)
+            .order_by(Album.updated_at.desc())
+            .first()
+        )
+        db_session.query(Album).filter(Album.uuid==new_uuid).update({Album.info: info}, synchronize_session="fetch")
+        db_session.query(Album).filter(Album.uuid == old_uuid).update(
+            {"valid": -94}, synchronize_session="fetch"
+        )
+        db_session.query(Album).filter(Album.uuid == new_uuid).update(
+            {"valid": 1}, synchronize_session="fetch"
+        )
+        db_session.query(ItunesRelease).filter(
+            ItunesRelease.album_uuid == old_uuid
+        ).update({"valid": -94}, synchronize_session="fetch")
+        db_session.query(Artist_album).filter(
+            Artist_album.album_id == old_id
+        ).update({"valid": -94}, synchronize_session="fetch")
+
+    db_session.commit()
 
 
 if __name__ == "__main__":
     gsheet_url = "https://docs.google.com/spreadsheets/d/1H0t9xq2vUesfpBQoieJP6TxHbWl8D43s5kiAZ7K3Cgc/edit#gid=978085935"
-    df = get_ituneid(gsheet_url)
     update_albums(gsheet_url)
+

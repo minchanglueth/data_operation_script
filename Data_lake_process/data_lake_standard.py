@@ -290,7 +290,7 @@ class YoutubeWorking:
                 filter_df = (
                     df[
                         (
-                            (df["memo"] == "not ok") | (df["memo"] == "added")
+                            (df["memo"] == "not found") | (df["memo"] == "added")
                         )  # filter df by conditions
                         & (df["url_to_add"].notnull())
                         & (df["url_to_add"] != "")
@@ -305,7 +305,7 @@ class YoutubeWorking:
                 filter_df = (
                     df[
                         (
-                            (df["memo"] == "not ok") | (df["memo"] == "added")
+                            (df["memo"] == "not found") | (df["memo"] == "added")
                         )  # filter df by conditions
                         & (df["url_to_add"].notnull())
                         & (df["url_to_add"] != "")
@@ -890,10 +890,10 @@ if __name__ == "__main__":
         # "https://docs.google.com/spreadsheets/d/1ExsBZA3043PKySiG1T4U9domUeUyn3j9bLi29XjgThY/edit#gid=218846379",
         # "https://docs.google.com/spreadsheets/d/1Qw5zuuVKSbU-W3Pe0ORAhuNGrY2JmzyAudYFghFy6HU/edit#gid=1309472844",
         # "https://docs.google.com/spreadsheets/d/1NaNlovlGHg_NDyP6zcxH1eGxV7M6jxI4ZCdZX263_C8/edit#gid=1202991154",
-        "https://docs.google.com/spreadsheets/d/1ZUzx1smeyIKD4PtQ-hhT1kbPSTGRdu8I8NG1uvzcWr4/edit#gid=1373813396"
+        "https://docs.google.com/spreadsheets/d/1TefQkARzyMfUTVyHU-CZjON8lLgCo_2nzqjsZzOG04Q/edit#gid=534182420"
     ]
-    sheet_name_ = SheetNames.MP4_SHEET_NAME
-    page_type_ = PageType.ArtistPage
+    sheet_name_ = SheetNames.MP3_SHEET_NAME
+    page_type_ = PageType.Contribution
     pre_valid = ""
 
     control_flow = ControlFlow(
@@ -907,7 +907,7 @@ if __name__ == "__main__":
     # control_flow.pre_valid_()
 
     # check_box:
-    # control_flow.check_box()
+    control_flow.check_box()
 
     # observe:
     # k = control_flow.observe()
@@ -920,7 +920,7 @@ if __name__ == "__main__":
     # control_flow.crawl()
 
     # checking
-    control_flow.checking()
+    # control_flow.checking()
 
     # update d9
     # control_flow.update_d9()
