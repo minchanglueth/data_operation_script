@@ -617,17 +617,14 @@ def automate_checking_youtube_crawler_status(
 ):
     # count = 0
     # while True and count < 300:
-        # print(count)
+    # print(count)
     checking_accuracy_result = checking_youtube_crawler_status(
         df=filter_df, format_id=format_id
     )
     gsheet_infos = list(set(checking_accuracy_result.gsheet_info.tolist()))
     result = checking_accuracy_result[
-        ~checking_accuracy_result["status"].isin(
-            ["complete", "incomplete", "missing"]
-        )
+        ~checking_accuracy_result["status"].isin(["complete", "incomplete", "missing"])
     ].status
-    print(result)
     if len(result) == 0:
         for gsheet_info in gsheet_infos:
             checking_accuracy_result_ = checking_accuracy_result[
