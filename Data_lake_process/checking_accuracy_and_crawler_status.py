@@ -555,110 +555,117 @@ def checking_youtube_crawler_status(df: object, format_id: str):
     df["status"] = ""
     df["crawlingtask_id"] = ""
     gsheet_infos = list(set(df.gsheet_info.tolist()))
-    gsheet_info = gsheet_infos[0]
-    gsheet_name = get_key_value_from_gsheet_info(
-        gsheet_info=gsheet_info, key="gsheet_name"
+    empty_df = pd.DataFrame(
+        columns=["index", "check", "status", "crawlingtask_id", "gsheet_info"]
     )
-    sheet_name = get_key_value_from_gsheet_info(
-        gsheet_info=gsheet_info, key="sheet_name"
-    )
-    PIC_taskdetail = f"{gsheet_name}_{sheet_name}"
-    track_id_list = df[df.track_id.notnull()]["track_id"].values.tolist()
-    db_crawlingtask = get_df_from_query(
-        get_youtube_crawlingtask_info(
-            track_id=track_id_list, PIC=PIC_taskdetail, format_id=format_id
+    for gsheet_info in gsheet_infos:
+        df_ = df[df.gsheet_info == gsheet_info]
+        gsheet_name = get_key_value_from_gsheet_info(
+            gsheet_info=gsheet_info, key="gsheet_name"
         )
-    )
-    db_crawlingtask.columns = [
-        "crawlingtask_id",
-        "objectid",
-        "db_url",
-        "when_exists",
-        "status",
-        "created_at",
-    ]
-    db_crawlingtask = db_crawlingtask.sort_values(
-        "created_at", ascending=False
-    ).drop_duplicates(subset="objectid")
-    db_crawlingtask.db_url = db_crawlingtask.db_url.str.replace('"', "")
-    dff = pd.merge(df, db_crawlingtask, left_on="track_id", right_on="objectid")
+        sheet_name = get_key_value_from_gsheet_info(
+            gsheet_info=gsheet_info, key="sheet_name"
+        )
+        PIC_taskdetail = f"{gsheet_name}_{sheet_name}"
+        track_id_list = df_[df_.track_id.notnull()]["track_id"].values.tolist()
+        db_crawlingtask = get_df_from_query(
+            get_youtube_crawlingtask_info(
+                track_id=track_id_list, PIC=PIC_taskdetail, format_id=format_id
+            )
+        )
+        db_crawlingtask.columns = [
+            "crawlingtask_id",
+            "objectid",
+            "db_url",
+            "when_exists",
+            "status",
+            "created_at",
+        ]
+        db_crawlingtask = db_crawlingtask.sort_values(
+            "created_at", ascending=False
+        ).drop_duplicates(subset="objectid")
+        db_crawlingtask.db_url = db_crawlingtask.db_url.str.replace('"', "")
+        dff = pd.merge(df_, db_crawlingtask, left_on="track_id", right_on="objectid")
 
-    def check(row):
-        if row["db_url"] not in (None, np.nan):
-            if row["url_to_add"] == row["db_url"]:
-                return True
+        def check(row):
+            if row["db_url"] not in (None, np.nan):
+                if row["url_to_add"] == row["db_url"]:
+                    return True
+                else:
+                    return False
             else:
-                return False
-        else:
-            return "missing"
+                return "missing"
 
-    dff["check"] = dff.apply(check, axis=1)
-    dff = dff.fillna(value={"crawlingtask_id_y": "missing", "status_y": "missing"})
-    columns_to_get = [
-        "index",
-        "check",
-        "status_y",
-        "crawlingtask_id_y",
-    ]
-    dff = dff[columns_to_get]
-    dff.columns = [
-        "index",
-        "check",
-        "status",
-        "crawlingtask_id",
-    ]
-    return dff
+        dff["check"] = dff.apply(check, axis=1)
+        dff = dff.fillna(value={"crawlingtask_id_y": "missing", "status_y": "missing"})
+        columns_to_get = [
+            "index",
+            "check",
+            "status_y",
+            "crawlingtask_id_y",
+            "gsheet_info",
+        ]
+        dff = dff[columns_to_get]
+        dff.columns = ["index", "check", "status", "crawlingtask_id", "gsheet_info"]
+        empty_df = empty_df.append(dff, ignore_index=True)
+
+    return empty_df
 
 
 def automate_checking_youtube_crawler_status(
     original_df: object, filter_df: object, format_id: str
 ):
-    gsheet_infos = list(set(filter_df.gsheet_info.tolist()))
-    count = 0
-    while True and count < 300:
-        checking_accuracy_result = checking_youtube_crawler_status(
-            df=filter_df, format_id=format_id
+    # count = 0
+    # while True and count < 300:
+        # print(count)
+    checking_accuracy_result = checking_youtube_crawler_status(
+        df=filter_df, format_id=format_id
+    )
+    gsheet_infos = list(set(checking_accuracy_result.gsheet_info.tolist()))
+    result = checking_accuracy_result[
+        ~checking_accuracy_result["status"].isin(
+            ["complete", "incomplete", "missing"]
         )
-        result = checking_accuracy_result[
-            ~checking_accuracy_result["status"].isin(
-                ["complete", "incomplete", "missing"]
+    ].status
+    print(result)
+    if len(result) == 0:
+        for gsheet_info in gsheet_infos:
+            checking_accuracy_result_ = checking_accuracy_result[
+                checking_accuracy_result.gsheet_info == gsheet_info
+            ].copy()
+            original_df_ = original_df[original_df.gsheet_info == gsheet_info].copy()
+            gsheet_name = get_key_value_from_gsheet_info(
+                gsheet_info=gsheet_info, key="gsheet_name"
             )
-        ].status
-        if len(result) == 0:
-            for gsheet_info in gsheet_infos:
-                gsheet_name = get_key_value_from_gsheet_info(
-                    gsheet_info=gsheet_info, key="gsheet_name"
-                )
-                sheet_name = get_key_value_from_gsheet_info(
-                    gsheet_info=gsheet_info, key="sheet_name"
-                )
-                url = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key="url")
-                print(
-                    Fore.LIGHTYELLOW_EX
-                    + f"File: {gsheet_name}, sheet_name: {sheet_name} has been crawled complete already"
-                    + Style.RESET_ALL
-                )
-                # print(checking_accuracy_result)
-                updated_column = ["check", "status", "crawlingtask_id"]
-                merge_df = original_df.merge(
-                    checking_accuracy_result[
-                        ["check", "status", "crawlingtask_id", "index"]
-                    ],
-                    left_index=True,
-                    right_on="index",
-                    how="left",
-                ).fillna(value="")
-                update_value_at_last_column(
-                    df_to_update=merge_df[updated_column],
-                    gsheet_id=get_gsheet_id_from_url(url=url),
-                    sheet_name=sheet_name,
-                )
+            sheet_name = get_key_value_from_gsheet_info(
+                gsheet_info=gsheet_info, key="sheet_name"
+            )
+            url = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key="url")
+            print(
+                Fore.LIGHTYELLOW_EX
+                + f"File: {gsheet_name}, sheet_name: {sheet_name} has been crawled complete already"
+                + Style.RESET_ALL
+            )
+            updated_column = ["check", "status", "crawlingtask_id"]
+            merge_df = original_df_.merge(
+                checking_accuracy_result_[
+                    ["check", "status", "crawlingtask_id", "index"]
+                ],
+                left_index=True,
+                right_on="index",
+                how="left",
+            ).fillna(value="")
+            update_value_at_last_column(
+                df_to_update=merge_df[updated_column],
+                gsheet_id=get_gsheet_id_from_url(url=url),
+                sheet_name=sheet_name,
+            )
 
-            break
-        else:
-            count += 1
-            time.sleep(2)
-            print(count, "-----", result)
+            # break
+        # else:
+        #     count += 1
+        #     time.sleep(2)
+        #     print(count, "-----", result)
 
 
 if __name__ == "__main__":
