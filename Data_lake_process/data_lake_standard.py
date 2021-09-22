@@ -886,13 +886,10 @@ if __name__ == "__main__":
     with open(query_path, "w") as f:
         f.truncate()
     urls = [
-        # "https://docs.google.com/spreadsheets/d/1ExsBZA3043PKySiG1T4U9domUeUyn3j9bLi29XjgThY/edit#gid=2003688570",
-        # "https://docs.google.com/spreadsheets/d/1ExsBZA3043PKySiG1T4U9domUeUyn3j9bLi29XjgThY/edit#gid=218846379",
-        # "https://docs.google.com/spreadsheets/d/1Qw5zuuVKSbU-W3Pe0ORAhuNGrY2JmzyAudYFghFy6HU/edit#gid=1309472844",
-        # "https://docs.google.com/spreadsheets/d/1NaNlovlGHg_NDyP6zcxH1eGxV7M6jxI4ZCdZX263_C8/edit#gid=1202991154",
-        "https://docs.google.com/spreadsheets/d/1ZUzx1smeyIKD4PtQ-hhT1kbPSTGRdu8I8NG1uvzcWr4/edit#gid=1373813396"
+        "https://docs.google.com/spreadsheets/d/1SAgurpVss13lTtveFtWWISSVmYiMhRZsfnJvoe1VJv0/edit#gid=1942196740",
+        "https://docs.google.com/spreadsheets/d/1ZUzx1smeyIKD4PtQ-hhT1kbPSTGRdu8I8NG1uvzcWr4/edit?pli=1#gid=1373813396"
     ]
-    sheet_name_ = SheetNames.MP4_SHEET_NAME
+    sheet_name_ = SheetNames.MP3_SHEET_NAME
     page_type_ = PageType.ArtistPage
     pre_valid = ""
 
