@@ -1,3 +1,4 @@
+from http import server
 import string
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -113,7 +114,7 @@ def update_value(list_result: list, grid_range_to_update: str, gsheet_id: str):
         .execute()
     )
     print(
-        f"\ncomplete update data, gsheet_id: {gsheet_id}, sheet_name: {grid_range_to_update}"
+        f"\ncomplete update data, gsheet_id: {gsheet_id}, sheet_name: {grid_range_to_update}\n"
     )
 
 
@@ -302,6 +303,31 @@ def get_gsheet_column(columns_to_update, worksheet_columns, position):
     else:
         return f"B{string.ascii_uppercase[(column_index - 52)]}"
 
+def getindex_by_columnname(colName, gsheet_id, sheet_name):
+    data = gspread_values(gsheet_id, sheet_name)
+    if colName in data[0]:
+        column_index = data[0].index(colName)
+        return column_index
+    else:
+        column_index = None
+        return column_index
+        
+def delete_columns(grid_range_to_update: str, gsheet_id: str, colName: str):
+    sheet_id = get_sheet_id_from_gsheet_id_and_sheet_name(gsheet_id, grid_range_to_update)
+    column_index = getindex_by_columnname(colName, gsheet_id, grid_range_to_update)
+    if column_index != None:
+        try:
+            request_body = {"requests": [{"deleteDimension": {"range":{"sheetId": sheet_id, "dimension": "COLUMNS", "startIndex": column_index, "endIndex": column_index + 1}}}]}
+
+            response = (
+                service()
+                .spreadsheets()
+                .batchUpdate(spreadsheetId=gsheet_id, body=request_body)
+                .execute()
+            )
+            return response
+        except Exception as e:
+            print(e)
 
 if __name__ == "__main__":
     pd.set_option(

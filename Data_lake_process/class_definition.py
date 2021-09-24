@@ -92,48 +92,85 @@ class PageType:
 
 
 class Page(object):
-    def __init__(self, url: str):
+    def __init__(self, url: str, action: object = None):
         self.gsheet_id = get_gsheet_id_from_url(url=url)
         self.url = url
+        self.action = action
         self.page_name = get_gsheet_name(gsheet_id=self.gsheet_id)
-        self.sheet_name_type = self.SheetNameType(url=self.url)
+        self.sheet_name_type = self.SheetNameType(url=self.url, action=self.action )
 
     class SheetNameType:
-        def __init__(self, url: str):
+        def __init__(self, url: str,  action: object = None):
             gsheet_id = get_gsheet_id_from_url(url=url)
             sheet_names = get_list_of_sheet_title(gsheet_id=gsheet_id)
             if "MP_3" in sheet_names:
-                self.MP3_SHEET_NAME = {
-                    "sheet_name": "MP_3",
-                    "fomatid": DataSourceFormatMaster.FORMAT_ID_MP3_FULL,
-                    "column_name": [
-                        "track_id",
-                        "memo",
-                        "mp3_link",
-                        "url_to_add",
-                        "type",
-                        "checking_mp3",
-                        "already_existed",
-                        "is_released",
-                        "assignee",
-                    ],
-                }
+                if action == 'crawling':
+                    self.MP3_SHEET_NAME = {
+                        "sheet_name": "MP_3",
+                        "fomatid": DataSourceFormatMaster.FORMAT_ID_MP3_FULL,
+                        "column_name": [
+                            "track_id",
+                            "memo",
+                            "mp3_link",
+                            "url_to_add",
+                            "type",
+                            "checking_mp3",
+                            "already_existed",
+                            "is_released",
+                            "assignee",
+                            "crawlingtask_id",
+                        ],
+                    }
+                else:
+                    self.MP3_SHEET_NAME = {
+                        "sheet_name": "MP_3",
+                        "fomatid": DataSourceFormatMaster.FORMAT_ID_MP3_FULL,
+                        "column_name": [
+                            "track_id",
+                            "memo",
+                            "mp3_link",
+                            "url_to_add",
+                            "type",
+                            "checking_mp3",
+                            "already_existed",
+                            "is_released",
+                            "assignee",
+                        ],
+                    }
             if "MP_4" in sheet_names:
-                self.MP4_SHEET_NAME = {
-                    "sheet_name": "MP_4",
-                    "fomatid": DataSourceFormatMaster.FORMAT_ID_MP4_FULL,
-                    "column_name": [
-                        "track_id",
-                        "memo",
-                        "mp4_link",
-                        "url_to_add",
-                        "checking_mp4",
-                        "already_existed",
-                        "is_released",
-                        "verified",
-                        "assignee",
-                    ],
-                }
+                if action == 'crawling':
+                    self.MP4_SHEET_NAME = {
+                        "sheet_name": "MP_4",
+                        "fomatid": DataSourceFormatMaster.FORMAT_ID_MP4_FULL,
+                        "column_name": [
+                            "track_id",
+                            "memo",
+                            "mp4_link",
+                            "url_to_add",
+                            "checking_mp4",
+                            "already_existed",
+                            "is_released",
+                            "verified",
+                            "assignee",
+                            "crawlingtask_id",
+                        ],
+                    }
+                else:
+                    self.MP4_SHEET_NAME = {
+                        "sheet_name": "MP_4",
+                        "fomatid": DataSourceFormatMaster.FORMAT_ID_MP4_FULL,
+                        "column_name": [
+                            "track_id",
+                            "memo",
+                            "mp4_link",
+                            "url_to_add",
+                            "checking_mp4",
+                            "already_existed",
+                            "is_released",
+                            "verified",
+                            "assignee",
+                        ],
+                    }
             if "Version_done" in sheet_names:
                 self.VERSION_SHEET_NAME = {
                     "sheet_name": "Version_done",
@@ -308,7 +345,7 @@ class Page(object):
             "gsheet_id": f"{self.gsheet_id}",
             "gsheet_name": f"{get_gsheet_name(gsheet_id=self.gsheet_id)}",
             "sheet_name": f"{sheet_info.get('sheet_name')}",
-            "page_type": "top_single",
+            # "page_type": "top_single",
             "page_priority": page_priority,
         }
         df["gsheet_info"] = df.apply(lambda x: json.dumps(info), axis=1)
@@ -319,7 +356,7 @@ class Page(object):
 # SheetNameType = Page.SheetNameType
 
 
-def merge_file(sheet_name: str, urls: list, page_type: object = None):
+def merge_file(sheet_name: str, urls: list, page_type: object = None, action: object = None):
     # Step 1: remove duplicate url
     url_reformats = list(
         set(
@@ -335,7 +372,10 @@ def merge_file(sheet_name: str, urls: list, page_type: object = None):
     df = pd.DataFrame()
     for url in url_reformats:
         try:
-            page = Page(url=url)
+            if action == 'crawling':
+                page = Page(url=url,action="crawling")
+            else:
+                page = Page(url=url)
             sheet_info = getattr(page.sheet_name_type, sheet_name)
             df_ = page.media_file(sheet_info=sheet_info, page_priority=priority)
             df = df.append(df_, ignore_index=True)

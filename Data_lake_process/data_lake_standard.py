@@ -268,57 +268,73 @@ class YoutubeWorking:
         original_file_ = merge_file(
             sheet_name=sheet_name, urls=urls, page_type=page_type
         )
+        original_file_for_crawling = merge_file(
+            sheet_name=sheet_name, urls=urls, page_type=page_type, action="crawling"
+        )
         if original_file_.empty:
             print("original_file is empty")
             pass
         else:
             self.original_file = original_file_
+            self.original_file_for_crawling = original_file_for_crawling
             self.sheet_name = sheet_name
             self.page_type = page_type
 
     def check_box(self):
         df = self.original_file
-        youtube_check_box(
+        youtube_check_box_result = youtube_check_box(
             page_name=getattr(self.page_type, "name"), df=df, sheet_name=self.sheet_name
         )
-        return youtube_check_box
+        return youtube_check_box_result
 
-    def youtube_filter(self):
-        if self.check_box():
+    def youtube_filter(self, action: object = None):
+        self.check_box()
+        if action == "crawling":
+            df = self.original_file_for_crawling
+        else:
             df = self.original_file
-            if self.sheet_name == SheetNames.MP3_SHEET_NAME:
-                filter_df = (
-                    df[
-                        (
-                            (df["memo"] == "not ok") | (df["memo"] == "added")
-                        )  # filter df by conditions
-                        & (df["url_to_add"].notnull())
-                        & (df["url_to_add"] != "")
-                    ]
-                    .drop_duplicates(
-                        subset=["track_id", "url_to_add", "type", "gsheet_info"],
-                        keep="first",
-                    )
-                    .reset_index()
+        if self.sheet_name == SheetNames.MP3_SHEET_NAME:
+            filter_df = (
+                df[
+                    (
+                        (df["memo"] == "not ok") | (df["memo"] == "added")
+                    )  # filter df by conditions
+                    & (df["url_to_add"].notnull())
+                    & (df["url_to_add"] != "")
+                ]
+                .drop_duplicates(
+                    subset=["track_id", "url_to_add", "type", "gsheet_info"],
+                    keep="first",
                 )
-            elif self.sheet_name == SheetNames.MP4_SHEET_NAME:
-                filter_df = (
-                    df[
-                        (
-                            (df["memo"] == "not ok") | (df["memo"] == "added")
-                        )  # filter df by conditions
-                        & (df["url_to_add"].notnull())
-                        & (df["url_to_add"] != "")
-                    ]
-                    .drop_duplicates(
-                        subset=["track_id", "url_to_add", "gsheet_info"], keep="first"
-                    )
-                    .reset_index()
+                .reset_index()
+            )
+        elif self.sheet_name == SheetNames.MP4_SHEET_NAME:
+            filter_df = (
+                df[
+                    (
+                        (df["memo"] == "not ok") | (df["memo"] == "added")
+                    )  # filter df by conditions
+                    & (df["url_to_add"].notnull())
+                    & (df["url_to_add"] != "")
+                ]
+                .drop_duplicates(
+                    subset=["track_id", "url_to_add", "gsheet_info"], keep="first"
                 )
-            return filter_df
+                .reset_index()
+            )
+        return filter_df
 
     def crawl_mp3_mp4_youtube_datalake(self):
-        df = self.youtube_filter()
+        if self.check_box() == True:
+            df = self.youtube_filter(action="crawling")
+            df = df[df["crawlingtask_id"]=="missing"]
+            if df.empty:
+                print(Fore.LIGHTBLUE_EX + f"Already finished crawling, no crawlingtasks generated" + Style.RESET_ALL)
+            else:
+                print(Fore.LIGHTBLUE_EX + f"Crawlingtasks generated" + Style.RESET_ALL)
+        else:
+            print(Fore.LIGHTRED_EX + f"No crawlingtasks generated" + Style.RESET_ALL)
+            df = pd.DataFrame()
         if self.sheet_name == SheetNames.MP3_SHEET_NAME:
             crawl_youtube_mp3(df=df)
         elif self.sheet_name == SheetNames.MP4_SHEET_NAME:
@@ -886,8 +902,12 @@ if __name__ == "__main__":
     with open(query_path, "w") as f:
         f.truncate()
     urls = [
-        "https://docs.google.com/spreadsheets/d/1SAgurpVss13lTtveFtWWISSVmYiMhRZsfnJvoe1VJv0/edit#gid=1942196740",
-        "https://docs.google.com/spreadsheets/d/1ZUzx1smeyIKD4PtQ-hhT1kbPSTGRdu8I8NG1uvzcWr4/edit?pli=1#gid=1373813396"
+        # "https://docs.google.com/spreadsheets/d/1SAgurpVss13lTtveFtWWISSVmYiMhRZsfnJvoe1VJv0/edit#gid=1942196740",
+        # "https://docs.google.com/spreadsheets/d/1ZUzx1smeyIKD4PtQ-hhT1kbPSTGRdu8I8NG1uvzcWr4/edit?pli=1#gid=1373813396",
+        # "https://docs.google.com/spreadsheets/d/1fqKT-5lrnaJ_05kZnECa5nMY9lN9sq3c05Lh14Gdm1c/edit#gid=534182420",
+        "https://docs.google.com/spreadsheets/d/1fqKT-5lrnaJ_05kZnECa5nMY9lN9sq3c05Lh14Gdm1c/edit#gid=534182420",
+        # "https://docs.google.com/spreadsheets/d/1TefQkARzyMfUTVyHU-CZjON8lLgCo_2nzqjsZzOG04Q/edit#gid=534182420",
+        # "https://docs.google.com/spreadsheets/d/1ZUzx1smeyIKD4PtQ-hhT1kbPSTGRdu8I8NG1uvzcWr4/edit#gid=1373813396"
     ]
     sheet_name_ = SheetNames.MP3_SHEET_NAME
     page_type_ = PageType.ArtistPage
@@ -913,11 +933,14 @@ if __name__ == "__main__":
     # similarity:
     # control_flow.similarity()
 
-    # crawl:
-    # control_flow.crawl()
+    # crawl: 
+    # Lưu ý: dùng câu lệnh checking() cùng crawl()
+    control_flow.checking()
+    time.sleep(5)
+    control_flow.crawl()
 
     # checking
-    control_flow.checking()
+    # control_flow.checking()
 
     # update d9
     # control_flow.update_d9()
