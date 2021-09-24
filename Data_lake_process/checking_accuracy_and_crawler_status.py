@@ -25,10 +25,12 @@ from support_function.slack_function.slack_message import (
 )
 from crawl_itune.functions import get_itune_id_region_from_itune_url
 from google_spreadsheet_api.function import (
+    get_sheet_id_from_gsheet_id_and_sheet_name,
     update_value,
     update_value_at_last_column,
     is_a_in_x,
     get_gsheet_column,
+    delete_columns,
 )
 from google_spreadsheet_api.gspread_utility import get_worksheet
 from colorama import Fore, Style
@@ -560,6 +562,7 @@ def checking_youtube_crawler_status(df: object, format_id: str):
     )
     for gsheet_info in gsheet_infos:
         df_ = df[df.gsheet_info == gsheet_info]
+        df_["trackid_url"] = df_["track_id"] + df_["url_to_add"] # để merge dựa vào cả điều kiện trackid và url
         gsheet_name = get_key_value_from_gsheet_info(
             gsheet_info=gsheet_info, key="gsheet_name"
         )
@@ -585,14 +588,13 @@ def checking_youtube_crawler_status(df: object, format_id: str):
             "created_at", ascending=False
         ).drop_duplicates(subset="objectid")
         db_crawlingtask.db_url = db_crawlingtask.db_url.str.replace('"', "")
-        dff = pd.merge(df_, db_crawlingtask, left_on="track_id", right_on="objectid")
+        db_crawlingtask["trackid_dburl"] = db_crawlingtask["objectid"] + db_crawlingtask["db_url"] # để merge dựa vào cả điều kiện trackid và url
+        dff = pd.merge(df_, db_crawlingtask, how="outer", left_on="trackid_url", right_on="trackid_dburl") # thêm outer để tìm những row nào chưa được insert vào crawlingtasks
+        dff = dff[~dff['gsheet_info'].isin ([None, np.nan])] # loại các TH trong bảng crawlingtasks có những TH ko khớp với spreadsheet dẫn đến ko có spreadsheetid ở dff
 
         def check(row):
-            if row["db_url"] not in (None, np.nan):
-                if row["url_to_add"] == row["db_url"]:
-                    return True
-                else:
-                    return False
+            if row["crawlingtask_id_y"] not in (None, np.nan):
+                return True
             else:
                 return "missing"
 
@@ -640,7 +642,13 @@ def automate_checking_youtube_crawler_status(
             url = get_key_value_from_gsheet_info(gsheet_info=gsheet_info, key="url")
             print(
                 Fore.LIGHTYELLOW_EX
-                + f"File: {gsheet_name}, sheet_name: {sheet_name} has been crawled complete already"
+                + f"File: {gsheet_name}, sheet_name: {sheet_name}, inserted crawlingtask(s) have been finished crawling already"
+                + Style.RESET_ALL
+            )
+            missing_crawlingtasks = len(checking_accuracy_result_[checking_accuracy_result_["status"]== "missing"])
+            print(
+                Fore.LIGHTRED_EX
+                + f"There are {missing_crawlingtasks} row(s) have NOT been inserted to crawlingtasks. Please check row(s) with 'missing' crawlingtask_id"
                 + Style.RESET_ALL
             )
             updated_column = ["check", "status", "crawlingtask_id"]
@@ -652,12 +660,15 @@ def automate_checking_youtube_crawler_status(
                 right_on="index",
                 how="left",
             ).fillna(value="")
+            for colName in ["check","status","crawlingtask_id"]:
+                delete_columns(grid_range_to_update=sheet_name, gsheet_id=get_gsheet_id_from_url(url=url), colName=colName)
             update_value_at_last_column(
                 df_to_update=merge_df[updated_column],
                 gsheet_id=get_gsheet_id_from_url(url=url),
                 sheet_name=sheet_name,
             )
-
+    else:
+        print("crawling not finished, please come back later!")
             # break
         # else:
         #     count += 1
