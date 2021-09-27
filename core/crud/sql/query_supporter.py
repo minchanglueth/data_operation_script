@@ -312,15 +312,14 @@ def get_youtube_crawlingtask_info(track_id: str, PIC: str, format_id: str):
                 "when_exists"
             ),
             Crawlingtask.status,
+            Crawlingtask.priority
         )
         .filter(
             Crawlingtask.objectid.in_(track_id),
             Crawlingtask.actionid == V4CrawlingTaskActionMaster.DOWNLOAD_VIDEO_YOUTUBE,
             func.json_extract(Crawlingtask.taskdetail, "$.PIC") == PIC,
             func.json_extract(Crawlingtask.taskdetail, "$.data_source_format_id")
-            == format_id,
-            Crawlingtask.priority != 10000,
-            Crawlingtask.status.isnot(None),
+            == format_id
         )
         .group_by(Crawlingtask.id)
         .subquery()
@@ -335,6 +334,7 @@ def get_youtube_crawlingtask_info(track_id: str, PIC: str, format_id: str):
             "when_exists"
         ),
         Crawlingtask.status,
+        Crawlingtask.priority,
         Crawlingtask.created_at,
     ).join(
         subq,
@@ -471,8 +471,8 @@ if __name__ == "__main__":
     db_crawlingtask = get_youtube_crawlingtask_info(
         track_id=trackid, PIC=pic, format_id=format_id
     )
-    k = get_compiled_raw_mysql(db_crawlingtask)
-    print(k)
+    k = get_df_from_query(db_crawlingtask)
+    print(k.head())
     # joy_xinh = get_df_from_query(db_crawlingtasks)
     # print(joy_xinh)
 
