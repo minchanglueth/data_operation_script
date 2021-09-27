@@ -582,6 +582,7 @@ def checking_youtube_crawler_status(df: object, format_id: str):
             "db_url",
             "when_exists",
             "status",
+            "priority",
             "created_at",
         ]
         db_crawlingtask = db_crawlingtask.sort_values(
@@ -598,6 +599,14 @@ def checking_youtube_crawler_status(df: object, format_id: str):
             else:
                 return "missing"
 
+        def check_priority(row):
+            if row["priority"] == 10000:
+                if row["status_y"] not in ("complete", "incomplete"):
+                    return "pending"
+                else:
+                    return row["status_y"]
+
+        dff["status_y"] = dff.apply(check_priority, axis=1)
         dff["check"] = dff.apply(check, axis=1)
         dff = dff.fillna(value={"crawlingtask_id_y": "missing", "status_y": "missing"})
         columns_to_get = [
@@ -617,21 +626,21 @@ def checking_youtube_crawler_status(df: object, format_id: str):
 def automate_checking_youtube_crawler_status(
     original_df: object, filter_df: object, format_id: str
 ):
-    # count = 0
-    # while True and count < 300:
-    # print(count)
+
     checking_accuracy_result = checking_youtube_crawler_status(
         df=filter_df, format_id=format_id
     )
     gsheet_infos = list(set(checking_accuracy_result.gsheet_info.tolist()))
-    result = checking_accuracy_result[
-        ~checking_accuracy_result["status"].isin(["complete", "incomplete", "missing"])
-    ].status
-    if len(result) == 0:
-        for gsheet_info in gsheet_infos:
-            checking_accuracy_result_ = checking_accuracy_result[
-                checking_accuracy_result.gsheet_info == gsheet_info
-            ].copy()
+    for gsheet_info in gsheet_infos:
+        checking_accuracy_result_ = checking_accuracy_result[
+            checking_accuracy_result.gsheet_info == gsheet_info
+        ].copy()
+        result = checking_accuracy_result_[
+            ~checking_accuracy_result_["status"].isin(
+                ["complete", "incomplete", "missing", "pending"]
+            )
+        ].status
+        if len(result) == 0:
             original_df_ = original_df[original_df.gsheet_info == gsheet_info].copy()
             gsheet_name = get_key_value_from_gsheet_info(
                 gsheet_info=gsheet_info, key="gsheet_name"
@@ -667,13 +676,14 @@ def automate_checking_youtube_crawler_status(
                 gsheet_id=get_gsheet_id_from_url(url=url),
                 sheet_name=sheet_name,
             )
-    else:
-        print("crawling not finished, please come back later!")
-            # break
-        # else:
-        #     count += 1
-        #     time.sleep(2)
-        #     print(count, "-----", result)
+        else:
+            print(
+                Fore.LIGHTYELLOW_EX
+                + f"File: {gsheet_name}, sheet_name: {sheet_name} hasn't been crawled completely"
+                + Style.RESET_ALL
+            )
+            time.sleep(10)
+            print(result)
 
 
 if __name__ == "__main__":
