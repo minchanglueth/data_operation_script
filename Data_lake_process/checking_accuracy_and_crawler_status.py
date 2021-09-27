@@ -605,6 +605,8 @@ def checking_youtube_crawler_status(df: object, format_id: str):
                     return "pending"
                 else:
                     return row["status_y"]
+            else:
+                return row["status_y"]
 
         dff["status_y"] = dff.apply(check_priority, axis=1)
         dff["check"] = dff.apply(check, axis=1)
