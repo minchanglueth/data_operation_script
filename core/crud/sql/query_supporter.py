@@ -433,8 +433,8 @@ def get_crawling_result_cy_itunes(pointlogids: list):
         )
         .filter(
             (PointLog.valid == 1),
-            PointLog.id.not_in(get_crawling_result_cy_itunes_nouserid_error_id),
-            PointLog.id.not_in(get_crawling_result_cy_itunes_local_pending_id),
+            PointLog.id.notin_(get_crawling_result_cy_itunes_nouserid_error_id),
+            PointLog.id.notin_(get_crawling_result_cy_itunes_local_pending_id),
             PointLog.id.in_(pointlogids),
         )
         .order_by(PointLog.created_at.asc())
