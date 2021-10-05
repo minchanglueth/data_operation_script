@@ -132,7 +132,7 @@ def get_tracklist_from_album_itune(itune_album_id: str, itune_region: str = "us"
     else:
         #   Step 2: check web url
         web_url = f"https://music.apple.com/{itune_region}/album/{itune_album_id}"
-        print(web_url)
+        print("case validated only web_url: " + web_url)
         web_response = requests.get(web_url)
         if web_response:
             html_content = web_response.content
