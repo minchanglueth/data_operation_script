@@ -1,4 +1,5 @@
 from http import server
+from re import I
 import string
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -303,31 +304,67 @@ def get_gsheet_column(columns_to_update, worksheet_columns, position):
     else:
         return f"B{string.ascii_uppercase[(column_index - 52)]}"
 
-def getindex_by_columnname(colName, gsheet_id, sheet_name):
-    data = gspread_values(gsheet_id, sheet_name)
-    if colName in data[0]:
-        column_index = data[0].index(colName)
-        return column_index
-    else:
-        column_index = None
-        return column_index
-        
-def delete_columns(grid_range_to_update: str, gsheet_id: str, colName: str):
-    sheet_id = get_sheet_id_from_gsheet_id_and_sheet_name(gsheet_id, grid_range_to_update)
-    column_index = getindex_by_columnname(colName, gsheet_id, grid_range_to_update)
-    if column_index != None:
-        try:
-            request_body = {"requests": [{"deleteDimension": {"range":{"sheetId": sheet_id, "dimension": "COLUMNS", "startIndex": column_index, "endIndex": column_index + 1}}}]}
 
-            response = (
-                service()
-                .spreadsheets()
-                .batchUpdate(spreadsheetId=gsheet_id, body=request_body)
-                .execute()
-            )
-            return response
+def delete_columns(sheet_name: str, gsheet_id: str, colNames: list):
+    sheet_id = get_sheet_id_from_gsheet_id_and_sheet_name(gsheet_id, sheet_name)
+    gspread_data = gspread_values(gsheet_id, sheet_name)
+    gspread_column = gspread_data[0]
+    colNames_index = [i for i, x in enumerate(gspread_column) if x in colNames]
+    colNames_index = sorted(colNames_index)
+    # check xem vị trí các cột có nối tiếp nhau ko
+    index_unique = []
+    for i, column_index in enumerate(colNames_index):
+        column_index = column_index - i
+        index_unique.append(column_index)
+    index_unique = list(dict.fromkeys(index_unique))
+
+    if len(index_unique) == 1:  # TH các cột nối tiếp nhau -> delete trong 1 lần
+        try:
+            start_index = colNames_index[0]
+            end_index = start_index + len(colNames_index) + 1
+            request_body = {
+                "requests": [
+                    {
+                        "deleteDimension": {
+                            "range": {
+                                "sheetId": sheet_id,
+                                "dimension": "COLUMNS",
+                                "startIndex": start_index,
+                                "endIndex": end_index,
+                            }
+                        }
+                    }
+                ]
+            }
+            service().spreadsheets().batchUpdate(
+                spreadsheetId=gsheet_id, body=request_body
+            ).execute()
         except Exception as e:
             print(e)
+    elif len(index_unique) > 1:  # TH không nối tiếp nhau -> delete nhiều lần
+        for i, start_index in enumerate(colNames_index):
+            try:
+                start_index = start_index - i
+                request_body = {
+                    "requests": [
+                        {
+                            "deleteDimension": {
+                                "range": {
+                                    "sheetId": sheet_id,
+                                    "dimension": "COLUMNS",
+                                    "startIndex": start_index,
+                                    "endIndex": start_index + 1,
+                                }
+                            }
+                        }
+                    ]
+                }
+                service().spreadsheets().batchUpdate(
+                    spreadsheetId=gsheet_id, body=request_body
+                ).execute()
+            except Exception as e:
+                print(e)
+
 
 if __name__ == "__main__":
     pd.set_option(
