@@ -1,3 +1,5 @@
+from pandas.core.frame import DataFrame
+from sqlalchemy.sql.functions import count
 from Data_lake_process.class_definition import (
     WhenExist,
     PageType,
@@ -32,12 +34,13 @@ from google_spreadsheet_api.function import (
     get_gsheet_column,
     delete_columns,
 )
-from google_spreadsheet_api.gspread_utility import get_worksheet
+from google_spreadsheet_api.gspread_utility import get_worksheet, send_count_report
 from colorama import Fore, Style
 import time
 from core.crud.get_df_from_query import get_df_from_query
 import pandas as pd
 import numpy as np
+from datetime import date
 
 
 def checking_image_youtube_accuracy(df: object, actionid: str):
@@ -687,17 +690,38 @@ def automate_checking_youtube_crawler_status(
                 right_on="index",
                 how="left",
             ).fillna(value="")
-            for colName in ["check", "status", "crawlingtask_id"]:
-                delete_columns(
-                    grid_range_to_update=sheet_name,
-                    gsheet_id=get_gsheet_id_from_url(url=url),
-                    colName=colName,
-                )
+            columns_todelete = ["check", "status", "crawlingtask_id"]
+            delete_columns(
+                sheet_name=sheet_name,
+                gsheet_id=get_gsheet_id_from_url(url=url),
+                colNames=columns_todelete,
+            )
             update_value_at_last_column(
                 df_to_update=merge_df[updated_column],
                 gsheet_id=get_gsheet_id_from_url(url=url),
                 sheet_name=sheet_name,
             )
+            count_crawlingtaskid = len(
+                merge_df[
+                    ~merge_df["crawlingtask_id"].isin([None, "", np.nan, "missing"])
+                ]
+            )
+            report_data = [
+                str(date.today()),
+                gsheet_name,
+                url,
+                sheet_name,
+                count_crawlingtaskid,
+            ]
+            for status in ["complete", "incomplete", "pending", "missing"]:
+                count_status = len(merge_df[merge_df["status"] == status])
+                report_data.append(count_status)
+            send_count_report(
+                sheet_name="artist_page",
+                number_cols=len(report_data),
+                data_to_insert=report_data,
+            )
+
         else:
             print(
                 Fore.LIGHTYELLOW_EX
@@ -708,9 +732,9 @@ def automate_checking_youtube_crawler_status(
             print(result)
 
 
-if __name__ == "__main__":
-    start_time = time.time()
+# if __name__ == "__main__":
+#     start_time = time.time()
 
-    pd.set_option(
-        "display.max_rows", None, "display.max_columns", 30, "display.width", 500
-    )
+#     pd.set_option(
+#         "display.max_rows", None, "display.max_columns", 30, "display.width", 500
+#     )
