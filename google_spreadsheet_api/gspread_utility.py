@@ -63,5 +63,23 @@ def get_gsheet_column(columns_to_update: list, worksheet_columns: list, position
         return f"B{string.ascii_uppercase[(column_index - 51)]}"
 
 
-if __name__ == "__main__":
-    print(string.ascii_uppercase[25])
+def send_count_report(sheet_name: str, number_cols: int, data_to_insert):
+    gsheet_url = "https://docs.google.com/spreadsheets/d/1MHDksbs-RKXhZZ-LRgRhVy_ldAxK8lSzyoJK4sA_Uyo/edit#gid=209567714"
+    sheet = gc.open_by_url(gsheet_url)
+    sh = sheet.worksheet(sheet_name)
+    sheet_df = get_as_dataframe(sh, usecols=list(range(number_cols))).dropna(how="all")
+    add_df = pd.DataFrame([data_to_insert], columns=sheet_df.columns)
+    res = (
+        sheet_df[sheet_df.columns[1:]]
+        .isin(data_to_insert[1:])
+        .all(axis="columns")
+        .any()
+    )  # [1:] là để loại cột Date/created_at khi so sánh sheet_df có chứa dòng data_to_insert ko
+    if res == False:
+        set_with_dataframe(
+            sh, add_df, row=len(sheet_df) + 2, include_column_header=False
+        )
+
+
+# if __name__ == "__main__":
+#     print(string.ascii_uppercase[25])
