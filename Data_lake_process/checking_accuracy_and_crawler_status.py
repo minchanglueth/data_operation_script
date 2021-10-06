@@ -24,6 +24,7 @@ from core.crud.sql.query_supporter import (
 from support_function.slack_function.slack_message import (
     send_message_slack,
     cy_Itunes_plupdate,
+    mp3_mp4_all,
 )
 from crawl_itune.functions import get_itune_id_region_from_itune_url
 from google_spreadsheet_api.function import (
@@ -716,11 +717,16 @@ def automate_checking_youtube_crawler_status(
             for status in ["complete", "incomplete", "pending", "missing"]:
                 count_status = len(merge_df[merge_df["status"] == status])
                 report_data.append(count_status)
-            send_count_report(
+            res = send_count_report(
                 sheet_name="artist_page",
                 number_cols=len(report_data),
                 data_to_insert=report_data,
             )
+            if res == False:
+                message = mp3_mp4_all.format(*report_data[1:])
+                send_message_slack(
+                    "none", "none", "none", "none", message
+                ).send_to_slack_mp3mp4()
 
         else:
             print(
