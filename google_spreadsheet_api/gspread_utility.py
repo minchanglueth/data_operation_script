@@ -79,6 +79,7 @@ def send_count_report(sheet_name: str, number_cols: int, data_to_insert):
         set_with_dataframe(
             sh, add_df, row=len(sheet_df) + 2, include_column_header=False
         )
+    return res
 
 
 # if __name__ == "__main__":
