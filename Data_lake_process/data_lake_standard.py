@@ -60,7 +60,7 @@ from google_spreadsheet_api.function import update_value, update_value_at_last_c
 from Data_lake_process.class_definition import get_gsheet_id_from_url
 from datetime import date
 from Data_lake_process.youtube_similarity import similarity
-from google_spreadsheet_api.gspread_utility import get_worksheet, gc
+from google_spreadsheet_api.gspread_utility import get_worksheet, gc, send_count_report
 from gspread_dataframe import set_with_dataframe, get_as_dataframe
 
 # from support_function.slack_function.slack_message import (
@@ -143,14 +143,14 @@ def query_pandas_to_csv(df: object, column: str):
     f.close()
 
 
-def send_count_report(sheet_name: str, number_cols: int, data_to_insert):
-    gsheet_url = "https://docs.google.com/spreadsheets/d/1MHDksbs-RKXhZZ-LRgRhVy_ldAxK8lSzyoJK4sA_Uyo/edit#gid=209567714"
-    sheet = gc.open_by_url(gsheet_url)
-    sh = sheet.worksheet(sheet_name)
-    sheet_df = get_as_dataframe(sh, usecols=list(range(number_cols))).dropna(how="all")
-    df = pd.DataFrame([data_to_insert], columns=sheet_df.columns)
-    sheet_df = pd.concat([sheet_df, df])
-    set_with_dataframe(sh, sheet_df)
+# def send_count_report(sheet_name: str, number_cols: int, data_to_insert):
+#     gsheet_url = "https://docs.google.com/spreadsheets/d/1MHDksbs-RKXhZZ-LRgRhVy_ldAxK8lSzyoJK4sA_Uyo/edit#gid=209567714"
+#     sheet = gc.open_by_url(gsheet_url)
+#     sh = sheet.worksheet(sheet_name)
+#     sheet_df = get_as_dataframe(sh, usecols=list(range(number_cols))).dropna(how="all")
+#     df = pd.DataFrame([data_to_insert], columns=sheet_df.columns)
+#     sheet_df = pd.concat([sheet_df, df])
+#     set_with_dataframe(sh, sheet_df)
 
 
 class ImageWorking:
@@ -578,9 +578,9 @@ class C11Working:
                 axis=1,
             )
         query_pandas_to_csv(df=df, column="query")
-        data = [str(date.today()), "CY", "itunes_crawlalbum", len(df)]
+        data = [str(date.today()), pre_valid, "CY", "itunes_crawlalbum", len(df)]
         send_count_report(
-            sheet_name="user_contribute", number_cols=4, data_to_insert=data
+            sheet_name="user_contribute", number_cols=5, data_to_insert=data
         )
 
     def checking_c11_crawler_status(self):
@@ -681,9 +681,9 @@ class C11Working:
                 ]
             )
 
-            data = [str(date.today()), "CY", "itunes_verifypl", count]
+            data = [str(date.today()), pre_valid, "CY", "itunes_verifypl", count]
             send_count_report(
-                sheet_name="user_contribute", number_cols=4, data_to_insert=data
+                sheet_name="user_contribute", number_cols=5, data_to_insert=data
             )
 
             print(
@@ -902,11 +902,21 @@ if __name__ == "__main__":
     with open(query_path, "w") as f:
         f.truncate()
     urls = [
-        "https://docs.google.com/spreadsheets/d/1SAgurpVss13lTtveFtWWISSVmYiMhRZsfnJvoe1VJv0/edit#gid=13902732"
+        # "https://docs.google.com/spreadsheets/d/1SAgurpVss13lTtveFtWWISSVmYiMhRZsfnJvoe1VJv0/edit#gid=1942196740",
+        # "https://docs.google.com/spreadsheets/d/1ZUzx1smeyIKD4PtQ-hhT1kbPSTGRdu8I8NG1uvzcWr4/edit?pli=1#gid=1373813396",
+        # "https://docs.google.com/spreadsheets/d/1fqKT-5lrnaJ_05kZnECa5nMY9lN9sq3c05Lh14Gdm1c/edit#gid=534182420",
+        # "https://docs.google.com/spreadsheets/d/1fqKT-5lrnaJ_05kZnECa5nMY9lN9sq3c05Lh14Gdm1c/edit#gid=534182420",
+        # "https://docs.google.com/spreadsheets/d/1TefQkARzyMfUTVyHU-CZjON8lLgCo_2nzqjsZzOG04Q/edit#gid=534182420",
+        # "https://docs.google.com/spreadsheets/d/1ZUzx1smeyIKD4PtQ-hhT1kbPSTGRdu8I8NG1uvzcWr4/edit#gid=1373813396",
+        # "https://docs.google.com/spreadsheets/d/1hi8L4U3ao-sqYUOf_s4K7hxX1tgrLpVRkYrjOCTWThU/edit#gid=1004348326",
+        "https://docs.google.com/spreadsheets/d/1fqKT-5lrnaJ_05kZnECa5nMY9lN9sq3c05Lh14Gdm1c/edit#gid=534182420",
+        "https://docs.google.com/spreadsheets/d/1TefQkARzyMfUTVyHU-CZjON8lLgCo_2nzqjsZzOG04Q/edit#gid=534182420"
+        # "https://docs.google.com/spreadsheets/d/1bBKLbdSAt-_XFZGU1vW9r5UUfvUiVcxUaNHBS9yF1Ro/edit#gid=619806116&fvid=636767639",
+        # "https://docs.google.com/spreadsheets/d/1ZUzx1smeyIKD4PtQ-hhT1kbPSTGRdu8I8NG1uvzcWr4/edit#gid=218846379&fvid=464248548"
     ]
     sheet_name_ = SheetNames.MP3_SHEET_NAME
     page_type_ = PageType.ArtistPage
-    pre_valid = ""
+    pre_valid = "2021-10-01"
 
     control_flow = ControlFlow(
         sheet_name=sheet_name_, urls=urls, page_type=page_type_)
