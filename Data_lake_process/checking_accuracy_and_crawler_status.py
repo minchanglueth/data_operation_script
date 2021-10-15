@@ -1,3 +1,4 @@
+from pandas.core.base import NoNewAttributesMixin
 from pandas.core.frame import DataFrame
 from sqlalchemy.sql.functions import count
 from Data_lake_process.class_definition import (
@@ -35,6 +36,10 @@ from google_spreadsheet_api.function import (
     get_gsheet_column,
     delete_columns,
 )
+from core.crud.sql.datasource import (
+    get_datasourceids_from_youtube_url_and_trackid,
+)
+from itertools import chain
 from google_spreadsheet_api.gspread_utility import get_worksheet, send_count_report
 from colorama import Fore, Style
 import time
@@ -672,16 +677,11 @@ def automate_checking_youtube_crawler_status(
                 + f"File: {gsheet_name}, sheet_name: {sheet_name}, inserted crawlingtask(s) have been finished crawling already"
                 + Style.RESET_ALL
             )
-            missing_crawlingtasks = len(
-                checking_accuracy_result_[
-                    checking_accuracy_result_["status"] == "missing"
-                ]
-            )
-            print(
-                Fore.LIGHTRED_EX
-                + f"There are {missing_crawlingtasks} row(s) have NOT been inserted to crawlingtasks. Please check row(s) with 'missing' crawlingtask_id"
-                + Style.RESET_ALL
-            )
+            # missing_crawlingtasks = len(
+            #     checking_accuracy_result_[
+            #         checking_accuracy_result_["status"] == "missing"
+            #     ]
+            # )
             updated_column = ["check", "status", "crawlingtask_id"]
             merge_df = original_df_.merge(
                 checking_accuracy_result_[
@@ -716,17 +716,59 @@ def automate_checking_youtube_crawler_status(
             ]
             for status in ["complete", "incomplete", "pending", "missing"]:
                 count_status = len(merge_df[merge_df["status"] == status])
+                if status == "missing":
+                    df_noneurl = original_df_[
+                        (original_df_["url_to_add"] == "none")
+                        & (original_df_["memo"] == "not ok")
+                    ]
+                    count_noneurl = len(df_noneurl)
+                    count_status = count_status - count_noneurl
                 report_data.append(count_status)
+            invalid_ds = []
+            for i in range(0, len(merge_df)):
+                if format_id == DataSourceFormatMaster.FORMAT_ID_MP3_FULL:
+                    old_youtube_url = merge_df.iloc[i]["mp3_link"]
+                elif format_id == DataSourceFormatMaster.FORMAT_ID_MP4_FULL:
+                    old_youtube_url = merge_df.iloc[i]["mp4_link"]
+                memo = merge_df.iloc[i]["memo"]
+                track_id = merge_df.iloc[i]["track_id"]
+                new_youtube_url = merge_df.iloc[i]["url_to_add"]
+                if memo == "not ok" and new_youtube_url == "none":
+                    datasourceids = get_datasourceids_from_youtube_url_and_trackid(
+                        youtube_url=old_youtube_url,
+                        trackid=track_id,
+                        formatid=format_id,
+                    ).all()
+                    if datasourceids:
+                        invalid_ds.append(datasourceids)
+            count_invalid = len(invalid_ds)
+            report_data.append(count_invalid)
+
             res = send_count_report(
                 sheet_name="artist_page",
                 number_cols=len(report_data),
                 data_to_insert=report_data,
             )
+            message = mp3_mp4_all.format(*report_data[1:])
+
             if res == False:
-                message = mp3_mp4_all.format(*report_data[1:])
                 send_message_slack(
                     "none", "none", "none", "none", message
-                ).send_to_slack_mp3mp4()
+                ).send_to_slack_mp3mp4(send_slack=True)
+                print(
+                    Fore.LIGHTYELLOW_EX
+                    + "data_report has been updated"
+                    + Style.RESET_ALL
+                )
+            else:
+                send_message_slack(
+                    "none", "none", "none", "none", message
+                ).send_to_slack_mp3mp4(send_slack=False)
+                print(
+                    Fore.LIGHTYELLOW_EX
+                    + "data_report already has the same record"
+                    + Style.RESET_ALL
+                )
 
         else:
             print(
