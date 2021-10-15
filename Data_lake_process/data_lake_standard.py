@@ -288,10 +288,13 @@ class YoutubeWorking:
         return youtube_check_box_result
 
     def youtube_filter(self, action: object = None):
-        self.check_box()
-        if action == "crawling":
+        # self.check_box()
+        if (
+            action == "crawling"
+        ):  # ko cần chạy check_box() nữa vì đã chạy trước đó ở crawl_mp3_mp4_youtube_datalake rồi
             df = self.original_file_for_crawling
         else:
+            self.check_box()
             df = self.original_file
         if self.sheet_name == SheetNames.MP3_SHEET_NAME:
             filter_df = (
@@ -327,9 +330,13 @@ class YoutubeWorking:
     def crawl_mp3_mp4_youtube_datalake(self):
         if self.check_box() == True:
             df = self.youtube_filter(action="crawling")
-            df = df[df["crawlingtask_id"]=="missing"]
+            df = df[df["crawlingtask_id"] == "missing"]
             if df.empty:
-                print(Fore.LIGHTBLUE_EX + f"Already finished crawling, no crawlingtasks generated" + Style.RESET_ALL)
+                print(
+                    Fore.LIGHTBLUE_EX
+                    + f"Already finished crawling, no crawlingtasks generated"
+                    + Style.RESET_ALL
+                )
             else:
                 print(Fore.LIGHTBLUE_EX + f"Crawlingtasks generated" + Style.RESET_ALL)
         else:
@@ -344,8 +351,8 @@ class YoutubeWorking:
 
     def checking_youtube_crawler_status(self):
         print("checking accuracy")
-        original_df = self.original_file
-        filter_df = self.youtube_filter()
+        # original_df = self.original_file
+        # filter_df = self.youtube_filter()
         if self.sheet_name == SheetNames.MP3_SHEET_NAME:
             format_id = DataSourceFormatMaster.FORMAT_ID_MP3_FULL
         elif self.sheet_name == SheetNames.MP4_SHEET_NAME:
@@ -827,10 +834,18 @@ class ControlFlow:
             return image_working.crawl_image_datalake()
 
         elif self.sheet_name in (SheetNames.MP3_SHEET_NAME, SheetNames.MP4_SHEET_NAME):
-            youtube_working = YoutubeWorking(
+            youtube_working_checking = YoutubeWorking(
                 sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type
             )
-            return youtube_working.crawl_mp3_mp4_youtube_datalake()
+            youtube_working_checking.checking_youtube_crawler_status()
+            print("\nnow checking for crawling...")
+            time.sleep(15)
+            youtube_working_crawl = YoutubeWorking(
+                sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type
+            )
+            youtube_working_crawl.crawl_mp3_mp4_youtube_datalake()
+
+            return
 
         elif self.sheet_name == SheetNames.S_11:
             s11_working = S11Working(
@@ -855,10 +870,18 @@ class ControlFlow:
             return image_working.checking_image_crawler_status()
 
         elif self.sheet_name in (SheetNames.MP3_SHEET_NAME, SheetNames.MP4_SHEET_NAME):
-            youtube_working = YoutubeWorking(
+            youtube_working_checking = YoutubeWorking(
                 sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type
             )
-            return youtube_working.checking_youtube_crawler_status()
+            youtube_working_checking.checking_youtube_crawler_status()
+            print("\nnow checking for crawling...")
+            time.sleep(15)
+            youtube_working_crawl = YoutubeWorking(
+                sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type
+            )
+            youtube_working_crawl.crawl_mp3_mp4_youtube_datalake()
+
+            return
 
         elif self.sheet_name == SheetNames.S_11:
             s11_working = S11Working(
@@ -909,17 +932,16 @@ if __name__ == "__main__":
         # "https://docs.google.com/spreadsheets/d/1TefQkARzyMfUTVyHU-CZjON8lLgCo_2nzqjsZzOG04Q/edit#gid=534182420",
         # "https://docs.google.com/spreadsheets/d/1ZUzx1smeyIKD4PtQ-hhT1kbPSTGRdu8I8NG1uvzcWr4/edit#gid=1373813396",
         # "https://docs.google.com/spreadsheets/d/1hi8L4U3ao-sqYUOf_s4K7hxX1tgrLpVRkYrjOCTWThU/edit#gid=1004348326",
-        "https://docs.google.com/spreadsheets/d/1fqKT-5lrnaJ_05kZnECa5nMY9lN9sq3c05Lh14Gdm1c/edit#gid=534182420",
-        "https://docs.google.com/spreadsheets/d/1TefQkARzyMfUTVyHU-CZjON8lLgCo_2nzqjsZzOG04Q/edit#gid=534182420"
+        # "https://docs.google.com/spreadsheets/d/1fqKT-5lrnaJ_05kZnECa5nMY9lN9sq3c05Lh14Gdm1c/edit#gid=534182420",
+        "https://docs.google.com/spreadsheets/d/1XCtbHzP15FRduJzf_ena4tdye6oHwzpD-IRNdPV9jpM"
         # "https://docs.google.com/spreadsheets/d/1bBKLbdSAt-_XFZGU1vW9r5UUfvUiVcxUaNHBS9yF1Ro/edit#gid=619806116&fvid=636767639",
         # "https://docs.google.com/spreadsheets/d/1ZUzx1smeyIKD4PtQ-hhT1kbPSTGRdu8I8NG1uvzcWr4/edit#gid=218846379&fvid=464248548"
     ]
-    sheet_name_ = SheetNames.MP3_SHEET_NAME
+    sheet_name_ = SheetNames.MP4_SHEET_NAME
     page_type_ = PageType.ArtistPage
     pre_valid = "2021-10-01"
 
-    control_flow = ControlFlow(
-        sheet_name=sheet_name_, urls=urls, page_type=page_type_)
+    control_flow = ControlFlow(sheet_name=sheet_name_, urls=urls, page_type=page_type_)
     # ControlFlow_C11
     # control_flow = ControlFlow(
     #     sheet_name=sheet_name_, urls=urls, page_type=page_type_, pre_valid=pre_valid
@@ -938,13 +960,10 @@ if __name__ == "__main__":
     # similarity:
     # control_flow.similarity()
 
-    # crawl: 
-    # Lưu ý: dùng câu lệnh checking() cùng crawl()
-    control_flow.checking()
-    time.sleep(5)
+    # crawl:
     control_flow.crawl()
 
-    # checking
+    # checking:
     # control_flow.checking()
 
     # update d9
