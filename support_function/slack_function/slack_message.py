@@ -42,7 +42,8 @@ Type: {}
 + Number of complete crawlingtasks: {}
 + Number of incomplete crawlingtasks: {}
 + Number of pending crawlingtasks: {}
-+ Number of crawlintasks NOT inserted: {}
++ Number of crawlingtasks NOT inserted: {}
++ Number of invalid datasources NOT updated: {}
 """
 
 
@@ -93,7 +94,9 @@ class send_message_slack:
             # client_slack.chat_postMessage(
             #     channel="minchan-error", text=str(report_crawler_updated)
             # )  # MM<3
-            client_slack.chat_postMessage(channel='data-auto-report-error', text=str(report_crawler_updated)) #vibbidi-correct
+            client_slack.chat_postMessage(
+                channel="data-auto-report-error", text=str(report_crawler_updated)
+            )  # vibbidi-correct
             # client_slack.chat_postMessage(channel='data-auto-error', text=str(report_crawler_updated)) #vibbidi-test
         except SlackApiError as e:
             ## You will get a SlackApiError if "ok" is False
@@ -102,15 +105,24 @@ class send_message_slack:
             print(f"Got an error: {e.response['error']}")
             print(f"Got an error: {e.response['ok']}")
 
-    def send_to_slack_mp3mp4(self):
-        try:
-            # client_slack.chat_postMessage(channel='minchan-testing', text=str(self.message)) #MM<3
-            client_slack.chat_postMessage(channel="unit-music-data", text=str(self.message))
-            # vibbidi-correct
-            # client_slack.chat_postMessage(channel='data-auto-error', text=str(self.message)) #vibbidi-test
-        except SlackApiError as e:
-            ## You will get a SlackApiError if "ok" is False
-            assert e.response["ok"] is False
-            assert e.response["error"]  # str like 'invalid_auth', 'channel_not_found'
-            print(f"Got an error: {e.response['error']}")
-            print(f"Got an error: {e.response['ok']}")
+    def send_to_slack_mp3mp4(self, send_slack):
+        if send_slack == True:
+            print(str(self.message))
+            try:
+                # client_slack.chat_postMessage(
+                #     channel="minchan-testing", text=str(self.message)
+                # )  # MM<3
+                client_slack.chat_postMessage(
+                    channel="unit-music-data", text=str(self.message)
+                )  # vibbidi-correct
+                # client_slack.chat_postMessage(channel='data-auto-error', text=str(self.message)) #vibbidi-test
+            except SlackApiError as e:
+                ## You will get a SlackApiError if "ok" is False
+                assert e.response["ok"] is False
+                assert e.response[
+                    "error"
+                ]  # str like 'invalid_auth', 'channel_not_found'
+                print(f"Got an error: {e.response['error']}")
+                print(f"Got an error: {e.response['ok']}")
+        else:
+            print(str(self.message))
