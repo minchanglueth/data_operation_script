@@ -2,7 +2,7 @@
   "mysql": {
     "host": "localhost",
     "port": 3309,
-    "user": "banhxeo",
+    "user": "sysadm",
     "user_stg": "sysadm",
     "password": "rEi2019Wa-05VtJ$p",
     "password_stg": "kerberos1221",
