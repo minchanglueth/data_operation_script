@@ -598,7 +598,7 @@ def checking_youtube_crawler_status(df: object, format_id: str):
         ]
         db_crawlingtask = db_crawlingtask.sort_values(
             "created_at", ascending=False
-        ).drop_duplicates(subset="objectid")
+        ).drop_duplicates(subset=["objectid", "db_url"], keep="first")
         db_crawlingtask.db_url = db_crawlingtask.db_url.str.replace('"', "")
         db_crawlingtask["trackid_dburl"] = (
             db_crawlingtask["objectid"] + db_crawlingtask["db_url"]
@@ -677,11 +677,6 @@ def automate_checking_youtube_crawler_status(
                 + f"File: {gsheet_name}, sheet_name: {sheet_name}, inserted crawlingtask(s) have been finished crawling already"
                 + Style.RESET_ALL
             )
-            # missing_crawlingtasks = len(
-            #     checking_accuracy_result_[
-            #         checking_accuracy_result_["status"] == "missing"
-            #     ]
-            # )
             updated_column = ["check", "status", "crawlingtask_id"]
             merge_df = original_df_.merge(
                 checking_accuracy_result_[
@@ -776,8 +771,12 @@ def automate_checking_youtube_crawler_status(
                 + f"File: {gsheet_name}, sheet_name: {sheet_name} hasn't been crawled completely"
                 + Style.RESET_ALL
             )
-            time.sleep(10)
             print(result)
+            print(Fore.LIGHTRED_EX + f"No crawlingtasks generated" + Style.RESET_ALL)
+            # time.sleep(10)
+            return False
+
+    return True
 
 
 # if __name__ == "__main__":

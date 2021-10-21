@@ -304,7 +304,7 @@ def get_youtube_crawlingtask_info(track_id: str, PIC: str, format_id: str):
     subq = (
         db_session.query(
             Crawlingtask.id.label("id"),
-            func.max(Crawlingtask.created_at).label("maxdate"),
+            Crawlingtask.objectid,
             func.json_extract(Crawlingtask.taskdetail, f"$.youtube_url").label(
                 "youtube_url"
             ),
@@ -312,36 +312,20 @@ def get_youtube_crawlingtask_info(track_id: str, PIC: str, format_id: str):
                 "when_exists"
             ),
             Crawlingtask.status,
-            Crawlingtask.priority
+            Crawlingtask.priority,
+            Crawlingtask.created_at,
         )
         .filter(
             Crawlingtask.objectid.in_(track_id),
             Crawlingtask.actionid == V4CrawlingTaskActionMaster.DOWNLOAD_VIDEO_YOUTUBE,
             func.json_extract(Crawlingtask.taskdetail, "$.PIC") == PIC,
             func.json_extract(Crawlingtask.taskdetail, "$.data_source_format_id")
-            == format_id
+            == format_id,
         )
-        .group_by(Crawlingtask.id)
-        .subquery()
-    )
-    get_crawlingtask_info = db_session.query(
-        Crawlingtask.id,
-        Crawlingtask.objectid,
-        func.json_extract(Crawlingtask.taskdetail, f"$.youtube_url").label(
-            "youtube_url"
-        ),
-        func.json_extract(Crawlingtask.taskdetail, "$.when_exists").label(
-            "when_exists"
-        ),
-        Crawlingtask.status,
-        Crawlingtask.priority,
-        Crawlingtask.created_at,
-    ).join(
-        subq,
-        and_(Crawlingtask.id == subq.c.id, Crawlingtask.created_at == subq.c.maxdate),
+        .order_by(Crawlingtask.created_at.desc())
     )
 
-    return get_crawlingtask_info
+    return subq
 
 
 def get_crawling_result_cy_itunes(pointlogids: list):
@@ -465,8 +449,8 @@ if __name__ == "__main__":
     )
     # itune_url = 'https://music.apple.com/us/album/deadpan-love/1562039096'
     # pointlogids = ['002D10C7039849DB9A290B727A1DA303','00CC3085F30349C7BEDD7FC0914EC296', '1F41FA3473CE48409E97C181C794379D']
-    pic = "NewClassic 14.06.2021_MP_3"
-    trackid = "E7B5DE4F3C8F4C4F83123B4E0DCDBBC1"
+    pic = "Contribution_Apr_2021_MP_3"
+    trackid = ["2ACAFA27626B4BE9AF2DFD9FCCDC0773"]
     format_id = "1A67A5F1E0D84FB9B48234AE65086375"
     db_crawlingtask = get_youtube_crawlingtask_info(
         track_id=trackid, PIC=pic, format_id=format_id
