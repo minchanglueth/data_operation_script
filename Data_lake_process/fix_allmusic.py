@@ -572,7 +572,7 @@ if __name__ == "__main__":
     # input here
     gsheet_url = "https://docs.google.com/spreadsheets/d/1H0t9xq2vUesfpBQoieJP6TxHbWl8D43s5kiAZ7K3Cgc/edit#gid=978085935"
     # sheet name of allmusic input data
-    sheet_allmusic = "Test_1"
+    sheet_allmusic = "Allmusic"
     # sheet name of result check sheet
     sheet_check_result = "Test_2 (check_result)"
 
@@ -581,7 +581,7 @@ if __name__ == "__main__":
         df = get_ituneid(gsheet_url, sheet_allmusic)
         print_old_info(df, gsheet_url, sheet_check_result)
         id_list = run_crawler(df)
-        time.sleep(300)
+        time.sleep(900)
         query_complete_crawl = get_complete_crawl(id_list)
         get_all_crawl(id_list, sheet_check_result, gsheet_url)
         merged_df = merge_new_old_ids(query_complete_crawl, df)
