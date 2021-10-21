@@ -34,7 +34,6 @@ from core.models.album_contributor import AlbumContributor
 from core.models.usernarrative import UserNarrative
 from core.models.albumcountlog import AlbumCountLog
 from core.crud.get_df_from_query import get_df_from_query
-from google_spreadsheet_api.function import is_a_in_x
 import pandas as pd
 from uuid import uuid4
 import time
@@ -53,6 +52,7 @@ def get_number_from_string(string_with_number):
     if number == "":
         number = np.nan
     return number
+
 
 def get_ituneid(gsheet_url: str, sheet_name: str):
     sh = gc.open_by_url(gsheet_url)
@@ -204,7 +204,9 @@ def get_complete_crawl(id_list: list):
         query_crawler = (
             db_session.query(
                 Crawlingtask.id,
-                func.json_extract(Crawlingtask.taskdetail, "$.album_id").label("itune_id"),
+                func.json_extract(Crawlingtask.taskdetail, "$.album_id").label(
+                    "itune_id"
+                ),
             )
             .select_from(Crawlingtask)
             .filter(Crawlingtask.id.in_(id_list))
@@ -236,18 +238,20 @@ def get_complete_crawl(id_list: list):
 def get_all_crawl(id_list: list, sheet_name: str, gsheet_url: str):
     try:
         query_crawler = (
-        db_session.query(
-            func.json_extract(Crawlingtask.taskdetail, "$.album_id").label("itune_id"),
-            Crawlingtask.id.label("Crawlingtask.ID"),
-            Crawlingtask.status.label("Crawlingtask.status"),
+            db_session.query(
+                func.json_extract(Crawlingtask.taskdetail, "$.album_id").label(
+                    "itune_id"
+                ),
+                Crawlingtask.id.label("Crawlingtask.ID"),
+                Crawlingtask.status.label("Crawlingtask.status"),
+            )
+            .select_from(Crawlingtask)
+            .filter(Crawlingtask.id.in_(id_list))
+            .order_by(Crawlingtask.created_at.desc())
         )
-        .select_from(Crawlingtask)
-        .filter(Crawlingtask.id.in_(id_list))
-        .order_by(Crawlingtask.created_at.desc())
-    )
 
         dfc = get_df_from_query(query_crawler).drop_duplicates(subset="itune_id")
-    
+
     except exc.SQLAlchemyError:
         db_session.rollback()
         raise
@@ -280,10 +284,12 @@ def get_incomplete_crawl(gsheet_url: str, id_list: list):
     try:
         query = (
             db_session.query(
-                Crawlingtask.id,
+                Crawlingtask.id.label("Crawlingtask_id"),
                 Crawlingtask.status,
                 Crawlingtask.taskdetail,
-                func.json_extract(Crawlingtask.taskdetail, "$.album_id").label("itune_id"),
+                func.json_extract(Crawlingtask.taskdetail, "$.album_id").label(
+                    "itune_id"
+                ),
             )
             .select_from(Crawlingtask)
             .filter(Crawlingtask.id.in_(id_list), Crawlingtask.status != "complete")
@@ -298,7 +304,7 @@ def get_incomplete_crawl(gsheet_url: str, id_list: list):
     sh = gc.open_by_url(gsheet_url)
     worksheet = sh.worksheet("Incomplete crawling tasks")
     df_ = get_as_dataframe(worksheet, skip_blank_lines=True)
-    dff = pd.concat([df, df_]).drop_duplicates()
+    dff = pd.concat([df, df_]).drop_duplicates(subset="Crawlingtask_id")
     set_with_dataframe(worksheet, dff)
 
 
@@ -399,9 +405,7 @@ def update_albums(merged_df):
 
             db_session.query(RelatedAlbum).filter(
                 RelatedAlbum.related_album_id == old_uuid
-            ).update(
-                {RelatedAlbum.related_album_id: new_uuid}
-            )
+            ).update({RelatedAlbum.related_album_id: new_uuid})
             raa_list = (
                 db_session.query(RelatedAlbum)
                 .filter(RelatedAlbum.related_album_id == old_uuid)
@@ -460,9 +464,7 @@ def update_albums(merged_df):
             db_session.query(Album).filter(Album.uuid == old_uuid).update(
                 {"valid": -94}
             )
-            db_session.query(Album).filter(Album.uuid == new_uuid).update(
-                {"valid": 1}
-            )
+            db_session.query(Album).filter(Album.uuid == new_uuid).update({"valid": 1})
 
             db_session.query(ItunesRelease).filter(
                 ItunesRelease.album_uuid == old_uuid
@@ -483,7 +485,6 @@ def update_albums(merged_df):
             db_session.close()
 
 
-
 def update_new_info(id_list: list, merged_df, gsheet_url: str, sheet_name: str):
     new_uuid_list = merged_df["uuid_new"].values.tolist()
     try:
@@ -496,7 +497,9 @@ def update_new_info(id_list: list, merged_df, gsheet_url: str, sheet_name: str):
                 ChartAlbum.album_id.label("Chart_album.albumID (new)"),
                 CollectionAlbum.album_id.label("Collection_album.albumID (new)"),
                 RelatedAlbum.album_id.label("Relatedalbum.albumID (new)"),
-                RelatedAlbum.related_album_id.label("Relatedalbum.relatedalbumID (new)"),
+                RelatedAlbum.related_album_id.label(
+                    "Relatedalbum.relatedalbumID (new)"
+                ),
                 ThemeAlbum.album_id.label("Theme_album.albumID (new)"),
                 URIMapper.entity_id.label("Urimapper.entityID (new)"),
                 SgLikes.entity_type.label("sg_likes.entityUUID (new)"),
@@ -512,7 +515,9 @@ def update_new_info(id_list: list, merged_df, gsheet_url: str, sheet_name: str):
             .join(ThemeAlbum, ThemeAlbum.album_id == Album.id, isouter=True)
             .join(URIMapper, URIMapper.entity_id == Album.uuid, isouter=True)
             .join(SgLikes, SgLikes.entity_uuid == Album.uuid, isouter=True)
-            .join(AlbumContributor, AlbumContributor.album_id == Album.uuid, isouter=True)
+            .join(
+                AlbumContributor, AlbumContributor.album_id == Album.uuid, isouter=True
+            )
             .join(UserNarrative, UserNarrative.entity_uuid == Album.uuid, isouter=True)
             .filter(Album.uuid.in_(new_uuid_list))
         )
@@ -570,6 +575,7 @@ if __name__ == "__main__":
     sheet_allmusic = "Test_1"
     # sheet name of result check sheet
     sheet_check_result = "Test_2 (check_result)"
+
     try:
         # actual script part
         df = get_ituneid(gsheet_url, sheet_allmusic)
