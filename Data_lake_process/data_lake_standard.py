@@ -360,11 +360,12 @@ class YoutubeWorking:
         else:
             print("format_id not support")
             pass
-        automate_checking_youtube_crawler_status(
+        if automate_checking_youtube_crawler_status(
             original_df=self.original_file,
             filter_df=self.youtube_filter().copy(),
             format_id=format_id,
-        )
+        ):
+            return True
 
     def similarity(self):
         df = self.original_file
@@ -837,15 +838,13 @@ class ControlFlow:
             youtube_working_checking = YoutubeWorking(
                 sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type
             )
-            youtube_working_checking.checking_youtube_crawler_status()
-            print("\nnow checking for crawling...")
-            time.sleep(15)
-            youtube_working_crawl = YoutubeWorking(
-                sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type
-            )
-            youtube_working_crawl.crawl_mp3_mp4_youtube_datalake()
-
-            return
+            if youtube_working_checking.checking_youtube_crawler_status() == True:
+                print("\nnow checking for crawling...")
+                time.sleep(15)
+                youtube_working_crawl = YoutubeWorking(
+                    sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type
+                )
+                return youtube_working_crawl.crawl_mp3_mp4_youtube_datalake()
 
         elif self.sheet_name == SheetNames.S_11:
             s11_working = S11Working(
@@ -873,15 +872,13 @@ class ControlFlow:
             youtube_working_checking = YoutubeWorking(
                 sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type
             )
-            youtube_working_checking.checking_youtube_crawler_status()
-            print("\nnow checking for crawling...")
-            time.sleep(15)
-            youtube_working_crawl = YoutubeWorking(
-                sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type
-            )
-            youtube_working_crawl.crawl_mp3_mp4_youtube_datalake()
-
-            return
+            if youtube_working_checking.checking_youtube_crawler_status() == True:
+                print("\nnow checking for crawling...")
+                time.sleep(15)
+                youtube_working_crawl = YoutubeWorking(
+                    sheet_name=self.sheet_name, urls=self.urls, page_type=self.page_type
+                )
+                return youtube_working_crawl.crawl_mp3_mp4_youtube_datalake()
 
         elif self.sheet_name == SheetNames.S_11:
             s11_working = S11Working(
@@ -933,11 +930,15 @@ if __name__ == "__main__":
         # "https://docs.google.com/spreadsheets/d/1ZUzx1smeyIKD4PtQ-hhT1kbPSTGRdu8I8NG1uvzcWr4/edit#gid=1373813396",
         # "https://docs.google.com/spreadsheets/d/1hi8L4U3ao-sqYUOf_s4K7hxX1tgrLpVRkYrjOCTWThU/edit#gid=1004348326",
         # "https://docs.google.com/spreadsheets/d/1fqKT-5lrnaJ_05kZnECa5nMY9lN9sq3c05Lh14Gdm1c/edit#gid=534182420",
-        "https://docs.google.com/spreadsheets/d/1XCtbHzP15FRduJzf_ena4tdye6oHwzpD-IRNdPV9jpM"
+        # "https://docs.google.com/spreadsheets/d/1XCtbHzP15FRduJzf_ena4tdye6oHwzpD-IRNdPV9jpM"
         # "https://docs.google.com/spreadsheets/d/1bBKLbdSAt-_XFZGU1vW9r5UUfvUiVcxUaNHBS9yF1Ro/edit#gid=619806116&fvid=636767639",
-        # "https://docs.google.com/spreadsheets/d/1ZUzx1smeyIKD4PtQ-hhT1kbPSTGRdu8I8NG1uvzcWr4/edit#gid=218846379&fvid=464248548"
+        # "https://docs.google.com/spreadsheets/d/1ZUzx1smeyIKD4PtQ-hhT1kbPSTGRdu8I8NG1uvzcWr4/edit#gid=218846379&fvid=464248548",
+        # "https://docs.google.com/spreadsheets/d/1ZUzx1smeyIKD4PtQ-hhT1kbPSTGRdu8I8NG1uvzcWr4",
+        # "https://docs.google.com/spreadsheets/d/1J33AQ_0SGcUgQkGbzzxqhuDA1o1RatR7sHenxriMYk0/edit#gid=1272485273",
+        # "https://docs.google.com/spreadsheets/d/1ZUzx1smeyIKD4PtQ-hhT1kbPSTGRdu8I8NG1uvzcWr4/edit#gid=1373813396&fvid=627309709",
+        "https://docs.google.com/spreadsheets/d/1fqKT-5lrnaJ_05kZnECa5nMY9lN9sq3c05Lh14Gdm1c/edit#gid=534182420"
     ]
-    sheet_name_ = SheetNames.MP4_SHEET_NAME
+    sheet_name_ = SheetNames.MP3_SHEET_NAME
     page_type_ = PageType.ArtistPage
     pre_valid = "2021-10-01"
 
