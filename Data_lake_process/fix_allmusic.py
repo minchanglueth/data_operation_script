@@ -123,51 +123,55 @@ def print_old_info(df, gsheet_url: str, sheet_name: str):
             Album.uuid.label("AlbumUUID (old)"),
             Album.info.label("Albums.info"),
             Artist_album.album_id.label("Artist_album.albumID"),
+            ChartAlbum.album_id.label("Chart_album.albumid"),
             CollectionAlbum.album_id.label("Collection_album.albumID"),
             ThemeAlbum.album_id.label("Theme_album.albumID"),
             URIMapper.entity_id.label("Urimapper.entityID"),
             SgLikes.entity_uuid.label("sg_likes.entityUUID"),
             AlbumContributor.album_id.label("Albumcontributors.albumID"),
+            ReportAutoCrawlerTop100Album.ext["album_uuid"].label("reportautocrawler_top100albums.ext->>'$.album_uuid'"),
             UserNarrative.entity_uuid.label("Usernarratives.entityUUID"),
-            ItunesRelease.album_uuid.label("itunes_album_tracks_release.AlbumUUID"),
-            AlbumCountLog.album_uuid.label("albumcountlog.AlbumUUID"),
             Album.valid.label("Albums.valid"),
             ItunesRelease.valid.label("ItunesRelease.valid"),
         )
         .select_from(Album)
         .join(Artist_album, Artist_album.album_id == Album.id)
+        .join(ChartAlbum, ChartAlbum.album_id == Album.id)
         .join(CollectionAlbum, CollectionAlbum.album_id == Album.uuid, isouter=True)
         .join(ThemeAlbum, ThemeAlbum.album_id == Album.id, isouter=True)
         .join(URIMapper, URIMapper.entity_id == Album.uuid, isouter=True)
         .join(SgLikes, SgLikes.entity_uuid == Album.uuid, isouter=True)
         .join(AlbumContributor, AlbumContributor.album_id == Album.uuid, isouter=True)
+        .join(ReportAutoCrawlerTop100Album, func.json_extract(ReportAutoCrawlerTop100Album.ext, '$.album_uuid') == Album.uuid, isouter=True)
         .join(UserNarrative, UserNarrative.entity_uuid == Album.uuid, isouter=True)
         .join(ItunesRelease, ItunesRelease.album_uuid == Album.uuid, isouter=True)
-        .join(AlbumCountLog, AlbumCountLog.album_uuid == Album.uuid, isouter=True)
+        # .join(AlbumCountLog, AlbumCountLog.album_uuid == Album.uuid, isouter=True)
         .filter(Album.uuid.in_(albumuuid_list))
         .distinct()
     )
     album_df = get_df_from_query(query_album).drop_duplicates(
-        subset=["AlbumUUID (old)"]
+        subset=["AlbumUUID (old)", "Albums.valid"]
     )
     db_session.close()
-    sh = gc.open_by_url(gsheet_url)
-    worksheet = sh.worksheet(sheet_name)
-    sheet_df = get_as_dataframe(
-        worksheet,
-        header=1,
-        skip_blank_lines=True,
-        evaluate_formulas=True,
-    )
-    sheet_df = sheet_df[["Itune ID (new)", "AlbumUUID (old)"]]
-    df = pd.merge(
-        sheet_df,
-        album_df,
-        how="left",
-        left_on="AlbumUUID (old)",
-        right_on="AlbumUUID (old)",
-    ).drop_duplicates(subset=["AlbumUUID (old)"])
-    set_with_dataframe(worksheet, df, include_column_header=False, row=3)
+    print(album_df.info())
+    # print(album_df[album_df["reportautocrawler_top100albums.ext->>'$.album_uuid'"] != "None"].head())
+    # sh = gc.open_by_url(gsheet_url)
+    # worksheet = sh.worksheet(sheet_name)
+    # sheet_df = get_as_dataframe(
+    #     worksheet,
+    #     header=1,
+    #     skip_blank_lines=True,
+    #     evaluate_formulas=True,
+    # )
+    # sheet_df = sheet_df[["Itune ID (new)", "AlbumUUID (old)"]]
+    # df = pd.merge(
+    #     sheet_df,
+    #     album_df,
+    #     how="left",
+    #     left_on="AlbumUUID (old)",
+    #     right_on="AlbumUUID (old)",
+    # ).drop_duplicates(subset=["AlbumUUID (old)"])
+    # set_with_dataframe(worksheet, df, include_column_header=False, row=3)
 
 
 def run_crawler(df: object):
@@ -572,7 +576,7 @@ if __name__ == "__main__":
     # input here
     gsheet_url = "https://docs.google.com/spreadsheets/d/1H0t9xq2vUesfpBQoieJP6TxHbWl8D43s5kiAZ7K3Cgc/edit#gid=978085935"
     # sheet name of allmusic input data
-    sheet_allmusic = "Allmusic"
+    sheet_allmusic = "Test_1"
     # sheet name of result check sheet
     sheet_check_result = "Test_2 (check_result)"
 
@@ -580,19 +584,19 @@ if __name__ == "__main__":
         # actual script part
         df = get_ituneid(gsheet_url, sheet_allmusic)
         print_old_info(df, gsheet_url, sheet_check_result)
-        id_list = run_crawler(df)
-        time.sleep(900)
-        query_complete_crawl = get_complete_crawl(id_list)
-        get_all_crawl(id_list, sheet_check_result, gsheet_url)
-        merged_df = merge_new_old_ids(query_complete_crawl, df)
-        update_albums(merged_df=merged_df)
-        get_incomplete_crawl(gsheet_url=gsheet_url, id_list=id_list)
-        update_new_info(
-            id_list=id_list,
-            merged_df=merged_df,
-            gsheet_url=gsheet_url,
-            sheet_name=sheet_check_result,
-        )
+        # id_list = run_crawler(df)
+        # time.sleep(900)
+        # query_complete_crawl = get_complete_crawl(id_list)
+        # get_all_crawl(id_list, sheet_check_result, gsheet_url)
+        # merged_df = merge_new_old_ids(query_complete_crawl, df)
+        # update_albums(merged_df=merged_df)
+        # get_incomplete_crawl(gsheet_url=gsheet_url, id_list=id_list)
+        # update_new_info(
+        #     id_list=id_list,
+        #     merged_df=merged_df,
+        #     gsheet_url=gsheet_url,
+        #     sheet_name=sheet_check_result,
+        # )
     except exc.SQLAlchemyError:
         db_session.rollback()
         raise

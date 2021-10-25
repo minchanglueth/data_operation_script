@@ -11,8 +11,6 @@ from core import credentials_path, token_path
 
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 
-print(credentials_path)
-
 
 def service():
     """Shows basic usage of the Sheets API.
