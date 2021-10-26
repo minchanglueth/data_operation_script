@@ -4,10 +4,9 @@ from sqlalchemy.ext.mutable import MutableDict
 from core.models.base_class import Base, TimestampMixin
 
 
-class ReportAutoCrawlerTop100Album(Base, TimestampMixin):
+class ReportAutoCrawlerTop100Album(Base):
     __tablename__ = "reportautocrawler_top100albums"
     id = sa.Column("Id", sa.String(32), primary_key=True)
-    valid = sa.Column("Valid", sa.SmallInteger, nullable=False, default=1)
     genre = sa.Column("Genre", sa.String(256))
     rank = sa.Column("Rank", sa.SmallInteger)
     album_title = sa.Column("AlbumTitle", sa.String(512))
@@ -16,7 +15,7 @@ class ReportAutoCrawlerTop100Album(Base, TimestampMixin):
     verification = sa.Column("Verification", sa.String(32))
     artist_name = sa.Column("ArtistName", sa.String(256))
     artist_uuid = sa.Column("ArtistUUID", sa.String(32))
-    track_title = sa.Column("TrackName", sa.String(512), default=None)
+    track_title = sa.Column("TrackTitle", sa.String(512), default=None)
     track_id = sa.Column("TrackId", sa.String(32))
     datasources_existed = sa.Column(
         "DataSourcesExisted", MutableDict.as_mutable(sa.JSON)
