@@ -148,7 +148,8 @@ def print_old_info(df, gsheet_url: str, sheet_name: str):
         .join(AlbumContributor, AlbumContributor.album_id == Album.uuid, isouter=True)
         .join(
             ReportAutoCrawlerTop100Album,
-            func.json_unquote(ReportAutoCrawlerTop100Album.ext["album_uuid"]) == Album.uuid,
+            func.json_unquote(ReportAutoCrawlerTop100Album.ext["album_uuid"])
+            == Album.uuid,
             isouter=True,
         )
         .join(UserNarrative, UserNarrative.entity_uuid == Album.uuid, isouter=True)
@@ -368,6 +369,8 @@ def update_albums(merged_df):
     for row in merged_df.index:
         old_uuid = str(merged_df.at[row, "albumuuid_old"])
         old_id = int(merged_df["albumid_old"].loc[row])
+        print(f"old uuid is {old_uuid}")
+        print(f"old id is {old_id}")
         new_uuid = str(merged_df.at[row, "uuid_new"])
         new_id = int(merged_df.at[row, "albumid_new"])
         try:
@@ -467,11 +470,11 @@ def update_albums(merged_df):
                 .order_by(Album.updated_at.desc())
                 .first()
             )
-            db_session.query(Album).filter(Album.uuid == new_uuid).update(
-                {Album.info: info}
-            )
             db_session.query(Album).filter(Album.uuid == old_uuid).update(
                 {"valid": -94}
+            )
+            db_session.query(Album).filter(Album.uuid == new_uuid).update(
+                {Album.info: info}
             )
             db_session.query(Album).filter(Album.uuid == new_uuid).update({"valid": 1})
 
@@ -483,7 +486,7 @@ def update_albums(merged_df):
                 Artist_album.album_id == old_id
             ).update({"valid": -94})
 
-            db_session.commit()
+            # db_session.commit()
 
         except exc.SQLAlchemyError as e:
             print(e)
@@ -491,6 +494,7 @@ def update_albums(merged_df):
             raise
             continue
         finally:
+            # db_session.commit()
             db_session.close()
 
 
@@ -513,6 +517,9 @@ def update_new_info(id_list: list, merged_df, gsheet_url: str, sheet_name: str):
                 URIMapper.entity_id.label("Urimapper.entityID (new)"),
                 SgLikes.entity_type.label("sg_likes.entityUUID (new)"),
                 AlbumContributor.album_id.label("Albumcontributors.albumID (new)"),
+                ReportAutoCrawlerTop100Album.ext["album_uuid"].label(
+                    "reportautocrawler_top100albums.ext->>'$.album_uuid' (new)"
+                ),
                 UserNarrative.entity_uuid.label("Usernarratives.entityUUID (new)"),
                 Album.info.label("Albums.info (new)"),
             )
@@ -528,10 +535,22 @@ def update_new_info(id_list: list, merged_df, gsheet_url: str, sheet_name: str):
                 AlbumContributor, AlbumContributor.album_id == Album.uuid, isouter=True
             )
             .join(UserNarrative, UserNarrative.entity_uuid == Album.uuid, isouter=True)
+            .join(
+                ReportAutoCrawlerTop100Album,
+                func.json_unquote(ReportAutoCrawlerTop100Album.ext["album_uuid"])
+                == Album.uuid,
+                isouter=True,
+            )
             .filter(Album.uuid.in_(new_uuid_list))
         )
 
-        new_info_df = get_df_from_query(query_new_info)
+        new_info_df = get_df_from_query(query_new_info).drop_duplicates(
+            subset=[
+                "AlbumUUID (new)",
+                "Artist_album.albumID (new)",
+                "Chart_album.albumID (new)",
+            ]
+        )
     except exc.SQLAlchemyError:
         db_session.rollback()
         raise
@@ -570,11 +589,12 @@ def update_new_info(id_list: list, merged_df, gsheet_url: str, sheet_name: str):
             "Urimapper.entityID (new)",
             "sg_likes.entityUUID (new)",
             "Albumcontributors.albumID (new)",
+            "reportautocrawler_top100albums.ext->>'$.album_uuid' (new)",
             "Usernarratives.entityUUID (new)",
             "Albums.info (new)",
         ]
     ]
-    set_with_dataframe(worksheet, df, row=3, col=17, include_column_header=False)
+    set_with_dataframe(worksheet, df, row=3, col=18, include_column_header=False)
 
 
 if __name__ == "__main__":
@@ -589,8 +609,59 @@ if __name__ == "__main__":
         # actual script part
         df = get_ituneid(gsheet_url, sheet_allmusic)
         print_old_info(df, gsheet_url, sheet_check_result)
-        id_list = run_crawler(df)
-        time.sleep(900)
+        # id_list = run_crawler(df)
+        # print(id_list)
+        # time.sleep(900)
+        id_list = [
+            "909E775D675E4ACBAAE56C0D6A405562",
+            "6CDEADDA72FA4EEE9D07AB8CC3B64DA3",
+            "11571A2E7C044C7CAFD777455F324057",
+            "3BD209C104164450B9B1AE6B0C7AB501",
+            "048A11FAF7284D69B5E2D6C1B4CEA11A",
+            "A3046DE6D5F84526A6BE25E2D37630EF",
+            "69F864D0A62547ACB178AB5F53A58082",
+            "9CFDAC3AD2D743A19C7B1FD88A4BC3C9",
+            "EADA8C95FBF04968993AE3C5AA5F9830",
+            "4F7152A67FD04C82AA9590B0E49D5DFA",
+            "BEE7D59103DB4F4AADE63E1B27CD69FF",
+            "0430FFFB8B8241669B3AD9749F11A8CA",
+            "CC3223A534394826AC5B3676DF4CEAB6",
+            "5406341BFCEE4B62AB095D45D77DB20F",
+            "5D1EE4A62B584A3788593A4746F1FC91",
+            "81A18E103FB74CF7A1B39EE9989FAA47",
+            "3354DDA030AC460D960A8D87D47D5A74",
+            "4BE1DE41BA1B46B58821539C140B4831",
+            "0A0F6102B97C4D838C280D4CA94AE532",
+            "279194AB11FF43188D323E202828E2DC",
+            "1E6FC543C95942359E1EF72632F171D4",
+            "CCF15318344149C78800EC85C0B8AE11",
+            "FA46BABCF896490188A043DB23D45F70",
+            "767E19A413494073B2C78612F98E785B",
+            "2E91AB8E70BA43EDB5128C10B077983A",
+            "DD93173670954CC7938B254556642821",
+            "1B4527D58D57472285129276FC3FD59E",
+            "9A2A686EB5C1434EA1BCD22021F224CF",
+            "F7B14B35908C4C7E8856095C58405457",
+            "C7D8F53CFB9F452482616F995A96A6C3",
+            "430A59FF397146F19E9FA81DC72C40A4",
+            "5D246FF0F0E9480CB6CDA713360BE9EF",
+            "7C3DEBF67DB14AD993C67AFB2176E465",
+            "E4C9320CF7E04AB88FA8374D8C35EAC7",
+            "41C22B477DCD42139B05C6875C1A18AE",
+            "C066DB0B366F44198E1307343F330700",
+            "7ED21BF23AB349FF8FCE3A7E85E19B17",
+            "B918DDCAB2F44053931C942E7EEF6269",
+            "7BDCB4526AAF4C9E89E795379187E7D5",
+            "B3EF34E091D14695BE12777917682097",
+            "E756423AAD3A4929A3169DB6681E6261",
+            "00684D97D9584076B02D645402697BD6",
+            "1AA8A64B666F49E5BC8A0394ED5849B8",
+            "2BD3C9F717434465925F7C7B5738BAB0",
+            "874DCBDB58864AA6A786408FB7426C86",
+            "49FC872F2A95413E91E2E95C47BC1ACD",
+            "3FB96C80AF01481392F2A41659C82E61",
+            "CEF1C4320A0A44029B400637AFCFD809",
+        ]
         query_complete_crawl = get_complete_crawl(id_list)
         get_all_crawl(id_list, sheet_check_result, gsheet_url)
         merged_df = merge_new_old_ids(query_complete_crawl, df)
