@@ -486,7 +486,7 @@ def update_albums(merged_df):
                 Artist_album.album_id == old_id
             ).update({"valid": -94})
 
-            # db_session.commit()
+            db_session.commit()
 
         except exc.SQLAlchemyError as e:
             print(e)
