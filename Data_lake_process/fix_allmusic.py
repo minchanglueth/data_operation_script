@@ -1,5 +1,7 @@
+from ast import Str
 from functools import update_wrapper
-from sqlalchemy import exc
+import json
+from sqlalchemy import exc, cast
 from hashlib import new
 from gspread.models import Worksheet
 from gspread_dataframe import get_as_dataframe, set_with_dataframe
@@ -7,7 +9,9 @@ import numpy as np
 from gspread_pandas import Spread, Client
 from gspread_formatting.dataframe import format_with_dataframe
 from sqlalchemy.orm.session import Session
-from sqlalchemy.sql.expression import update
+from sqlalchemy.sql.expression import update, case
+from sqlalchemy.sql.sqltypes import JSON, String
+from sqlalchemy.orm.attributes import flag_modified
 from google_spreadsheet_api.gspread_utility import gc, get_df_from_gsheet
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
@@ -40,9 +44,9 @@ import time
 import re
 
 engine = create_engine(SQLALCHEMY_DATABASE_URI, pool_pre_ping=True)
-db_session = scoped_session(
-    sessionmaker(autocommit=False, autoflush=False, bind=engine)
-)
+# db_session = scoped_session(
+#     sessionmaker(autocommit=False, autoflush=False, bind=engine)
+# )
 
 
 def get_number_from_string(string_with_number):
@@ -87,6 +91,9 @@ def get_ituneid(gsheet_url: str, sheet_name: str):
     dff = dff[dff.recheck_id == "ok"].copy()
     dff["apple_id"] = dff["apple_id"].apply(get_number_from_string)
     old_album_uuids = dff.albumuuid_old.values.tolist()
+    db_session = scoped_session(
+        sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    )
     query_album_id = db_session.query(Album.id, Album.uuid).filter(
         Album.uuid.in_(old_album_uuids)
     )
@@ -118,6 +125,9 @@ def get_ituneid(gsheet_url: str, sheet_name: str):
 
 def print_old_info(df, gsheet_url: str, sheet_name: str):
     albumuuid_list = df[df.albumid_old.notnull()]["albumuuid_old"].values.tolist()
+    db_session = scoped_session(
+        sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    )
     query_album = (
         db_session.query(
             Album.uuid.label("AlbumUUID (old)"),
@@ -185,6 +195,9 @@ def run_crawler(df: object):
     crawler_actionid = "9C8473C36E57472281A1C7936108FC06"
     crawler_id_list = []
     insert_list = []
+    db_session = scoped_session(
+        sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    )
     for row in crawlers.index:
         region = str(df.at[row, "region"])
         id = str(df.at[row, "apple_id"])
@@ -210,6 +223,9 @@ def run_crawler(df: object):
 
 
 def get_complete_crawl(id_list: list):
+    db_session = scoped_session(
+        sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    )
     try:
         query_crawler = (
             db_session.query(
@@ -246,6 +262,9 @@ def get_complete_crawl(id_list: list):
 
 
 def get_all_crawl(id_list: list, sheet_name: str, gsheet_url: str):
+    db_session = scoped_session(
+        sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    )
     try:
         query_crawler = (
             db_session.query(
@@ -291,6 +310,9 @@ def get_all_crawl(id_list: list, sheet_name: str, gsheet_url: str):
 
 
 def get_incomplete_crawl(gsheet_url: str, id_list: list):
+    db_session = scoped_session(
+        sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    )
     try:
         query = (
             db_session.query(
@@ -331,12 +353,16 @@ def get_new_album_uuid(query):
 
 
 def merge_new_old_ids(query, df):
+    db_session = scoped_session(
+        sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    )
     try:
         new_df = get_df_from_query(query)
     except exc.SQLAlchemyError:
         db_session.rollback()
         raise
     finally:
+        db_session.flush()
         db_session.close()
 
     merged_df = pd.merge(df, new_df, left_on="apple_id", right_on="external_id")
@@ -366,140 +392,253 @@ def merge_new_old_ids(query, df):
 
 
 def update_albums(merged_df):
-    for row in merged_df.index:
-        old_uuid = str(merged_df.at[row, "albumuuid_old"])
-        old_id = int(merged_df["albumid_old"].loc[row])
-        print(f"old uuid is {old_uuid}")
-        print(f"old id is {old_id}")
-        new_uuid = str(merged_df.at[row, "uuid_new"])
-        new_id = int(merged_df.at[row, "albumid_new"])
-        try:
-            # set valid artist album
-            aa = (
-                db_session.query(Artist_album)
-                .filter(Artist_album.album_id == old_id)
-                .update({"valid": -94})
+    db_session = scoped_session(
+        sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    )
+    db_session2 = scoped_session(
+        sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    )
+    db_session3 = scoped_session(
+        sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    )
+    db_session4 = scoped_session(
+        sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    )
+    db_session5 = scoped_session(
+        sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    )
+    db_session6 = scoped_session(
+        sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    )
+    db_session7 = scoped_session(
+        sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    )
+    db_session8 = scoped_session(
+        sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    )
+    db_session9 = scoped_session(
+        sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    )
+    db_session10 = scoped_session(
+        sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    )
+    db_session11 = scoped_session(
+        sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    )
+    old_uuid_list = merged_df.albumuuid_old.values.tolist()
+    old_id_list = merged_df.albumid_old.values.tolist()
+    new_uuid_list = merged_df.uuid_new.values.tolist()
+    uuid_dict = dict(zip(merged_df.albumuuid_old, merged_df.uuid_new))
+    id_dict = dict(zip(merged_df.albumid_old, merged_df.albumid_new))
+
+    # chart_album
+    db_session2.query(ChartAlbum).filter(ChartAlbum.album_id.in_(id_dict)).update(
+        {ChartAlbum.album_id: case(id_dict, value=ChartAlbum.album_id)},
+        synchronize_session=False,
+    )
+    c_list = db_session2.query(ChartAlbum).filter(ChartAlbum.album_id.in_(old_id_list))
+    for c in c_list:
+        db_session2.delete(c)
+    db_session2.commit()
+
+    # artist_album
+    valid_artist_album = db_session.query(Artist_album).filter(
+        Artist_album.album_id.in_(old_id_list)
+    )
+    for row in valid_artist_album:
+        row.valid = -94
+    db_session.commit()
+
+    # update collection_album
+
+    db_session3.query(CollectionAlbum).filter(
+        CollectionAlbum.album_id.in_(uuid_dict)
+    ).update(
+        {CollectionAlbum.album_id: case(uuid_dict, value=CollectionAlbum.album_id)},
+        synchronize_session=False,
+    )
+    ca_list = db_session3.query(CollectionAlbum).filter(
+        CollectionAlbum.album_id.in_(old_uuid_list)
+    )
+    for ca in ca_list:
+        db_session3.delete(ca)
+    db_session3.commit()
+
+    # update related_albums
+    db_session4.query(RelatedAlbum).filter(RelatedAlbum.album_id.in_(uuid_dict)).update(
+        {RelatedAlbum.album_id: case(uuid_dict, value=RelatedAlbum.album_id)},
+        synchronize_session=False,
+    )
+    ra_list = db_session4.query(RelatedAlbum).filter(
+        RelatedAlbum.album_id.in_(old_uuid_list)
+    )
+    for ra in ra_list:
+        db_session4.delete(ra)
+    db_session4.commit()
+
+    db_session4.query(RelatedAlbum).filter(
+        RelatedAlbum.related_album_id.in_(uuid_dict)
+    ).update(
+        {
+            RelatedAlbum.related_album_id: case(
+                uuid_dict, value=RelatedAlbum.related_album_id
             )
+        },
+        synchronize_session=False,
+    )
+    raa_list = db_session4.query(RelatedAlbum).filter(
+        RelatedAlbum.related_album_id.in_(old_uuid_list)
+    )
+    for raa in raa_list:
+        db_session4.delete(raa)
 
-            # update album_id in chart_album
-            db_session.query(ChartAlbum).filter(ChartAlbum.album_id == old_id).update(
-                {ChartAlbum.album_id: new_id}
-            )
-            c_list = (
-                db_session.query(ChartAlbum).filter(ChartAlbum.album_id == old_id).all()
-            )
-            for c in c_list:
-                db_session.delete(c)
+    db_session4.commit()
 
-            # update collection_album
-            db_session.query(CollectionAlbum).filter(
-                CollectionAlbum.album_id == old_uuid
-            ).update({CollectionAlbum.album_id: new_uuid})
-            ca_list = (
-                db_session.query(CollectionAlbum)
-                .filter(CollectionAlbum.album_id == old_uuid)
-                .all()
-            )
-            for ca in ca_list:
-                db_session.delete(ca)
+    # update theme_album
+    db_session5.query(ThemeAlbum).filter(ThemeAlbum.album_id.in_(old_id_list)).update(
+        {ThemeAlbum.valid: -94}, synchronize_session=False
+    )
 
-            # update related_albums
-            db_session.query(RelatedAlbum).filter(
-                RelatedAlbum.album_id == old_uuid
-            ).update({RelatedAlbum.album_id: new_uuid})
-            ra_list = (
-                db_session.query(RelatedAlbum)
-                .filter(RelatedAlbum.album_id == old_uuid)
-                .all()
-            )
-            for ra in ra_list:
-                db_session.delete(ra)
+    db_session5.query(ThemeAlbum).filter(ThemeAlbum.album_id.in_(id_dict)).update(
+        {ThemeAlbum.album_id: case(uuid_dict, value=ThemeAlbum.album_id)},
+        synchronize_session=False,
+    )
 
-            db_session.query(RelatedAlbum).filter(
-                RelatedAlbum.related_album_id == old_uuid
-            ).update({RelatedAlbum.related_album_id: new_uuid})
-            raa_list = (
-                db_session.query(RelatedAlbum)
-                .filter(RelatedAlbum.related_album_id == old_uuid)
-                .all()
-            )
-            for raa in raa_list:
-                db_session.delete(raa)
+    db_session5.commit()
 
-            # update theme_album
-            db_session.query(ThemeAlbum).filter(ThemeAlbum.album_id == old_id).update(
-                {"album_id": new_uuid, "valid": -94}
-            )
+    # update urimapper
 
-            # update urimapper
-            db_session.query(URIMapper).filter(URIMapper.entity_id == old_uuid).update(
-                {"entity_id": new_uuid}, synchronize_session=False
-            )
+    db_session6.query(URIMapper).filter(URIMapper.entity_id.in_(uuid_dict)).update(
+        {URIMapper.entity_id: case(uuid_dict, value=URIMapper.entity_id)},
+        synchronize_session=False,
+    )
 
-            # update report autocrawler top 100
-            update_report = (
-                db_session.query(ReportAutoCrawlerTop100Album.ext)
-                .filter(
-                    func.json_extract(ReportAutoCrawlerTop100Album.ext, "$.album_uuid")
-                    == old_uuid
-                )
-                .all()
-            )
-            for u in update_report:
-                u.ext["album_uuid"] = new_uuid
+    db_session6.commit()
 
-            # update sg_likes
-            db_session.query(SgLikes).filter(SgLikes.entity_uuid == old_uuid).update(
-                {SgLikes.entity_uuid: new_uuid}
-            )
+    # update report autocrawler top 100
+    report_info = db_session7.query(
+        ReportAutoCrawlerTop100Album.id,
+        ReportAutoCrawlerTop100Album.ext,
+        ReportAutoCrawlerTop100Album.ext["album_uuid"].label("album_uuid"),
+    ).filter(
+        func.json_extract(ReportAutoCrawlerTop100Album.ext, "$.album_uuid").in_(
+            old_uuid_list
+        )
+    )
 
-            # update album_contributors
-            db_session.query(AlbumContributor).filter(
-                AlbumContributor.album_id == old_uuid
-            ).update({AlbumContributor.album_id: new_uuid})
+    report_info_df = get_df_from_query(report_info)
 
-            # update user_narratives
-            db_session.query(UserNarrative).filter(
-                UserNarrative.entity_uuid == old_uuid
-            ).update({UserNarrative.entity_uuid: new_uuid})
+    for row in report_info_df.index:
+        ext = report_info_df.at[row, "ext"].copy()
+        old_uuid = report_info_df.at[row, "album_uuid"]
+        ext["album_uuid"] = uuid_dict[old_uuid]
+        report_info_df.at[row, "ext"] = ext
 
-            # update albums
-            info = (
-                db_session.query(Album.info)
-                .filter(Album.uuid == old_uuid)
-                .order_by(Album.updated_at.desc())
-                .first()
-            )
-            db_session.query(Album).filter(Album.uuid == old_uuid).update(
-                {"valid": -94}
-            )
-            db_session.query(Album).filter(Album.uuid == new_uuid).update(
-                {Album.info: info}
-            )
-            db_session.query(Album).filter(Album.uuid == new_uuid).update({"valid": 1})
+    report_info_dict = report_info_df[["id", "ext"]].to_dict("records")
 
-            db_session.query(ItunesRelease).filter(
-                ItunesRelease.album_uuid == old_uuid
-            ).update({"valid": -94})
+    db_session7.bulk_update_mappings(ReportAutoCrawlerTop100Album, report_info_dict)
 
-            db_session.query(Artist_album).filter(
-                Artist_album.album_id == old_id
-            ).update({"valid": -94})
+    db_session7.commit()
 
-            db_session.commit()
+    # update sg_likes
 
-        except exc.SQLAlchemyError as e:
-            print(e)
-            db_session.rollback()
-            raise
-            continue
-        finally:
-            # db_session.commit()
-            db_session.close()
+    db_session8.query(SgLikes).filter(SgLikes.entity_uuid.in_(uuid_dict)).update(
+        {SgLikes.entity_uuid: case(uuid_dict, value=SgLikes.entity_uuid)},
+        synchronize_session=False,
+    )
+
+    db_session8.commit()
+
+    # update album_contributors
+    db_session8.query(AlbumContributor).filter(
+        AlbumContributor.album_id.in_(uuid_dict)
+    ).update(
+        {AlbumContributor.album_id: case(uuid_dict, value=AlbumContributor.album_id)},
+        synchronize_session=False,
+    )
+
+    db_session8.commit()
+
+    # update user_narratives
+    db_session9.query(UserNarrative).filter(
+        UserNarrative.entity_uuid.in_(old_uuid_list)
+    ).update(
+        {UserNarrative.entity_uuid: case(uuid_dict, value=UserNarrative.entity_uuid)},
+        synchronize_session=False,
+    )
+
+    db_session9.commit()
+
+    # update albums
+
+    info = db_session10.query(Album.id, Album.info.label("album_info")).filter(
+        Album.uuid.in_(old_uuid_list)
+    )
+    info_df = get_df_from_query(info)
+
+    db_session10.flush()
+    time.sleep(5)
+
+    info_df_new = pd.merge(info_df, merged_df, left_on="id", right_on="albumid_old")
+    info_df_ = info_df_new[["albumid_new", "album_info"]]
+    info_df_.columns = ["id", "info"]
+    album_info_dict = info_df_.to_dict("records")
+    db_session10.bulk_update_mappings(Album, album_info_dict)
+    db_session10.commit()
+    time.sleep(5)
+
+    old_uuid_album = get_df_from_query(db_session10.query(Album.id).filter(Album.uuid.in_(old_uuid_list)))
+    old_uuid_album["valid"] = -94
+    old_uuid_album = old_uuid_album.drop_duplicates()
+    old_uuid_album_dict = old_uuid_album.to_dict("records")
+    db_session10.bulk_update_mappings(Album, old_uuid_album_dict)
+    db_session10.flush()
+    db_session10.commit()
+    time.sleep(5)
+
+    new_uuid_album = get_df_from_query(db_session10.query(Album.id).filter(Album.uuid.in_(new_uuid_list)))
+    new_uuid_album["valid"] = 1
+    new_uuid_album = new_uuid_album.drop_duplicates()
+    new_uuid_album_dict = new_uuid_album.to_dict("records")
+    db_session10.bulk_update_mappings(Album, new_uuid_album_dict)
+    db_session10.commit()
+    time.sleep(5)
+
+    old_itunes_release = get_df_from_query(db_session11.query(ItunesRelease.id).filter(
+        ItunesRelease.album_uuid.in_(old_uuid_list))
+    )
+    old_itunes_release["valid"] = -94
+    old_itunes_release = old_itunes_release.to_dict("records")
+    db_session11.bulk_update_mappings(ItunesRelease, old_itunes_release)
+    db_session11.commit()
+
+    old_artist_album = db_session11.query(Artist_album).filter(Artist_album.album_id.in_(old_id_list))
+
+    for row in old_artist_album:
+        row.valid = -94
+    db_session11.commit()
+
+    for session in [
+        db_session,
+        db_session2,
+        db_session3,
+        db_session4,
+        db_session5,
+        db_session6,
+        db_session7,
+        db_session8,
+        db_session9,
+        db_session10,
+        db_session11,
+    ]:
+        session.close()
 
 
 def update_new_info(id_list: list, merged_df, gsheet_url: str, sheet_name: str):
     new_uuid_list = merged_df["uuid_new"].values.tolist()
+    db_session = scoped_session(
+        sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    )
     try:
         query_new_info = (
             db_session.query(
@@ -598,83 +737,32 @@ def update_new_info(id_list: list, merged_df, gsheet_url: str, sheet_name: str):
 
 
 if __name__ == "__main__":
+    start_time = time.time()
     # input here
     gsheet_url = "https://docs.google.com/spreadsheets/d/1H0t9xq2vUesfpBQoieJP6TxHbWl8D43s5kiAZ7K3Cgc/edit#gid=978085935"
     # sheet name of allmusic input data
     sheet_allmusic = "Test_1"
     # sheet name of result check sheet
     sheet_check_result = "Test_2 (check_result)_"
+    # actual script part
+    df = get_ituneid(gsheet_url, sheet_allmusic)
+    print_old_info(df, gsheet_url, sheet_check_result)
+    id_list = run_crawler(df)
+    time.sleep(900)
+    query_complete_crawl = get_complete_crawl(id_list)
 
-    try:
-        # actual script part
-        df = get_ituneid(gsheet_url, sheet_allmusic)
-        print_old_info(df, gsheet_url, sheet_check_result)
-        # id_list = run_crawler(df)
-        # print(id_list)
-        # time.sleep(900)
-        id_list = [
-            "909E775D675E4ACBAAE56C0D6A405562",
-            "6CDEADDA72FA4EEE9D07AB8CC3B64DA3",
-            "11571A2E7C044C7CAFD777455F324057",
-            "3BD209C104164450B9B1AE6B0C7AB501",
-            "048A11FAF7284D69B5E2D6C1B4CEA11A",
-            "A3046DE6D5F84526A6BE25E2D37630EF",
-            "69F864D0A62547ACB178AB5F53A58082",
-            "9CFDAC3AD2D743A19C7B1FD88A4BC3C9",
-            "EADA8C95FBF04968993AE3C5AA5F9830",
-            "4F7152A67FD04C82AA9590B0E49D5DFA",
-            "BEE7D59103DB4F4AADE63E1B27CD69FF",
-            "0430FFFB8B8241669B3AD9749F11A8CA",
-            "CC3223A534394826AC5B3676DF4CEAB6",
-            "5406341BFCEE4B62AB095D45D77DB20F",
-            "5D1EE4A62B584A3788593A4746F1FC91",
-            "81A18E103FB74CF7A1B39EE9989FAA47",
-            "3354DDA030AC460D960A8D87D47D5A74",
-            "4BE1DE41BA1B46B58821539C140B4831",
-            "0A0F6102B97C4D838C280D4CA94AE532",
-            "279194AB11FF43188D323E202828E2DC",
-            "1E6FC543C95942359E1EF72632F171D4",
-            "CCF15318344149C78800EC85C0B8AE11",
-            "FA46BABCF896490188A043DB23D45F70",
-            "767E19A413494073B2C78612F98E785B",
-            "2E91AB8E70BA43EDB5128C10B077983A",
-            "DD93173670954CC7938B254556642821",
-            "1B4527D58D57472285129276FC3FD59E",
-            "9A2A686EB5C1434EA1BCD22021F224CF",
-            "F7B14B35908C4C7E8856095C58405457",
-            "C7D8F53CFB9F452482616F995A96A6C3",
-            "430A59FF397146F19E9FA81DC72C40A4",
-            "5D246FF0F0E9480CB6CDA713360BE9EF",
-            "7C3DEBF67DB14AD993C67AFB2176E465",
-            "E4C9320CF7E04AB88FA8374D8C35EAC7",
-            "41C22B477DCD42139B05C6875C1A18AE",
-            "C066DB0B366F44198E1307343F330700",
-            "7ED21BF23AB349FF8FCE3A7E85E19B17",
-            "B918DDCAB2F44053931C942E7EEF6269",
-            "7BDCB4526AAF4C9E89E795379187E7D5",
-            "B3EF34E091D14695BE12777917682097",
-            "E756423AAD3A4929A3169DB6681E6261",
-            "00684D97D9584076B02D645402697BD6",
-            "1AA8A64B666F49E5BC8A0394ED5849B8",
-            "2BD3C9F717434465925F7C7B5738BAB0",
-            "874DCBDB58864AA6A786408FB7426C86",
-            "49FC872F2A95413E91E2E95C47BC1ACD",
-            "3FB96C80AF01481392F2A41659C82E61",
-            "CEF1C4320A0A44029B400637AFCFD809",
-        ]
-        query_complete_crawl = get_complete_crawl(id_list)
-        get_all_crawl(id_list, sheet_check_result, gsheet_url)
-        merged_df = merge_new_old_ids(query_complete_crawl, df)
-        update_albums(merged_df=merged_df)
-        get_incomplete_crawl(gsheet_url=gsheet_url, id_list=id_list)
-        update_new_info(
-            id_list=id_list,
-            merged_df=merged_df,
-            gsheet_url=gsheet_url,
-            sheet_name=sheet_check_result,
-        )
-    except exc.SQLAlchemyError:
-        db_session.rollback()
-        raise
-    finally:
-        db_session.close()
+    get_all_crawl(id_list, sheet_check_result, gsheet_url)
+    merged_df = merge_new_old_ids(query_complete_crawl, df)
+
+    update_albums(merged_df=merged_df)
+    time_6 = time.time() - start_time - 900
+    print("\n --- total time to process update_album is %s seconds ---" % (time_6-20))
+    get_incomplete_crawl(gsheet_url=gsheet_url, id_list=id_list)
+    update_new_info(
+        id_list=id_list,
+        merged_df=merged_df,
+        gsheet_url=gsheet_url,
+        sheet_name=sheet_check_result,
+    )
+
+    print("\n --- total time to process %s seconds ---" % (time.time() - start_time - 920))

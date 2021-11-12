@@ -1,8 +1,8 @@
 import sqlalchemy as sa
+import json
 from sqlalchemy.ext.mutable import MutableDict
 
 from core.models.base_class import Base, TimestampMixin
-
 
 class ReportAutoCrawlerTop100Album(Base):
     __tablename__ = "reportautocrawler_top100albums"
