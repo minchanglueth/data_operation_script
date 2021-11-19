@@ -1,5 +1,6 @@
 from ast import Str
 from functools import update_wrapper
+from more_itertools import sliced
 import json
 from sqlalchemy import exc, cast
 from hashlib import new
@@ -123,7 +124,7 @@ def get_ituneid(gsheet_url: str, sheet_name: str):
     return dff_merged
 
 
-def print_old_info(df, gsheet_url: str, sheet_name: str):
+def print_old_info(df, gsheet_url: str, sheet_name: str, index_slice):
     albumuuid_list = df[df.albumid_old.notnull()]["albumuuid_old"].values.tolist()
     db_session = scoped_session(
         sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -173,21 +174,9 @@ def print_old_info(df, gsheet_url: str, sheet_name: str):
     db_session.close()
     sh = gc.open_by_url(gsheet_url)
     worksheet = sh.worksheet(sheet_name)
-    sheet_df = get_as_dataframe(
-        worksheet,
-        header=1,
-        skip_blank_lines=True,
-        evaluate_formulas=True,
+    set_with_dataframe(
+        worksheet, album_df, include_column_header=False, row=index_slice[0] + 3, col=2
     )
-    sheet_df = sheet_df[["Itune ID (new)", "AlbumUUID (old)"]]
-    df = pd.merge(
-        sheet_df,
-        album_df,
-        how="left",
-        left_on="AlbumUUID (old)",
-        right_on="AlbumUUID (old)",
-    ).drop_duplicates(subset=["AlbumUUID (old)"])
-    set_with_dataframe(worksheet, df, include_column_header=False, row=3)
 
 
 def run_crawler(df: object):
@@ -261,7 +250,7 @@ def get_complete_crawl(id_list: list):
     return query_itune_id
 
 
-def get_all_crawl(id_list: list, sheet_name: str, gsheet_url: str):
+def get_all_crawl(df, id_list: list, sheet_name: str, gsheet_url: str, index_slice):
     db_session = scoped_session(
         sessionmaker(autocommit=False, autoflush=False, bind=engine)
     )
@@ -288,25 +277,33 @@ def get_all_crawl(id_list: list, sheet_name: str, gsheet_url: str):
         db_session.close()
 
     dfc["itune_id"] = dfc["itune_id"].str.replace('"', "").astype(int)
+
     sh = gc.open_by_url(gsheet_url)
     worksheet = sh.worksheet(sheet_name)
     sheet_df = get_as_dataframe(
-        worksheet, header=1, skip_blank_lines=True, evaluate_formulas=True
+        worksheet, header=1, skip_blank_lines=True
     )
-    sheet_df["Itune ID (new)"] = (
-        sheet_df["Itune ID (new)"].astype(str).apply(get_number_from_string)
-    )
+    sheet_df = sheet_df.iloc[index_slice]
     new_sheet_df = pd.merge(
-        sheet_df, dfc, left_on="Itune ID (new)", right_on="itune_id"
+        df, dfc, how="left", left_on="apple_id", right_on="itune_id"
     )
-    new_sheet_df["CrawlingtaskID"] = new_sheet_df["Crawlingtask.ID"]
-    new_sheet_df["Crawl Result"] = new_sheet_df["Crawlingtask.status"]
-    del new_sheet_df["Crawlingtask.ID"]
-    del new_sheet_df["Crawlingtask.status"]
-    new_sheet_df = new_sheet_df.iloc[:, :-1]
+    ns_df = pd.merge(sheet_df, new_sheet_df, how="left", left_on="AlbumUUID (old)", right_on="albumuuid_old")
+    ns_df_ = ns_df[["Crawlingtask.ID", "Crawlingtask.status"]]
     set_with_dataframe(
-        worksheet=worksheet, dataframe=new_sheet_df, row=3, include_column_header=False
+        worksheet=worksheet,
+        dataframe=ns_df_,
+        row=index_slice[0] + 3,
+        col=16,
+        include_column_header=False,
     )
+    set_with_dataframe(
+        worksheet=worksheet,
+        dataframe=new_sheet_df[["itune_id"]],
+        row=index_slice[0] + 3,
+        col=1,
+        include_column_header=False,
+    )
+    
 
 
 def get_incomplete_crawl(gsheet_url: str, id_list: list):
@@ -587,7 +584,9 @@ def update_albums(merged_df):
     db_session10.commit()
     time.sleep(5)
 
-    old_uuid_album = get_df_from_query(db_session10.query(Album.id).filter(Album.uuid.in_(old_uuid_list)))
+    old_uuid_album = get_df_from_query(
+        db_session10.query(Album.id).filter(Album.uuid.in_(old_uuid_list))
+    )
     old_uuid_album["valid"] = -94
     old_uuid_album = old_uuid_album.drop_duplicates()
     old_uuid_album_dict = old_uuid_album.to_dict("records")
@@ -596,7 +595,9 @@ def update_albums(merged_df):
     db_session10.commit()
     time.sleep(5)
 
-    new_uuid_album = get_df_from_query(db_session10.query(Album.id).filter(Album.uuid.in_(new_uuid_list)))
+    new_uuid_album = get_df_from_query(
+        db_session10.query(Album.id).filter(Album.uuid.in_(new_uuid_list))
+    )
     new_uuid_album["valid"] = 1
     new_uuid_album = new_uuid_album.drop_duplicates()
     new_uuid_album_dict = new_uuid_album.to_dict("records")
@@ -604,15 +605,19 @@ def update_albums(merged_df):
     db_session10.commit()
     time.sleep(5)
 
-    old_itunes_release = get_df_from_query(db_session11.query(ItunesRelease.id).filter(
-        ItunesRelease.album_uuid.in_(old_uuid_list))
+    old_itunes_release = get_df_from_query(
+        db_session11.query(ItunesRelease.id).filter(
+            ItunesRelease.album_uuid.in_(old_uuid_list)
+        )
     )
     old_itunes_release["valid"] = -94
     old_itunes_release = old_itunes_release.to_dict("records")
     db_session11.bulk_update_mappings(ItunesRelease, old_itunes_release)
     db_session11.commit()
 
-    old_artist_album = db_session11.query(Artist_album).filter(Artist_album.album_id.in_(old_id_list))
+    old_artist_album = db_session11.query(Artist_album).filter(
+        Artist_album.album_id.in_(old_id_list)
+    )
 
     for row in old_artist_album:
         row.valid = -94
@@ -634,7 +639,10 @@ def update_albums(merged_df):
         session.close()
 
 
-def update_new_info(id_list: list, merged_df, gsheet_url: str, sheet_name: str):
+def update_new_info(
+    id_list: list, merged_df, gsheet_url: str, sheet_name: str, index_slice
+):
+    print("running update_new_info")
     new_uuid_list = merged_df["uuid_new"].values.tolist()
     db_session = scoped_session(
         sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -654,7 +662,7 @@ def update_new_info(id_list: list, merged_df, gsheet_url: str, sheet_name: str):
                 ),
                 ThemeAlbum.album_id.label("Theme_album.albumID (new)"),
                 URIMapper.entity_id.label("Urimapper.entityID (new)"),
-                SgLikes.entity_type.label("sg_likes.entityUUID (new)"),
+                SgLikes.entity_uuid.label("sg_likes.entityUUID (new)"),
                 AlbumContributor.album_id.label("Albumcontributors.albumID (new)"),
                 ReportAutoCrawlerTop100Album.ext["album_uuid"].label(
                     "reportautocrawler_top100albums.ext->>'$.album_uuid' (new)"
@@ -706,8 +714,12 @@ def update_new_info(id_list: list, merged_df, gsheet_url: str, sheet_name: str):
     sh = gc.open_by_url(gsheet_url)
     worksheet = sh.worksheet(sheet_name)
     sheet_df = get_as_dataframe(worksheet, header=1, skip_blank_lines=True)[
-        ["Itune ID (new)", "AlbumUUID (old)"]
+        ["AlbumUUID (old)"]
     ]
+    sheet_df = sheet_df.iloc[index_slice]
+    # sheet_df["Itune ID (new)"] = sheet_df["Itune ID (new)"].astype(int)
+    print("this is sheet_df from update new info")
+    print(sheet_df)
     df = pd.merge(
         sheet_df,
         new_info,
@@ -733,11 +745,13 @@ def update_new_info(id_list: list, merged_df, gsheet_url: str, sheet_name: str):
             "Albums.info (new)",
         ]
     ]
-    set_with_dataframe(worksheet, df, row=3, col=18, include_column_header=False)
+    set_with_dataframe(
+        worksheet, df, row=index_slice[0] + 3, col=18, include_column_header=False
+    )
 
 
 if __name__ == "__main__":
-    start_time = time.time()
+
     # input here
     gsheet_url = "https://docs.google.com/spreadsheets/d/1H0t9xq2vUesfpBQoieJP6TxHbWl8D43s5kiAZ7K3Cgc/edit#gid=978085935"
     # sheet name of allmusic input data
@@ -746,23 +760,29 @@ if __name__ == "__main__":
     sheet_check_result = "Test_2 (check_result)_"
     # actual script part
     df = get_ituneid(gsheet_url, sheet_allmusic)
-    print_old_info(df, gsheet_url, sheet_check_result)
-    id_list = run_crawler(df)
-    time.sleep(900)
-    query_complete_crawl = get_complete_crawl(id_list)
+    CHUNK_SIZE = 1000
+    index_slices = sliced(range(len(df)), CHUNK_SIZE)
+    for index_slice in index_slices:
+        print(index_slice)
+        chunk = df.iloc[index_slice]
+        print_old_info(
+            df=chunk,
+            gsheet_url=gsheet_url,
+            sheet_name=sheet_check_result,
+            index_slice=index_slice,
+        )
+        id_list = run_crawler(chunk)
+        time.sleep(600)
+        query_complete_crawl = get_complete_crawl(id_list)
+        get_all_crawl(chunk, id_list, sheet_check_result, gsheet_url, index_slice)
+        merged_df = merge_new_old_ids(query_complete_crawl, chunk)
+        update_albums(merged_df=merged_df)
+        get_incomplete_crawl(gsheet_url=gsheet_url, id_list=id_list)
+        update_new_info(
+            id_list=id_list,
+            merged_df=merged_df,
+            gsheet_url=gsheet_url,
+            sheet_name=sheet_check_result,
+            index_slice=index_slice,
+        )
 
-    get_all_crawl(id_list, sheet_check_result, gsheet_url)
-    merged_df = merge_new_old_ids(query_complete_crawl, df)
-
-    update_albums(merged_df=merged_df)
-    time_6 = time.time() - start_time - 900
-    print("\n --- total time to process update_album is %s seconds ---" % (time_6-20))
-    get_incomplete_crawl(gsheet_url=gsheet_url, id_list=id_list)
-    update_new_info(
-        id_list=id_list,
-        merged_df=merged_df,
-        gsheet_url=gsheet_url,
-        sheet_name=sheet_check_result,
-    )
-
-    print("\n --- total time to process %s seconds ---" % (time.time() - start_time - 920))
