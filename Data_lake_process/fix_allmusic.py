@@ -717,9 +717,6 @@ def update_new_info(
         ["AlbumUUID (old)"]
     ]
     sheet_df = sheet_df.iloc[index_slice]
-    # sheet_df["Itune ID (new)"] = sheet_df["Itune ID (new)"].astype(int)
-    print("this is sheet_df from update new info")
-    print(sheet_df)
     df = pd.merge(
         sheet_df,
         new_info,
