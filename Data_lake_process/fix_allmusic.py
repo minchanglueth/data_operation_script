@@ -757,7 +757,7 @@ if __name__ == "__main__":
     sheet_check_result = "Test_2 (check_result)_"
     # actual script part
     df = get_ituneid(gsheet_url, sheet_allmusic)
-    CHUNK_SIZE = 1000
+    CHUNK_SIZE = 10
     index_slices = sliced(range(len(df)), CHUNK_SIZE)
     for index_slice in index_slices:
         print(index_slice)
@@ -769,7 +769,7 @@ if __name__ == "__main__":
             index_slice=index_slice,
         )
         id_list = run_crawler(chunk)
-        time.sleep(600)
+        time.sleep(300)
         query_complete_crawl = get_complete_crawl(id_list)
         get_all_crawl(chunk, id_list, sheet_check_result, gsheet_url, index_slice)
         merged_df = merge_new_old_ids(query_complete_crawl, chunk)
