@@ -962,7 +962,7 @@ if __name__ == "__main__":
     # control_flow.similarity()
 
     # crawl:
-    control_flow.crawl()
+    # control_flow.crawl()
 
     # checking:
     # control_flow.checking()
